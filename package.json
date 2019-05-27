@@ -1,0 +1,10 @@
+{
+    "name": "com.github.enue.tskt_math",
+    "displayName": "TSKT Math",
+    "version": "0.0.0",
+    "unity": "2018.4",
+    "description": "",
+    "keywords": [],
+    "category": "",
+    "dependencies": {}
+}

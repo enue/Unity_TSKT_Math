@@ -29,11 +29,6 @@ namespace TSKT.Tests
             }
             {
                 var found = map.TryGetFirst(new Vector2(1f, 1f), out var pair);
-                Assert.IsTrue(found);
-                Assert.AreEqual("hoge", pair.value);
-            }
-            {
-                var found = map.TryGetFirst(new Vector2(1.1f, 1f), out _);
                 Assert.IsFalse(found);
             }
         }

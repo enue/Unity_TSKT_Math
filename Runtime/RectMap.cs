@@ -47,7 +47,7 @@ namespace TSKT
                     {
                         foreach (var pair in pairs)
                         {
-                            if (ContainsAsClosedInterval(pair.key, position))
+                            if (pair.key.Contains(position))
                             {
                                 result = pair;
                                 return true;
@@ -73,7 +73,7 @@ namespace TSKT
                     {
                         foreach(var pair in pairs)
                         {
-                            if (ContainsAsClosedInterval(pair.key, position))
+                            if (pair.key.Contains(position))
                             {
                                 yield return pair;
                             }
@@ -113,16 +113,11 @@ namespace TSKT
 
         RectInt GetCells(Rect rect)
         {
-            var min = GetCells(rect.min);
-            var max = GetCells(rect.max);
+            var min = GetCells(rect.min).min;
+            // Rect.Containsは[min, max)で処理されるので、rect.maxがCellの境界をまたぐ場合は大きい側のCellを切り捨てられる
+            var max = GetCells(rect.max).min;
 
-            return new RectInt(min.xMin, min.yMin, max.xMax - min.xMin, max.yMax - min.yMin);
-        }
-
-        static bool ContainsAsClosedInterval(Rect rect, Vector2 point)
-        {
-            return (rect.xMin - point.x) * (rect.xMax - point.x) <= 0f
-            && (rect.yMin - point.y) * (rect.yMax - point.y) <= 0f;
+            return new RectInt(min.x, min.y, max.x - min.x, max.y - min.y);
         }
     }
 }

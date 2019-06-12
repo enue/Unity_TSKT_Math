@@ -15,6 +15,10 @@ namespace TSKT.Tests
         public void TryGetFirst(float cellSize, float offset)
         {
             var map = new RectMap<string>(cellSize, offset);
+
+            Assert.IsFalse(map.TryGetFirst(Vector2.zero, out _));
+            Assert.IsEmpty(map.Find(Vector2.zero));
+
             map.Add(new Rect(0f, 0f, 1f, 1f), "hoge");
 
             {
@@ -26,6 +30,8 @@ namespace TSKT.Tests
                 var found = map.TryGetFirst(new Vector2(0f, 0f), out var pair);
                 Assert.IsTrue(found);
                 Assert.AreEqual("hoge", pair.value);
+
+                Assert.AreEqual(1, map.Find(Vector2.zero).ToArray().Length);
             }
             {
                 var found = map.TryGetFirst(new Vector2(1f, 1f), out var pair);

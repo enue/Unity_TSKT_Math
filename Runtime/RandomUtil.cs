@@ -10,6 +10,11 @@ namespace TSKT
     {
         static public int[] GenerateShuffledRange(int start, int count)
         {
+            if (count == 0)
+            {
+                return System.Array.Empty<int>();
+            }
+
             var result = new int[count];
             for (int i = 0; i < count; ++i)
             {
@@ -21,6 +26,11 @@ namespace TSKT
 
         static public T[] GenerateShuffledArray<T>(List<T> list)
         {
+            if (list.Count == 0)
+            {
+                return System.Array.Empty<T>();
+            }
+
             var result = new T[list.Count];
             for(int i=0; i<result.Length; ++i)
             {

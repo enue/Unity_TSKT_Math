@@ -9,7 +9,8 @@ namespace TSKT
     {
         readonly float cellSize = 1f;
         readonly float offset = 0.5f;
-        readonly UnlimitedArray2<List<(Rect key, T value)>> cells = new UnlimitedArray2<List<(Rect, T)>>(0, 0);
+
+        UnlimitedArray2<List<(Rect key, T value)>> cells;
 
         public RectMap(float cellSize, float offset)
         {
@@ -19,30 +20,44 @@ namespace TSKT
 
         public void Add(Rect rect, T value)
         {
-            var cells = GetCells(rect);
-            for (int i = 0; i < cells.width + 1; ++i)
+            var range = GetCellRange(rect);
+            if (cells == null)
             {
-                for (int j = 0; j < cells.height + 1; ++j)
+                cells = new UnlimitedArray2<List<(Rect key, T value)>>(range.xMin, range.yMin, range.width, range.height);
+            }
+            else
+            {
+                cells.EnsureCapacity(range);
+            }
+            for (int i = 0; i < range.width + 1; ++i)
+            {
+                for (int j = 0; j < range.height + 1; ++j)
                 {
-                    var rects = this.cells[i + cells.xMin, j + cells.yMin];
-                    if (rects == null)
+                    var list = cells[i + range.xMin, j + range.yMin];
+                    if (list == null)
                     {
-                        rects = new List<(Rect, T)>();
-                        this.cells[i + cells.xMin, j + cells.yMin] = rects;
+                        list = new List<(Rect key, T value)>();
+                        cells[i + range.xMin, j + range.yMin] = list;
                     }
-                    rects.Add((rect, value));
+                    list.Add((rect, value));
                 }
             }
         }
 
         public bool TryGetFirst(Vector2 position, out (Rect key, T value) result)
         {
-            var cells = GetCells(position);
-            for (int i = 0; i < cells.width + 1; ++i)
+            if (cells == null)
             {
-                for (int j = 0; j < cells.height + 1; ++j)
+                result = default;
+                return false;
+            }
+
+            var range = GetCellRange(position);
+            for (int i = 0; i < range.width + 1; ++i)
+            {
+                for (int j = 0; j < range.height + 1; ++j)
                 {
-                    var pairs = this.cells[i + cells.xMin, j + cells.yMin];
+                    var pairs = cells?[i + range.xMin, j + range.yMin];
                     if (pairs != null && pairs.Count > 0)
                     {
                         foreach (var pair in pairs)
@@ -63,12 +78,16 @@ namespace TSKT
 
         public IEnumerable<(Rect, T)> Find(Vector2 position)
         {
-            var cells = GetCells(position);
-            for (int i = 0; i < cells.width + 1; ++i)
+            if (cells == null)
             {
-                for (int j = 0; j < cells.height + 1; ++j)
+                yield break;
+            }
+            var range = GetCellRange(position);
+            for (int i = 0; i < range.width + 1; ++i)
+            {
+                for (int j = 0; j < range.height + 1; ++j)
                 {
-                    var pairs = this.cells[i + cells.xMin, j + cells.yMin];
+                    var pairs = cells?[i + range.xMin, j + range.yMin];
                     if (pairs != null && pairs.Count > 0)
                     {
                         foreach(var pair in pairs)
@@ -77,14 +96,13 @@ namespace TSKT
                             {
                                 yield return pair;
                             }
-
                         }
                     }
                 }
             }
         }
 
-        RectInt GetCells(Vector2 position)
+        RectInt GetCellRange(Vector2 position)
         {
             var maxI = Mathf.FloorToInt((position.x + offset) / cellSize);
             int minI;
@@ -111,11 +129,11 @@ namespace TSKT
             return new RectInt(minI, minJ, maxI - minI, maxJ - minJ);
         }
 
-        RectInt GetCells(Rect rect)
+        RectInt GetCellRange(Rect rect)
         {
-            var min = GetCells(rect.min).min;
+            var min = GetCellRange(rect.min).min;
             // Rect.Containsは[min, max)で処理されるので、rect.maxがCellの境界をまたぐ場合は大きい側のCellを切り捨てられる
-            var max = GetCells(rect.max).min;
+            var max = GetCellRange(rect.max).min;
 
             return new RectInt(min.x, min.y, max.x - min.x, max.y - min.y);
         }

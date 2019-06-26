@@ -21,7 +21,7 @@ namespace TSKT
             }
         }
 
-        public void SetCost(int i, int j, int cost)
+        public void SetCost(int i, int j, double cost)
         {
             costs[i, j] = cost;
         }

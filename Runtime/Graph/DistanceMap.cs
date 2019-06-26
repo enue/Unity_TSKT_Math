@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace TSKT
 {
@@ -6,13 +7,13 @@ namespace TSKT
     {
         public T Pivot { get; }
         public Dictionary<T, double> Distances { get; }
-        public Dictionary<T, List<T>> EdgesToPivot { get; }
+        public Dictionary<T, (T node, double distance)[]> Edges { get; }
 
         public DistanceMap(IGraph<T> graph, T pivot, double maxDistance = double.PositiveInfinity)
         {
             Pivot = pivot;
             Distances = new Dictionary<T, double>();
-            EdgesToPivot = new Dictionary<T, List<T>>();
+            Edges = new Dictionary<T, (T node, double distance)[]>();
 
             var tasks = new Queue<T>();
             tasks.Enqueue(pivot);
@@ -23,12 +24,20 @@ namespace TSKT
             {
                 var currentNode = tasks.Dequeue();
 
-                var nexts = graph.GetNextNodeDistancesFrom(currentNode);
-                if (nexts != null)
+                if (!Edges.TryGetValue(currentNode, out var nexts))
                 {
+                    nexts = graph.GetNextNodeDistancesFrom(currentNode)?.ToArray();
+                    Edges.Add(currentNode, nexts);
+                }
+
+                if (nexts != null && nexts.Length > 0)
+                {
+                    var currentNodePosition = Distances[currentNode];
                     foreach (var (nextNode, distance) in nexts)
                     {
-                        var newWeight = Distances[currentNode] + distance;
+                        UnityEngine.Assertions.Assert.IsTrue(distance > 0.0, "weight must be greater than 0.0");
+
+                        var newWeight = currentNodePosition + distance;
                         if (newWeight <= maxDistance)
                         {
                             if (Distances.TryGetValue(nextNode, out var oldWeight))
@@ -37,27 +46,12 @@ namespace TSKT
                                 {
                                     tasks.Enqueue(nextNode);
                                     Distances[nextNode] = newWeight;
-
-                                    var route = EdgesToPivot[nextNode];
-                                    route.Clear();
-                                    route.Add(currentNode);
-                                }
-                                else if (oldWeight == newWeight)
-                                {
-                                    if (!EdgesToPivot.TryGetValue(nextNode, out var nodes))
-                                    {
-                                        nodes = new List<T>();
-                                        EdgesToPivot.Add(nextNode, nodes);
-                                    }
-                                    nodes.Add(currentNode);
                                 }
                             }
                             else
                             {
                                 tasks.Enqueue(nextNode);
                                 Distances.Add(nextNode, newWeight);
-
-                                EdgesToPivot.Add(nextNode, new List<T>() { currentNode });
                             }
                         }
                     }
@@ -65,24 +59,56 @@ namespace TSKT
             }
         }
 
-        public List<List<T>> ComputeRoutesToPivotFrom(T from)
+        public Dictionary<T, List<T>> EdgesToPivot
         {
-            var result = new List<List<T>>();
-
-            if (!EdgesToPivot.ContainsKey(from))
+            get
             {
+                var result = new Dictionary<T, List<T>>();
+                foreach (var it in Edges)
+                {
+                    if (it.Value != null && it.Value.Length > 0)
+                    {
+                        var from = it.Key;
+                        var fromDistance = Distances[from];
+                        foreach (var (to, _) in it.Value)
+                        {
+                            if (fromDistance > Distances[to])
+                            {
+                                continue;
+                            }
+
+                            if (!result.TryGetValue(to, out var froms))
+                            {
+                                froms = new List<T>();
+                                result.Add(to, froms);
+                            }
+                            froms.Add(from);
+                        }
+                    }
+                }
                 return result;
             }
-            var tasks = new Queue<List<T>>();
-            tasks.Enqueue(new List<T>() { from });
+        }
+
+
+        public IEnumerable<List<T>> ComputeRoutesToPivotFrom(T from)
+        {
+            if (!Distances.ContainsKey(from))
+            {
+                yield break;
+            }
+
+            var edgesToPivot = EdgesToPivot;
+            var tasks = new Stack<List<T>>();
+            tasks.Push(new List<T>() { from });
 
             while(tasks.Count > 0)
             {
-                var route = tasks.Dequeue();
+                var route = tasks.Pop();
 
-                if (!EdgesToPivot.TryGetValue(route[route.Count - 1], out var nextPoints))
+                if (!edgesToPivot.TryGetValue(route[route.Count - 1], out var nextPoints))
                 {
-                    result.Add(route);
+                    yield return route;
                     continue;
                 }
                 if (nextPoints.Count > 1)
@@ -93,13 +119,12 @@ namespace TSKT
                         {
                             nextPoints[i]
                         };
-                        tasks.Enqueue(newTask);
+                        tasks.Push(newTask);
                     }
                 }
                 route.Add(nextPoints[0]);
-                tasks.Enqueue(route);
+                tasks.Push(route);
             }
-            return result;
         }
     }
 }

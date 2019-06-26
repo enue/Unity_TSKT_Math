@@ -79,13 +79,13 @@ namespace TSKT
                     {
                         continue;
                     }
-                    foreach (var (to, _) in edge.Value)
+                    foreach (var (to, weight) in edge.Value)
                     {
                         if (!Distances.TryGetValue(to, out var toDistance))
                         {
                             continue;
                         }
-                        if (fromDistance > toDistance)
+                        if (fromDistance + weight != toDistance)
                         {
                             continue;
                         }

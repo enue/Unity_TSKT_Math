@@ -64,26 +64,38 @@ namespace TSKT
             get
             {
                 var result = new Dictionary<T, List<T>>();
-                foreach (var it in Edges)
+                foreach (var edge in Edges)
                 {
-                    if (it.Value != null && it.Value.Length > 0)
+                    if (edge.Value == null)
                     {
-                        var from = it.Key;
-                        var fromDistance = Distances[from];
-                        foreach (var (to, _) in it.Value)
+                        continue;
+                    }
+                    if (edge.Value.Length == 0)
+                    {
+                        continue;
+                    }
+                    var from = edge.Key;
+                    if (!Distances.TryGetValue(from, out var fromDistance))
+                    {
+                        continue;
+                    }
+                    foreach (var (to, _) in edge.Value)
+                    {
+                        if (!Distances.TryGetValue(to, out var toDistance))
                         {
-                            if (fromDistance > Distances[to])
-                            {
-                                continue;
-                            }
-
-                            if (!result.TryGetValue(to, out var froms))
-                            {
-                                froms = new List<T>();
-                                result.Add(to, froms);
-                            }
-                            froms.Add(from);
+                            continue;
                         }
+                        if (fromDistance > toDistance)
+                        {
+                            continue;
+                        }
+
+                        if (!result.TryGetValue(to, out var froms))
+                        {
+                            froms = new List<T>();
+                            result.Add(to, froms);
+                        }
+                        froms.Add(from);
                     }
                 }
                 return result;

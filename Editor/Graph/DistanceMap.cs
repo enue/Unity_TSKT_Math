@@ -19,6 +19,16 @@ namespace TSKT.Tests
             Assert.AreEqual(6, routes.Length);
         }
 
+        [Test]
+        public void LimitedDistances()
+        {
+            var board = new Board(10, 10);
+            var distanceMap = board.ComputeDistancesFrom(new Vector2Int(5, 5), 4.0);
+            var edgesToPivot = distanceMap.EdgesToPivot;
+            Assert.AreEqual(6, distanceMap.ComputeRoutesToPivotFrom(new Vector2Int(3, 3)).ToArray().Length);
+            Assert.AreEqual(0, distanceMap.ComputeRoutesToPivotFrom(new Vector2Int(7, 8)).ToArray().Length);
+        }
+
         public void Performance()
         {
             var board = new Board(100, 1000);

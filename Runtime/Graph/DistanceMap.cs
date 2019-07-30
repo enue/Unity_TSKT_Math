@@ -35,7 +35,7 @@ namespace TSKT
                     var currentNodePosition = Distances[currentNode];
                     foreach (var (nextNode, distance) in nexts)
                     {
-                        UnityEngine.Assertions.Assert.IsTrue(distance > 0.0, "weight must be greater than 0.0");
+                        UnityEngine.Debug.Assert(distance > 0.0, "weight must be greater than 0.0");
 
                         var newWeight = currentNodePosition + distance;
                         if (newWeight <= maxDistance)

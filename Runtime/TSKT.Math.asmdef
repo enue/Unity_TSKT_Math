@@ -1,7 +1,8 @@
 {
     "name": "TSKT.Math",
     "references": [
-        "TSKTContainer"
+        "TSKTContainer",
+        "Unity.Mathematics"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
@@ -10,5 +11,6 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": []
+    "defineConstraints": [],
+    "versionDefines": []
 }

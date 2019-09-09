@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using Unity.Mathematics;
-using static Unity.Mathematics.math;
 
 namespace TSKT
 {
@@ -44,34 +42,37 @@ namespace TSKT
             // a * qt^3 + b * qt^2 + c * qt + d = q;
             // a * rt^3 + b * rt^2 + c * rt + d = r;
             // 3a * vt^2 + 2b * vt + c = v;
-            var matrix = float4x4(
-                pt * pt * pt,
-                pt * pt,
-                pt,
-                1f,
+            var matrix = new Matrix4x4()
+            {
+                m00 = pt * pt * pt,
+                m01 = pt * pt,
+                m02 = pt,
+                m03 = 1f,
 
-                qt * qt * qt,
-                qt * qt,
-                qt,
-                1f,
+                m10 = qt * qt * qt,
+                m11 = qt * qt,
+                m12 = qt,
+                m13 = 1f,
 
-                rt * rt * rt,
-                rt * rt,
-                rt,
-                1f,
+                m20 = rt * rt * rt,
+                m21 = rt * rt,
+                m22 = rt,
+                m23 = 1f,
 
-                3f * vt * vt,
-                2f * vt,
-                1f,
-                0f);
-
-            var m = mul(inverse(matrix), float4(p, q, r, v));
+                m30 = 3f * vt * vt,
+                m31 = 2f * vt,
+                m32 = 1f,
+                m33 = 0f
+            };
+            var rightMatrix = new Vector4(p, q, r, v);
+            var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
-                a: m.x,
-                b: m.y,
-                c: m.z,
-                d: m.w);
+                a: Vector4.Dot(inversedMatrix.GetRow(0), rightMatrix),
+                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix)
+            );
 
             return result;
         }
@@ -87,34 +88,37 @@ namespace TSKT
             // 3a * ut^2 + 2b * ut + c = u;
             // 3a * vt^2 + 2b * vt + c = v;
 
-            var matrix = float4x4(
-                pt * pt * pt,
-                pt * pt,
-                pt,
-                1f,
+            var matrix = new Matrix4x4()
+            {
+                m00 = pt * pt * pt,
+                m01 = pt * pt,
+                m02 = pt,
+                m03 = 1f,
 
-                qt * qt * qt,
-                qt * qt,
-                qt,
-                1f,
+                m10 = qt * qt * qt,
+                m11 = qt * qt,
+                m12 = qt,
+                m13 = 1f,
 
-                3f * ut * ut,
-                2f * ut,
-                1f,
-                0f,
+                m20 = 3f * ut * ut,
+                m21 = 2f * ut,
+                m22 = 1f,
+                m23 = 0f,
 
-                3f * vt * vt,
-                2f * vt,
-                1f,
-                0f);
+                m30 = 3f * vt * vt,
+                m31 = 2f * vt,
+                m32 = 1f,
+                m33 = 0f
+            };
 
-            var m = mul(inverse(matrix), float4(p, q, u, v));
+            var rightMatrix = new Vector4(p, q, u, v);
+            var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
-                a: m.x,
-                b: m.y,
-                c: m.z,
-                d: m.w);
+                a: Vector4.Dot(inversedMatrix.GetRow(0), rightMatrix),
+                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
 
             return result;
         }
@@ -128,27 +132,38 @@ namespace TSKT
             // b * qt^2 + qt * c + d = q
             // 2b = accell
             // a = 0
-            var matrix = float3x3(
-                pt * pt,
-                pt,
-                1f,
 
-                qt * qt,
-                qt,
-                1f,
+            var matrix = new Matrix4x4()
+            {
+                m00 = 0f,
+                m01 = pt * pt,
+                m02 = pt,
+                m03 = 1f,
 
-                2f,
-                0f,
-                0f);
+                m10 = 0f,
+                m11 = qt * qt,
+                m12 = qt,
+                m13 = 1f,
 
+                m20 = 0f,
+                m21 = 2f,
+                m22 = 0f,
+                m23 = 0f,
 
-            var m = mul(inverse(matrix), float3(p, q, accell));
+                m30 = 1f,
+                m31 = 0f,
+                m32 = 0f,
+                m33 = 0f
+            };
+
+            var rightMatrix = new Vector4(p, q, accell, 0f);
+            var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
                 a: 0f,
-                b: m.x,
-                c: m.y,
-                d: m.z);
+                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
 
             return result;
         }
@@ -165,34 +180,37 @@ namespace TSKT
             // 3a * vt^2 + 2b * vt + c = v;
             // 6a * accelT + 2b = accel;
 
-            var matrix = float4x4(
-                pt * pt * pt,
-                pt * pt,
-                pt,
-                1f,
+            var matrix = new Matrix4x4()
+            {
+                m00 = pt * pt * pt,
+                m01 = pt * pt,
+                m02 = pt,
+                m03 = 1f,
 
-                qt * qt * qt,
-                qt * qt,
-                qt,
-                1f,
+                m10 = qt * qt * qt,
+                m11 = qt * qt,
+                m12 = qt,
+                m13 = 1f,
 
-                3f * vt * vt,
-                2f * vt,
-                1f,
-                0f,
+                m20 = 3f * vt * vt,
+                m21 = 2f * vt,
+                m22 = 1f,
+                m23 = 0f,
 
-                6f * accelT,
-                2f,
-                0f,
-                0f);
+                m30 = 6f * accelT,
+                m31 = 2f,
+                m32 = 0f,
+                m33 = 0f
+            };
 
-            var m = mul(inverse(matrix), float4(p, q, v, accel));
+            var rightMatrix = new Vector4(p, q, v, accel);
+            var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
-                a: m.x,
-                b: m.y,
-                c: m.z,
-                d: m.w);
+                a: Vector4.Dot(inversedMatrix.GetRow(0), rightMatrix),
+                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
 
             return result;
         }
@@ -203,31 +221,42 @@ namespace TSKT
             float qt, float q,
             float rt, float r)
         {
-            // b * pt^2 + c * pt + d = p;
-            // b * qt^2 + c * qt + d = q;
-            // b * rt^2 + c * rt + d = r;
+            // a * pt^3 + b * pt^2 + c * pt + d = p;
+            // a * qt^3 + b * qt^2 + c * qt + d = q;
+            // a * rt^3 + b * rt^2 + c * rt + d = r;
             // a = 0
 
-            var matrix = float3x3(
-                pt * pt,
-                pt,
-                1f,
+            var matrix = new Matrix4x4()
+            {
+                m00 = 0f,
+                m01 = pt * pt,
+                m02 = pt,
+                m03 = 1f,
 
-                qt * qt,
-                qt,
-                1f,
+                m10 = 0f,
+                m11 = qt * qt,
+                m12 = qt,
+                m13 = 1f,
 
-                rt * rt,
-                rt,
-                1f);
+                m20 = 0f,
+                m21 = rt * rt,
+                m22 = rt,
+                m23 = 1f,
 
-            var m = mul(inverse(matrix), float3(p, q, r));
+                m30 = 1f,
+                m31 = 0f,
+                m32 = 0f,
+                m33 = 0f
+            };
+
+            var rightMatrix = new Vector4(p, q, r, 0f);
+            var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
                 a: 0f,
-                b: m.x,
-                c: m.y,
-                d: m.z);
+                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
 
             return result;
         }
@@ -242,31 +271,38 @@ namespace TSKT
             // a * qt^3 + b * qt^2 + c * qt + d = q;
             // a * rt^3 + b * rt^2 + c * rt + d = r;
             // a * st^3 + b * st^2 + c * st + d = s;
-            var matrix = float4x4(
-                pt * pt * pt,
-                pt * pt,
-                pt,
-                1f,
-                qt * qt * qt,
-                qt * qt,
-                qt,
-                1f,
-                rt * rt * rt,
-                rt * rt,
-                rt,
-                1f,
-                st * st * st,
-                st * st,
-                st,
-                1f);
 
-            var m = mul(inverse(matrix), float4(p, q, r, s));
+            var matrix = new Matrix4x4()
+            {
+                m00 = pt * pt * pt,
+                m01 = pt * pt,
+                m02 = pt,
+                m03 = 1f,
+
+                m10 = qt * qt * qt,
+                m11 = qt * qt,
+                m12 = qt,
+                m13 = 1f,
+
+                m20 = rt * rt * rt,
+                m21 = rt * rt,
+                m22 = rt,
+                m23 = 1f,
+
+                m30 = st * st * st,
+                m31 = st * st,
+                m32 = st,
+                m33 = 1f
+            };
+
+            var rightMatrix = new Vector4(p, q, r, s);
+            var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
-                a: m.x,
-                b: m.y,
-                c: m.z,
-                d: m.w);
+                a: Vector4.Dot(inversedMatrix.GetRow(0), rightMatrix),
+                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
 
             return result;
         }
@@ -276,31 +312,42 @@ namespace TSKT
             float qt, float q,
             float vt, float v)
         {
-            // b * pt^2 + c * pt + d = p;
-            // b * qt^2 + c * qt + d = q;
-            // 2b * vt + c = v;
+            // a * pt^3 + b * pt^2 + c * pt + d = p;
+            // a * qt^3 + b * qt^2 + c * qt + d = q;
+            // 3a * vt^2 + 2b * vt + c = v;
             // a = 0;
 
-            var matrix = new float3x3(
-                pt * pt,
-                pt,
-                1f,
+            var matrix = new Matrix4x4()
+            {
+                m00 = 0f,
+                m01 = pt * pt,
+                m02 = pt,
+                m03 = 1f,
 
-                qt * qt,
-                qt,
-                1f,
+                m10 = 0f,
+                m11 = qt * qt,
+                m12 = qt,
+                m13 = 1f,
 
-                2f * vt,
-                1f,
-                0f);
+                m20 = 0f,
+                m21 = 2f * vt,
+                m22 = 1,
+                m23 = 0f,
 
-            var m = mul(inverse(matrix), float3(p, q, v));
+                m30 = 1f,
+                m31 = 0f,
+                m32 = 0f,
+                m33 = 0f
+            };
+
+            var rightMatrix = new Vector4(p, q, v, 0f);
+            var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
                 a: 0f,
-                b: m.x,
-                c: m.y,
-                d: m.z);
+                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
 
             return result;
         }
@@ -309,25 +356,42 @@ namespace TSKT
             float pt, float p,
             float qt, float q)
         {
-            // c * pt + d = p;
-            // c * qt + d = q;
+            // a * pt^3 + b * pt^2 + c * pt + d = p;
+            // a * qt^3 + b * qt^2 + c * qt + d = q;
             // a = 0;
             // b = 0;
 
-            var matrix = float2x2(
-                pt,
-                1f,
+            var matrix = new Matrix4x4()
+            {
+                m00 = 0f,
+                m01 = 0f,
+                m02 = pt,
+                m03 = 1f,
 
-                qt,
-                1f);
+                m10 = 0f,
+                m11 = 0f,
+                m12 = qt,
+                m13 = 1f,
 
-            var m = mul(inverse(matrix), float2(p, q));
+                m20 = 1f,
+                m21 = 0f,
+                m22 = 0f,
+                m23 = 0f,
+
+                m30 = 0f,
+                m31 = 1f,
+                m32 = 0f,
+                m33 = 0f
+            };
+
+            var rightMatrix = new Vector4(p, q, 0f, 0f);
+            var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
                 a: 0f,
                 b: 0f,
-                c: m.x,
-                d: m.y);
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
 
             return result;
         }

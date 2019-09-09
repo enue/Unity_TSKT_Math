@@ -1,8 +1,7 @@
 {
     "name": "TSKT.Math",
     "references": [
-        "TSKTContainer",
-        "Unity.Mathematics"
+        "TSKTContainer"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

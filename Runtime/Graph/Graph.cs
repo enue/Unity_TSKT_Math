@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace TSKT
 {
@@ -94,8 +93,14 @@ namespace TSKT
 
         public IEnumerable<(T, double)> GetNextNodeDistancesFrom(T node)
         {
-            return NextNodesFrom(node)?
-                .Select(_ => (_.Key, _.Value));
+            var nodes = NextNodesFrom(node);
+            if (nodes != null)
+            {
+                foreach (var it in nodes)
+                {
+                    yield return (it.Key, it.Value);
+                }
+            }
         }
 
         public DistanceMap<T> ComputeDistancesFrom(T node, double maxDistance = double.PositiveInfinity)

@@ -86,7 +86,7 @@ namespace TSKT.Tests
         }
 
         [Test]
-        [TestCase(3f, 1f, 2f, 2f, 1f, 1f, 0f, 4f)]
+        [TestCase(2.6f, 1f, 2f, 1.5f, 1f, 0.9f, 0f, 2.7f)]
         public void Process4Points(float t1, float v1, float t2, float v2, float t3, float v3, float t4, float v4)
         {
             var f = TSKT.CubicFunction.Process4Points(t1, v1, t2, v2, t3, v3, t4, v4);

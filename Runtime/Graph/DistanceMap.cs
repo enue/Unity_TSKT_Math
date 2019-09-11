@@ -9,6 +9,13 @@ namespace TSKT
         public Dictionary<T, double> Distances { get; }
         public Dictionary<T, (T node, double distance)[]> Edges { get; }
 
+        public DistanceMap(T pivot, Dictionary<T, double> distances, Dictionary<T, (T node, double distance)[]> edges)
+        {
+            Pivot = pivot;
+            Distances = distances;
+            Edges = edges;
+        }
+
         public DistanceMap(IGraph<T> graph, T pivot, double maxDistance = double.PositiveInfinity)
         {
             Pivot = pivot;

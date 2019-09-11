@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TSKT
 {
@@ -61,24 +62,25 @@ namespace TSKT
             }
         }
 
-        public int Width
-        {
-            get
-            {
-                return costs.GetLength(0);
-            }
-        }
-        public int Height
-        {
-            get
-            {
-                return costs.GetLength(1);
-            }
-        }
+        public int Width => costs.GetLength(0);
+        public int Height => costs.GetLength(1);
 
         public DistanceMap<Vector2Int> ComputeDistancesFrom(Vector2Int node, double maxDistance = double.PositiveInfinity)
         {
-            return new DistanceMap<Vector2Int>(this, node, maxDistance);
+            var width = Width;
+            var height = Height;
+            var cells = new List<Vector2Int>();
+            for (int i = 0; i < width; ++i)
+            {
+                for (int j = 0; j < height; ++j)
+                {
+                    if (costs[i, j].HasValue)
+                    {
+                        cells.Add(new Vector2Int(i, j));
+                    }
+                }
+            }
+            return BoardProcessor.Calculate(node, cells, this, maxDistance);
         }
     }
 }

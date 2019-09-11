@@ -21,8 +21,8 @@ namespace TSKT.Tests
                 }
             }
             var pivot = new Vector2Int(5, 5);
-            var distanceMapWithBurst = board.ComputeDistancesFrom(pivot);
-            var distanceMapWithoutBurst = new DistanceMap<Vector2Int>(board, pivot);
+            var distanceMapWithBurst = board.ComputeDistancesWithBurst(pivot);
+            var distanceMapWithoutBurst = board.ComputeDistancesFrom(pivot);
 
             Assert.AreEqual(distanceMapWithoutBurst.Distances.Count, distanceMapWithBurst.Distances.Count);
             foreach (var it in distanceMapWithBurst.Distances)
@@ -58,12 +58,12 @@ namespace TSKT.Tests
             var watch = new System.Diagnostics.Stopwatch();
 
             watch.Restart();
-            var distanceMapWithBurst = board.ComputeDistancesFrom(pivot);
+            var distanceMapWithBurst = board.ComputeDistancesWithBurst(pivot);
             watch.Stop();
             var elapsedTimeWithBurst = watch.ElapsedMilliseconds;
 
             watch.Restart();
-            var distanceMapWithoutBurst = new DistanceMap<Vector2Int>(board, pivot);
+            var distanceMapWithoutBurst = board.ComputeDistancesFrom(pivot);
             watch.Stop();
             var elapsedTimeWithoutBurst = watch.ElapsedMilliseconds;
 

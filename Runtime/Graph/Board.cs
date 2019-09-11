@@ -67,6 +67,10 @@ namespace TSKT
 
         public DistanceMap<Vector2Int> ComputeDistancesFrom(Vector2Int node, double maxDistance = double.PositiveInfinity)
         {
+            return new DistanceMap<Vector2Int>(this, node, maxDistance);
+        }
+        public DistanceMap<Vector2Int> ComputeDistancesWithBurst(Vector2Int from, double maxDistance = double.PositiveInfinity)
+        {
             var width = Width;
             var height = Height;
             var cells = new List<Vector2Int>();
@@ -80,7 +84,7 @@ namespace TSKT
                     }
                 }
             }
-            return BoardProcessor.Calculate(node, cells, this, maxDistance);
+            return BoardProcessor.Calculate(from, cells, this, maxDistance);
         }
     }
 }

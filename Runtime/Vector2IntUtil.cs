@@ -33,34 +33,5 @@ namespace TSKT
         {
             return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
         }
-
-        public struct Comparer : IComparer<Vector2Int>
-        {
-            public int Compare(Vector2Int x, Vector2Int y)
-            {
-                return Vector2IntUtil.Compare(x, y);
-            }
-        }
-
-        public static int Compare(Vector2Int a, Vector2Int b)
-        {
-            if (a.x > b.x)
-            {
-                return 1;
-            }
-            if (a.x < b.x)
-            {
-                return -1;
-            }
-            if (a.y > b.y)
-            {
-                return 1;
-            }
-            if (a.y < b.y)
-            {
-                return -1;
-            }
-            return 0;
-        }
     }
 }

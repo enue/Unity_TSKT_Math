@@ -98,16 +98,15 @@ namespace TSKT
         public static DistanceMap<Vector2Int> Calculate(Vector2Int pivot, List<Vector2Int> allNodes, IGraph<Vector2Int> graph, double maxDistance)
         {
             var sortedCells = allNodes.ToArray();
-            Array.Sort(sortedCells, Vector2IntUtil.Compare);
+            Array.Sort(sortedCells, Vector2IntComparer.Comparison);
 
             var edges = new Dictionary<int, List<(int to, double weight)>>();
-            var comparer = new Vector2IntUtil.Comparer();
             for (int fromId = 0; fromId < sortedCells.Length; ++fromId)
             {
                 List<(int, double)> toWeightMap = null;
                 foreach (var (next, weight) in graph.GetNextNodeDistancesFrom(sortedCells[fromId]))
                 {
-                    var nextId = Array.BinarySearch(sortedCells, next, comparer);
+                    var nextId = Array.BinarySearch(sortedCells, next, Vector2IntComparer.Instance);
                     if (nextId >= 0)
                     {
                         if (toWeightMap == null)
@@ -122,7 +121,7 @@ namespace TSKT
                     }
                 }
             }
-            var pivotId = Array.BinarySearch(sortedCells, pivot, comparer);
+            var pivotId = Array.BinarySearch(sortedCells, pivot, Vector2IntComparer.Instance);
             Debug.Assert(pivotId >= 0);
 
             return Calculate(pivotId, sortedCells, edges, maxDistance);

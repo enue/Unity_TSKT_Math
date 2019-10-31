@@ -16,7 +16,7 @@ namespace TSKT.Tests
             {
                 for (int j = 0; j < board.Height; ++j)
                 {
-                    var cost = Random.Range(1f, 100f);
+                    var cost = TSKT.Random.Range(1f, 100f);
                     board.SetCost(i, j, cost);
                 }
             }
@@ -48,7 +48,7 @@ namespace TSKT.Tests
             {
                 for(int j=0; j<board.Height; ++j)
                 {
-                    var cost = Random.Range(1f, 100f);
+                    var cost = TSKT.Random.Range(1f, 100f);
                     board.SetCost(i, j, cost);
                 }
             }

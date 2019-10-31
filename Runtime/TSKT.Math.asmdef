@@ -2,9 +2,9 @@
     "name": "TSKT.Math",
     "references": [
         "TSKTContainer",
-        "Unity.Burst"
+        "Unity.Burst",
+        "Unity.Mathematics"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

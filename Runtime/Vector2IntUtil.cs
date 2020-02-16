@@ -22,11 +22,23 @@ namespace TSKT
             return lhs.x * rhs.x + lhs.y * rhs.y;
         }
 
-        public static Vector2Int Rotate(Vector2Int src, Vector2Int rotate)
+        public static Vector2Int Rotate(Vector2Int src, float radian)
+        {
+            var sin = Mathf.Sin(radian);
+            var cos = Mathf.Cos(radian);
+            return Rotate(src, cos, sin);
+        }
+
+        public static Vector2Int Rotate(Vector2Int src, float cos, float sin)
         {
             return new Vector2Int(
-                src.x * rotate.x - src.y * rotate.y,
-                src.x * rotate.y + src.y * rotate.x);
+                Mathf.RoundToInt(src.x * cos - src.y * sin),
+                Mathf.RoundToInt(src.x * sin + src.y * cos));
+        }
+
+        public static Vector2Int Rotate(Vector2Int src, Vector2Int rotate)
+        {
+            return Rotate(src, rotate.x, rotate.y);
         }
 
         public static int GetManhattanDistance(Vector2Int a, Vector2Int b)

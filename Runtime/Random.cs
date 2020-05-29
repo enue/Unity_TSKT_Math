@@ -101,6 +101,11 @@ namespace TSKT
         {
             return randomWrapper.Value;
         }
+
+        public static Core GetNewRandom()
+        {
+            return new Core(Interlocked.Increment(ref seed));
+        }
     }
 
     public static class Random

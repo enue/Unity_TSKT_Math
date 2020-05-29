@@ -12,7 +12,7 @@ namespace TSKT
     {
         public class Core
         {
-            readonly public Unity.Mathematics.Random random;
+            public Unity.Mathematics.Random random;
             readonly public uint seed;
 
             public Core(int seed)

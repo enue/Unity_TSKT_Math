@@ -7,7 +7,7 @@
     "keywords": [],
     "category": "",
     "dependencies": {
-        "com.github.enue.tskt_container": "https://github.com/enue/Unity_TSKT_Container.git?path=Assets/Package",
+        "com.github.enue.tskt_container": "0.3.1",
         "com.unity.mathematics": "1.1.0"
     }
 }

@@ -101,7 +101,10 @@ namespace TSKT
         {
             if (memo.Distances.ContainsKey(goal))
             {
-                memo.SearchPaths(goal).FirstOrDefault();
+                var distances = memo.Distances;
+                return memo.SearchPaths(goal)
+                    .First()
+                    .ToDictionary(_ => _, _ => distances[_]);
             }
             return SearchPaths(goal, searchAllPaths: false).FirstOrDefault();
         }

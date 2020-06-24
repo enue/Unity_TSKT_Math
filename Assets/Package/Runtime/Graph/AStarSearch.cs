@@ -74,29 +74,50 @@ namespace TSKT
             }
         }
 
-        readonly DistanceMap<T> distanceMap;
-        public T Start => distanceMap.Pivot;
-        public Dictionary<T, double> Distances => distanceMap.Distances;
-        public Dictionary<T, (T node, double distance)[]> Edges => distanceMap.Edges;
-
-        public T Goal { get; }
-
-        public AStarSearch(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        readonly IGraph<T> graph;
+        readonly System.Func<T, T, double> heuristicFunction;
+        public readonly DistanceMap<T> memo;
+        public T Start => memo.Pivot;
+        
+        public AStarSearch(IGraph<T> graph, T start, System.Func<T, T, double> heuristicFunction, DistanceMap<T> memo = default)
         {
-            Goal = goal;
-            distanceMap = new DistanceMap<T>(
-                start,
-                new Dictionary<T, double>(),
-                new Dictionary<T, (T node, double distance)[]>());
-            Distances.Add(start, 0.0);
+            this.heuristicFunction = heuristicFunction;
+            this.graph = graph;
+
+            if (memo.Distances == null)
+            {
+                this.memo = new DistanceMap<T>(
+                    start,
+                    new Dictionary<T, double>(),
+                    new Dictionary<T, (T node, double distance)[]>());
+                this.memo.Distances.Add(start, 0.0);
+            }
+            else
+            {
+                this.memo = memo;
+            }
+        }
+
+        public Dictionary<T, double> FindPath(T goal)
+        {
+            var distanceMap = new DistanceMap<T>(
+                Start,
+                new Dictionary<T, double>(memo.Distances),
+                memo.Edges);
 
             var tasks = new PriorityQueue();
-            tasks.Enqueue(heuristicFunction(start, goal), 0.0, start);
+
+            foreach (var it in distanceMap.Distances)
+            {
+                var startToItDistance = it.Value;
+                var expectedDistance = it.Value + heuristicFunction(it.Key, goal);
+                tasks.Enqueue(expectedDistance, -startToItDistance, it.Key);
+            }
 
             while (tasks.Count > 0)
             {
                 var (expectedDistance, _, currentNode) = tasks.Dequeue();
-                if (Distances.TryGetValue(Goal, out var startToGoalDistance))
+                if (distanceMap.Distances.TryGetValue(goal, out var startToGoalDistance))
                 {
                     if (expectedDistance >= startToGoalDistance)
                     {
@@ -104,19 +125,19 @@ namespace TSKT
                     }
                 }
 
-                if (!Edges.TryGetValue(currentNode, out var nexts))
+                if (!distanceMap.Edges.TryGetValue(currentNode, out var nexts))
                 {
                     nexts = graph.GetNextNodeDistancesFrom(currentNode)?.ToArray();
-                    Edges.Add(currentNode, nexts);
+                    distanceMap.Edges.Add(currentNode, nexts);
                 }
 
-                var startToCurrentNodeDistance = Distances[currentNode];
+                var startToCurrentNodeDistance = distanceMap.Distances[currentNode];
 
                 foreach (var (next, edgeWeight) in nexts)
                 {
                     var startToNextNodeDistance = edgeWeight + startToCurrentNodeDistance;
 
-                    if (Distances.TryGetValue(next, out var oldDistance))
+                    if (distanceMap.Distances.TryGetValue(next, out var oldDistance))
                     {
                         if (oldDistance <= startToNextNodeDistance)
                         {
@@ -124,30 +145,33 @@ namespace TSKT
                         }
                     }
 
-                    Distances[next] = startToNextNodeDistance;
+                    distanceMap.Distances[next] = startToNextNodeDistance;
 
                     var nextExpectedDistance = heuristicFunction(next, goal) + startToNextNodeDistance;
                     // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
                     tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, next);
                 }
             }
-        }
 
-        public Dictionary<T, List<T>> EdgesToStart => distanceMap.EdgesToPivot;
-        public T[] ComputePathFromGoalToStart() => distanceMap.ComputeRoutesToPivotFrom(Goal).FirstOrDefault();
-        public bool FoundPath => Distances.ContainsKey(Goal);
+            var path = distanceMap.ComputeRoutesToPivotFrom(goal).FirstOrDefault()?
+                .Reverse()?
+                .ToDictionary(_ => _, _ => distanceMap.Distances[_]);
+
+            if (path != null)
+            {
+                // goalまでの経路は最適なので蓄積しておく
+                foreach (var it in path)
+                {
+                    memo.Distances[it.Key] = it.Value;
+                }
+            }
+            return path;
+        }
 
         static public Dictionary<T, double> FindPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
         {
-            var search = new AStarSearch<T>(graph, start, goal, heuristicFunction);
-            if (!search.FoundPath)
-            {
-                return null;
-            }
-
-            return search.ComputePathFromGoalToStart()
-                .Reverse()
-                .ToDictionary(_ => _, _ => search.Distances[_]);
+            var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
+            return search.FindPath(goal);
         }
     }
 }

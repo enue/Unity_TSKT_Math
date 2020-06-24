@@ -14,32 +14,46 @@ namespace TSKT.Tests
         public void Test(int width, int height, float costRandom)
         {
             var start = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
-            var goal = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
             var board = new Board(width, height);
-            if (costRandom > 0f)
+            for (int i = 0; i < width; ++i)
             {
-                for (int i = 0; i < width; ++i)
+                for (int j = 0; j < height; ++j)
                 {
-                    for (int j = 0; j < height; ++j)
+                    if (costRandom > 0f)
                     {
                         board.SetCost(i, j, 1.0 + UnityEngine.Random.Range(0f, costRandom));
+                    }
+                    if (UnityEngine.Random.Range(0f, 1f) < 0.1f)
+                    {
+                        board.Disable(i, j);
                     }
                 }
             }
 
             var distanceMap = board.ComputeDistancesFrom(start);
-            var dijkstraRoutes = distanceMap.ComputeRoutesToPivotFrom(goal).ToArray();
-            var goalDistanceByDijkstra = distanceMap.Distances[goal];
+            var aStarSearch = new AStarSearch<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
 
-            var aStarSearch = new AStarSearch<Vector2Int>(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
-            var aStarPath = aStarSearch.ComputePathFromGoalToStart();
-            var goalDistanceByAStarSearch = aStarSearch.Distances[goal];
-            Assert.AreEqual(goalDistanceByDijkstra, goalDistanceByAStarSearch);
-            Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(aStarPath)));
+            for (int i = 0; i < 10; ++i)
+            {
+                var goal = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
 
-            var path = AStarSearch<Vector2Int>.FindPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
-            Assert.IsTrue(aStarPath.SequenceEqual(path.Keys.Reverse()));
-            Assert.AreEqual(goalDistanceByAStarSearch, path[goal]);
+                var dijkstraRoutes = distanceMap.ComputeRoutesToPivotFrom(goal).ToArray();
+                distanceMap.Distances.TryGetValue(goal, out var goalDistanceByDijkstra);
+
+                var aStarPath = aStarSearch.FindPath(goal);
+                if (dijkstraRoutes.Length == 0)
+                {
+                    Assert.AreEqual(null, aStarPath);
+                }
+                else
+                {
+                    Assert.AreEqual(goalDistanceByDijkstra, aStarPath?.Last().Value ?? 0.0);
+                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(aStarPath.Keys.Reverse())));
+                }
+
+                var path = AStarSearch<Vector2Int>.FindPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
+                Assert.AreEqual(aStarPath?.Last(), path?.Last());
+            }
         }
     }
 }

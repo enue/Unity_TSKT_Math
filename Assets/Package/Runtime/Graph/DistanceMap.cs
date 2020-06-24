@@ -17,6 +17,16 @@ namespace TSKT
         }
 
         public DistanceMap(IGraph<T> graph, T start, double maxDistance = double.PositiveInfinity)
+            : this(graph, start, false, default, maxDistance)
+        {
+        }
+
+        public DistanceMap(IGraph<T> graph, T start, T goal, double maxDistance = double.PositiveInfinity)
+            : this(graph, start, true, goal, maxDistance)
+        {
+        }
+
+        DistanceMap(IGraph<T> graph, T start, bool goalExists, T goal, double maxDistance = double.PositiveInfinity)
         {
             Start = start;
             Distances = new Dictionary<T, double>();
@@ -30,6 +40,21 @@ namespace TSKT
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Dequeue();
+
+                if (goalExists)
+                {
+                    if (Distances.TryGetValue(goal, out var startToGoalDistance))
+                    {
+                        if (maxDistance > startToGoalDistance)
+                        {
+                            maxDistance = startToGoalDistance;
+                        }
+                        if (Distances[currentNode] > startToGoalDistance)
+                        {
+                            continue;
+                        }
+                    }
+                }
 
                 if (!Edges.TryGetValue(currentNode, out var nexts))
                 {

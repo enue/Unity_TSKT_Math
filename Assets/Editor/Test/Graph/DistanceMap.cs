@@ -30,6 +30,15 @@ namespace TSKT.Tests
         }
 
         [Test]
+        public void LimitedDistances2()
+        {
+            var board = new Board(10, 10);
+            var distanceMap = new DistanceMap<Vector2Int>(board, new Vector2Int(5, 5), new Vector2Int(9, 6));
+            Assert.AreNotEqual(0, distanceMap.SearchPaths(new Vector2Int(9, 6)).Count());
+            Assert.AreEqual(0, distanceMap.SearchPaths(new Vector2Int(9, 7)).Count());
+        }
+
+        [Test]
         public void Path()
         {
             var graph = new Graph<char>();

@@ -70,7 +70,7 @@ namespace TSKT
             return new DistanceMap<Vector2Int>(this, node, maxDistance);
         }
 
-        public AStarSearch<Vector2Int> CreateAStarSearch(Vector2Int start, Vector2Int goal)
+        public AStarSearch<Vector2Int> CreateAStarSearch(Vector2Int start)
         {
             var minCost = double.PositiveInfinity;
             foreach (var it in costs)

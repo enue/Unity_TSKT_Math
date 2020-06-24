@@ -81,28 +81,28 @@ namespace TSKT
                     {
                         continue;
                     }
-                    var from = edge.Key;
-                    if (!Distances.TryGetValue(from, out var fromDistance))
+                    var nearPivotNode = edge.Key;
+                    if (!Distances.TryGetValue(nearPivotNode, out var nearPivotNodeDistance))
                     {
                         continue;
                     }
-                    foreach (var (to, weight) in edge.Value)
+                    foreach (var (farPivotNode, weight) in edge.Value)
                     {
-                        if (!Distances.TryGetValue(to, out var toDistance))
+                        if (!Distances.TryGetValue(farPivotNode, out var farPivotNodeDistance))
                         {
                             continue;
                         }
-                        if (fromDistance + weight != toDistance)
+                        if (nearPivotNodeDistance + weight != farPivotNodeDistance)
                         {
                             continue;
                         }
 
-                        if (!result.TryGetValue(to, out var froms))
+                        if (!result.TryGetValue(farPivotNode, out var nexts))
                         {
-                            froms = new List<T>();
-                            result.Add(to, froms);
+                            nexts = new List<T>();
+                            result.Add(farPivotNode, nexts);
                         }
-                        froms.Add(from);
+                        nexts.Add(nearPivotNode);
                     }
                 }
                 return result;
@@ -121,7 +121,7 @@ namespace TSKT
             var tasks = new Stack<List<T>>();
             tasks.Push(new List<T>() { from });
 
-            while(tasks.Count > 0)
+            while (tasks.Count > 0)
             {
                 var route = tasks.Pop();
 
@@ -132,7 +132,7 @@ namespace TSKT
                 }
                 if (nextPoints.Count > 1)
                 {
-                    for(int i=1; i<nextPoints.Count; ++i)
+                    for (int i = 1; i < nextPoints.Count; ++i)
                     {
                         var newTask = new List<T>(route)
                         {

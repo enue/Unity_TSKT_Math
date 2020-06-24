@@ -49,7 +49,7 @@ namespace TSKT.Tests
             var distanceMap = new DistanceMap<char>(graph, 'a');
             var route = distanceMap.ComputeRoutesToPivotFrom('d').ToArray();
             Assert.AreEqual(1, route.Length);
-            Assert.AreEqual(3, route[0].Count);
+            Assert.AreEqual(3, route[0].Length);
             Assert.AreEqual('d', route[0][0]);
             Assert.AreEqual('b', route[0][1]);
             Assert.AreEqual('a', route[0][2]);

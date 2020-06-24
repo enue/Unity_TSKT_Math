@@ -134,7 +134,7 @@ namespace TSKT
         }
 
         public Dictionary<T, List<T>> EdgesToStart => distanceMap.EdgesToPivot;
-        public List<T> ComputePathFromGoalToStart() => distanceMap.ComputeRoutesToPivotFrom(Goal).FirstOrDefault();
+        public T[] ComputePathFromGoalToStart() => distanceMap.ComputeRoutesToPivotFrom(Goal).FirstOrDefault();
         public bool FoundPath => Distances.ContainsKey(Goal);
     }
 }

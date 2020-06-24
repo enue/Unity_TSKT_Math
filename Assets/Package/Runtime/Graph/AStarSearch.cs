@@ -77,7 +77,7 @@ namespace TSKT
         readonly IGraph<T> graph;
         readonly System.Func<T, T, double> heuristicFunction;
         public readonly DistanceMap<T> memo;
-        public T Start => memo.Pivot;
+        public T Start => memo.Start;
         
         public AStarSearch(IGraph<T> graph, T start, System.Func<T, T, double> heuristicFunction, DistanceMap<T> memo = default)
         {
@@ -99,8 +99,13 @@ namespace TSKT
         }
         public Dictionary<T, double> FindPath(T goal)
         {
+            if (memo.Distances.ContainsKey(goal))
+            {
+                memo.SearchPaths(goal).FirstOrDefault();
+            }
             return SearchPaths(goal, searchAllPaths: false).FirstOrDefault();
         }
+
         public IEnumerable<Dictionary<T, double>> FindAllPaths(T goal)
         {
             return SearchPaths(goal, searchAllPaths: true);
@@ -171,7 +176,7 @@ namespace TSKT
                 }
             }
 
-            foreach (var path in distanceMap.ComputeRoutesFromPivotTo(goal))
+            foreach (var path in distanceMap.SearchPaths(goal))
             {
                 var result = path.ToDictionary(_ => _, _ => distanceMap.Distances[_]);
 

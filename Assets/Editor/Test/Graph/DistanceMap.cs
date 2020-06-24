@@ -15,8 +15,8 @@ namespace TSKT.Tests
             var distanceMap = board.ComputeDistancesFrom(new Vector2Int(5, 5));
             Assert.AreEqual(7.0, distanceMap.Distances[new Vector2Int(9, 8)]);
 
-            var routes = distanceMap.ComputeRoutesToPivotFrom(new Vector2Int(7, 7)).ToArray();
-            Assert.AreEqual(6, routes.Length);
+            var paths = distanceMap.SearchPaths(new Vector2Int(7, 7)).ToArray();
+            Assert.AreEqual(6, paths.Length);
         }
 
         [Test]
@@ -24,13 +24,13 @@ namespace TSKT.Tests
         {
             var board = new Board(10, 10);
             var distanceMap = board.ComputeDistancesFrom(new Vector2Int(5, 5), 4.0);
-            var edgesToPivot = distanceMap.EdgesToPivot;
-            Assert.AreEqual(6, distanceMap.ComputeRoutesToPivotFrom(new Vector2Int(3, 3)).ToArray().Length);
-            Assert.AreEqual(0, distanceMap.ComputeRoutesToPivotFrom(new Vector2Int(7, 8)).ToArray().Length);
+            var edgesToPivot = distanceMap.ReversedEdges;
+            Assert.AreEqual(6, distanceMap.SearchPaths(new Vector2Int(3, 3)).ToArray().Length);
+            Assert.AreEqual(0, distanceMap.SearchPaths(new Vector2Int(7, 8)).ToArray().Length);
         }
 
         [Test]
-        public void Route()
+        public void Path()
         {
             var graph = new Graph<char>();
             graph.CreateNode('a');
@@ -47,12 +47,12 @@ namespace TSKT.Tests
             graph.DoubleOrderedLink('c', 'd', 2.0 / 7.0);
 
             var distanceMap = new DistanceMap<char>(graph, 'a');
-            var route = distanceMap.ComputeRoutesToPivotFrom('d').ToArray();
+            var route = distanceMap.SearchPaths('d').ToArray();
             Assert.AreEqual(1, route.Length);
             Assert.AreEqual(3, route[0].Length);
-            Assert.AreEqual('d', route[0][0]);
+            Assert.AreEqual('d', route[0][2]);
             Assert.AreEqual('b', route[0][1]);
-            Assert.AreEqual('a', route[0][2]);
+            Assert.AreEqual('a', route[0][0]);
         }
 
         public void Performance()
@@ -77,7 +77,7 @@ namespace TSKT.Tests
             Debug.Log(watch.ElapsedMilliseconds);
 
             watch.Restart();
-            distanceMap.ComputeRoutesToPivotFrom(new Vector2Int(99, 999)).Take(256).ToArray();
+            distanceMap.SearchPaths(new Vector2Int(99, 999)).Take(256).ToArray();
             watch.Stop();
             Debug.Log(watch.ElapsedMilliseconds);
         }

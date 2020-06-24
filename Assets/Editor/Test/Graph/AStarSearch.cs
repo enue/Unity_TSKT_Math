@@ -37,7 +37,7 @@ namespace TSKT.Tests
             {
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
 
-                var dijkstraRoutes = distanceMap.ComputeRoutesToPivotFrom(goal).ToArray();
+                var dijkstraRoutes = distanceMap.SearchPaths(goal).ToArray();
                 distanceMap.Distances.TryGetValue(goal, out var goalDistanceByDijkstra);
 
                 var aStarPath = aStarSearch.FindPath(goal);
@@ -48,14 +48,14 @@ namespace TSKT.Tests
                 else
                 {
                     Assert.AreEqual(goalDistanceByDijkstra, aStarPath[goal]);
-                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(aStarPath.Keys.Reverse())));
+                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(aStarPath.Keys)));
                 }
 
                 var aStarPaths = aStarSearch.FindAllPaths(goal).ToArray();
                 Assert.AreEqual(dijkstraRoutes.Length, aStarPaths.Length);
                 foreach (var it in aStarPaths)
                 {
-                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(it.Keys.Reverse())));
+                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(it.Keys)));
                 }
 
                 var path = AStarSearch<Vector2Int>.FindPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));

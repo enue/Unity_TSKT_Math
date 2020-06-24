@@ -5,27 +5,27 @@ namespace TSKT
 {
     public readonly struct DistanceMap<T>
     {
-        public T Pivot { get; }
+        public T Start { get; }
         public Dictionary<T, double> Distances { get; }
         public Dictionary<T, (T node, double distance)[]> Edges { get; }
 
-        public DistanceMap(T pivot, Dictionary<T, double> distances, Dictionary<T, (T node, double distance)[]> edges)
+        public DistanceMap(T start, Dictionary<T, double> distances, Dictionary<T, (T node, double distance)[]> edges)
         {
-            Pivot = pivot;
+            Start = start;
             Distances = distances;
             Edges = edges;
         }
 
-        public DistanceMap(IGraph<T> graph, T pivot, double maxDistance = double.PositiveInfinity)
+        public DistanceMap(IGraph<T> graph, T start, double maxDistance = double.PositiveInfinity)
         {
-            Pivot = pivot;
+            Start = start;
             Distances = new Dictionary<T, double>();
             Edges = new Dictionary<T, (T node, double distance)[]>();
 
             var tasks = new Queue<T>();
-            tasks.Enqueue(pivot);
+            tasks.Enqueue(start);
 
-            Distances.Add(pivot, 0.0);
+            Distances.Add(start, 0.0);
 
             while (tasks.Count > 0)
             {
@@ -39,26 +39,26 @@ namespace TSKT
 
                 if (nexts != null && nexts.Length > 0)
                 {
-                    var pivotToCurrentNodeDistance = Distances[currentNode];
+                    var startToCurrentNodeDistance = Distances[currentNode];
                     foreach (var (nextNode, edgeWeight) in nexts)
                     {
                         UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
 
-                        var pivotToNextNodeDistance = pivotToCurrentNodeDistance + edgeWeight;
-                        if (pivotToNextNodeDistance <= maxDistance)
+                        var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
+                        if (startToNextNodeDistance <= maxDistance)
                         {
                             if (Distances.TryGetValue(nextNode, out var oldDistance))
                             {
-                                if (oldDistance > pivotToNextNodeDistance)
+                                if (oldDistance > startToNextNodeDistance)
                                 {
                                     tasks.Enqueue(nextNode);
-                                    Distances[nextNode] = pivotToNextNodeDistance;
+                                    Distances[nextNode] = startToNextNodeDistance;
                                 }
                             }
                             else
                             {
                                 tasks.Enqueue(nextNode);
-                                Distances.Add(nextNode, pivotToNextNodeDistance);
+                                Distances.Add(nextNode, startToNextNodeDistance);
                             }
                         }
                     }
@@ -66,7 +66,7 @@ namespace TSKT
             }
         }
 
-        public Dictionary<T, List<T>> EdgesToPivot
+        public Dictionary<T, List<T>> ReversedEdges
         {
             get
             {
@@ -81,92 +81,59 @@ namespace TSKT
                     {
                         continue;
                     }
-                    var nearPivotNode = edge.Key;
-                    if (!Distances.TryGetValue(nearPivotNode, out var nearPivotNodeDistance))
+                    var nearNode = edge.Key;
+                    if (!Distances.TryGetValue(nearNode, out var nearNodeDistance))
                     {
                         continue;
                     }
-                    foreach (var (farPivotNode, weight) in edge.Value)
+                    foreach (var (farNode, weight) in edge.Value)
                     {
-                        if (!Distances.TryGetValue(farPivotNode, out var farPivotNodeDistance))
+                        if (!Distances.TryGetValue(farNode, out var farNodeDistance))
                         {
                             continue;
                         }
-                        if (nearPivotNodeDistance + weight != farPivotNodeDistance)
+                        if (nearNodeDistance + weight != farNodeDistance)
                         {
                             continue;
                         }
 
-                        if (!result.TryGetValue(farPivotNode, out var nexts))
+                        if (!result.TryGetValue(farNode, out var nexts))
                         {
                             nexts = new List<T>();
-                            result.Add(farPivotNode, nexts);
+                            result.Add(farNode, nexts);
                         }
-                        nexts.Add(nearPivotNode);
+                        nexts.Add(nearNode);
                     }
                 }
                 return result;
             }
         }
 
-        public T[] GetRouteToPivotFrom(T from)
+        public IEnumerable<T[]> SearchPaths(T goal)
         {
-            if (!Distances.ContainsKey(from))
-            {
-                return null;
-            }
-
-            var result = new List<T>
-            {
-                from
-            };
-            var edgesToPivot = EdgesToPivot;
-            while (true)
-            {
-                if (!edgesToPivot.TryGetValue(result[result.Count - 1], out var nexts))
-                {
-                    break;
-                }
-                result.Add(nexts[0]);
-            }
-            return result.ToArray();
-        }
-
-        public IEnumerable<T[]> ComputeRoutesToPivotFrom(T from)
-        {
-            return ComputeRoutesFromPivotTo(from)
-                .Select(_ =>
-                {
-                    System.Array.Reverse(_);
-                    return _;
-                });
-        }
-
-        public IEnumerable<T[]> ComputeRoutesFromPivotTo(T to)
-        {
-            if (!Distances.ContainsKey(to))
+            if (!Distances.ContainsKey(goal))
             {
                 yield break;
             }
 
-            var edgesToPivot = EdgesToPivot;
+            var reversedEdge = ReversedEdges;
             var tasks = new Stack<T[]>();
-            tasks.Push(new [] { to });
+            tasks.Push(new [] { goal });
 
             while (tasks.Count > 0)
             {
-                var route = tasks.Pop();
+                var path = tasks.Pop();
 
-                if (!edgesToPivot.TryGetValue(route[0], out var nextPoints))
+                if (!reversedEdge.TryGetValue(path[0], out var nearNodes))
                 {
-                    yield return route;
+                    yield return path;
                     continue;
                 }
-                foreach (var nextPoint in nextPoints)
+                foreach (var nearNode in nearNodes)
                 {
-                    var builder = new ArrayBuilder<T>(route.Length + 1);
-                    builder.Add(nextPoint);
-                    foreach (var it in route)
+                    var builder = new ArrayBuilder<T>(path.Length + 1);
+                    builder.Add(nearNode);
+                    foreach (var it in path)
                     {
                         builder.Add(it);
                     }

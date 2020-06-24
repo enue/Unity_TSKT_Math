@@ -97,8 +97,16 @@ namespace TSKT
                 this.memo = memo;
             }
         }
-
         public Dictionary<T, double> FindPath(T goal)
+        {
+            return SearchPaths(goal, searchAllPaths: false).FirstOrDefault();
+        }
+        public IEnumerable<Dictionary<T, double>> FindAllPaths(T goal)
+        {
+            return SearchPaths(goal, searchAllPaths: true);
+        }
+
+        IEnumerable<Dictionary<T, double>> SearchPaths(T goal, bool searchAllPaths)
         {
             var distanceMap = new DistanceMap<T>(
                 Start,
@@ -119,9 +127,19 @@ namespace TSKT
                 var (expectedDistance, _, currentNode) = tasks.Dequeue();
                 if (distanceMap.Distances.TryGetValue(goal, out var startToGoalDistance))
                 {
-                    if (expectedDistance >= startToGoalDistance)
+                    if (searchAllPaths)
                     {
-                        break;
+                        if (expectedDistance > startToGoalDistance)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (expectedDistance >= startToGoalDistance)
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -153,25 +171,30 @@ namespace TSKT
                 }
             }
 
-            var path = distanceMap.GetRouteToPivotFrom(goal)?
-                .Reverse()?
-                .ToDictionary(_ => _, _ => distanceMap.Distances[_]);
-
-            if (path != null)
+            foreach (var reversedPath in distanceMap.ComputeRoutesToPivotFrom(goal))
             {
+                var path = reversedPath.Reverse()
+                    .ToDictionary(_ => _, _ => distanceMap.Distances[_]);
+
                 // goalまでの経路は最適なので蓄積しておく
                 foreach (var it in path)
                 {
                     memo.Distances[it.Key] = it.Value;
                 }
+
+                yield return path;
             }
-            return path;
         }
 
         static public Dictionary<T, double> FindPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
             return search.FindPath(goal);
+        }
+        static public IEnumerable<Dictionary<T, double>> FindAllPaths(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        {
+            var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
+            return search.FindAllPaths(goal);
         }
     }
 }

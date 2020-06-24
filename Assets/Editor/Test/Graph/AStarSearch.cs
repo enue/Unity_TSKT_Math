@@ -47,8 +47,15 @@ namespace TSKT.Tests
                 }
                 else
                 {
-                    Assert.AreEqual(goalDistanceByDijkstra, aStarPath?.Last().Value ?? 0.0);
+                    Assert.AreEqual(goalDistanceByDijkstra, aStarPath[goal]);
                     Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(aStarPath.Keys.Reverse())));
+                }
+
+                var aStarPaths = aStarSearch.FindAllPaths(goal).ToArray();
+                Assert.AreEqual(dijkstraRoutes.Length, aStarPaths.Length);
+                foreach (var it in aStarPaths)
+                {
+                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(it.Keys.Reverse())));
                 }
 
                 var path = AStarSearch<Vector2Int>.FindPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));

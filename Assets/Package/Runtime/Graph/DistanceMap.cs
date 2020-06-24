@@ -109,6 +109,28 @@ namespace TSKT
             }
         }
 
+        public T[] GetRouteToPivotFrom(T from)
+        {
+            if (!Distances.ContainsKey(from))
+            {
+                return null;
+            }
+
+            var result = new List<T>
+            {
+                from
+            };
+            var edgesToPivot = EdgesToPivot;
+            while (true)
+            {
+                if (!edgesToPivot.TryGetValue(result[result.Count - 1], out var nexts))
+                {
+                    break;
+                }
+                result.Add(nexts[0]);
+            }
+            return result.ToArray();
+        }
 
         public IEnumerable<T[]> ComputeRoutesToPivotFrom(T from)
         {

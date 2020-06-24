@@ -153,7 +153,7 @@ namespace TSKT
                 }
             }
 
-            var path = distanceMap.ComputeRoutesToPivotFrom(goal).FirstOrDefault()?
+            var path = distanceMap.GetRouteToPivotFrom(goal)?
                 .Reverse()?
                 .ToDictionary(_ => _, _ => distanceMap.Distances[_]);
 

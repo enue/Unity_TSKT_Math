@@ -69,5 +69,22 @@ namespace TSKT
         {
             return new DistanceMap<Vector2Int>(this, node, maxDistance);
         }
+
+        public AStarSearch<Vector2Int> CreateAStarSearch(Vector2Int start, Vector2Int goal)
+        {
+            var minCost = double.PositiveInfinity;
+            foreach (var it in costs)
+            {
+                if (it.HasValue)
+                {
+                    if (minCost > it.Value)
+                    {
+                        minCost = it.Value;
+                    }
+                }
+            }
+            minCost += DirectionCostMap.Select(_ => _.Value).Min();
+            return new AStarSearch<Vector2Int>(this, start, (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * minCost);
+        }
     }
 }

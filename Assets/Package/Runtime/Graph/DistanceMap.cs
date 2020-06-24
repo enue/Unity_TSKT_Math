@@ -39,26 +39,26 @@ namespace TSKT
 
                 if (nexts != null && nexts.Length > 0)
                 {
-                    var currentNodePosition = Distances[currentNode];
-                    foreach (var (nextNode, distance) in nexts)
+                    var pivotToCurrentNodeDistance = Distances[currentNode];
+                    foreach (var (nextNode, edgeWeight) in nexts)
                     {
-                        UnityEngine.Debug.Assert(distance > 0.0, "weight must be greater than 0.0");
+                        UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
 
-                        var newWeight = currentNodePosition + distance;
-                        if (newWeight <= maxDistance)
+                        var pivotToNextNodeDistance = pivotToCurrentNodeDistance + edgeWeight;
+                        if (pivotToNextNodeDistance <= maxDistance)
                         {
-                            if (Distances.TryGetValue(nextNode, out var oldWeight))
+                            if (Distances.TryGetValue(nextNode, out var oldDistance))
                             {
-                                if (oldWeight > newWeight)
+                                if (oldDistance > pivotToNextNodeDistance)
                                 {
                                     tasks.Enqueue(nextNode);
-                                    Distances[nextNode] = newWeight;
+                                    Distances[nextNode] = pivotToNextNodeDistance;
                                 }
                             }
                             else
                             {
                                 tasks.Enqueue(nextNode);
-                                Distances.Add(nextNode, newWeight);
+                                Distances.Add(nextNode, pivotToNextNodeDistance);
                             }
                         }
                     }

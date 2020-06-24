@@ -136,5 +136,18 @@ namespace TSKT
         public Dictionary<T, List<T>> EdgesToStart => distanceMap.EdgesToPivot;
         public T[] ComputePathFromGoalToStart() => distanceMap.ComputeRoutesToPivotFrom(Goal).FirstOrDefault();
         public bool FoundPath => Distances.ContainsKey(Goal);
+
+        static public Dictionary<T, double> FindPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        {
+            var search = new AStarSearch<T>(graph, start, goal, heuristicFunction);
+            if (!search.FoundPath)
+            {
+                return null;
+            }
+
+            return search.ComputePathFromGoalToStart()
+                .Reverse()
+                .ToDictionary(_ => _, _ => search.Distances[_]);
+        }
     }
 }

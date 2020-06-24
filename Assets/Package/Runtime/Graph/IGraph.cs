@@ -6,6 +6,6 @@ namespace TSKT
 {
     public interface IGraph<T>
     {
-        IEnumerable<(T nextNode, double distance)> GetNextNodeDistancesFrom(T node);
+        IEnumerable<(T endNode, double weight)> GetEdgesFrom(T begin);
     }
 }

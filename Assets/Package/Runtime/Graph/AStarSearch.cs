@@ -150,7 +150,7 @@ namespace TSKT
 
                 if (!distanceMap.Edges.TryGetValue(currentNode, out var nexts))
                 {
-                    nexts = graph.GetNextNodeDistancesFrom(currentNode)?.ToArray();
+                    nexts = graph.GetEdgesFrom(currentNode)?.ToArray();
                     distanceMap.Edges.Add(currentNode, nexts);
                 }
 

@@ -7,7 +7,7 @@ namespace TSKT
     {
         public T Start { get; }
         public Dictionary<T, double> Distances { get; }
-        public Dictionary<T, (T node, double distance)[]> Edges { get; }
+        public Dictionary<T, (T endNode, double weight)[]> Edges { get; }
 
         public DistanceMap(T start, Dictionary<T, double> distances, Dictionary<T, (T node, double distance)[]> edges)
         {
@@ -33,7 +33,7 @@ namespace TSKT
 
                 if (!Edges.TryGetValue(currentNode, out var nexts))
                 {
-                    nexts = graph.GetNextNodeDistancesFrom(currentNode)?.ToArray();
+                    nexts = graph.GetEdgesFrom(currentNode)?.ToArray();
                     Edges.Add(currentNode, nexts);
                 }
 

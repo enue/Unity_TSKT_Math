@@ -37,7 +37,7 @@ namespace TSKT
             return i >= 0 && j >= 0 && i < Width && j < Height;
         }
 
-        public IEnumerable<(Vector2Int, double)> GetNextNodeDistancesFrom(Vector2Int node)
+        public IEnumerable<(Vector2Int, double)> GetEdgesFrom(Vector2Int node)
         {
             if (!Contains(node.x, node.y))
             {

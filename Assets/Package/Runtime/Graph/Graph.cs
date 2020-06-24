@@ -91,7 +91,7 @@ namespace TSKT
             return result;
         }
 
-        public IEnumerable<(T, double)> GetNextNodeDistancesFrom(T node)
+        public IEnumerable<(T, double)> GetEdgesFrom(T node)
         {
             var nodes = NextNodesFrom(node);
             if (nodes != null)

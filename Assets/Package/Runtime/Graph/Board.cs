@@ -8,7 +8,7 @@ namespace TSKT
     public class Board : IGraph<Vector2Int>
     {
         readonly double?[,] costs;
-        public UnlimitedArray2<double> DirectionCostMap { get; set; }
+        public DirectionMap<double> DirectionCostMap { get; set; }
 
         public Board(int w, int h)
         {
@@ -54,7 +54,7 @@ namespace TSKT
                         var cost = costs[next.x, next.y].Value;
                         if (DirectionCostMap != null)
                         {
-                            cost += DirectionCostMap[it.x, it.y];
+                            cost += DirectionCostMap[it];
                         }
                         yield return (next, cost);
                     }

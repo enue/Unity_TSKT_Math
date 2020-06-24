@@ -134,20 +134,30 @@ namespace TSKT
 
         public IEnumerable<T[]> ComputeRoutesToPivotFrom(T from)
         {
-            if (!Distances.ContainsKey(from))
+            return ComputeRoutesFromPivotTo(from)
+                .Select(_ =>
+                {
+                    System.Array.Reverse(_);
+                    return _;
+                });
+        }
+
+        public IEnumerable<T[]> ComputeRoutesFromPivotTo(T to)
+        {
+            if (!Distances.ContainsKey(to))
             {
                 yield break;
             }
 
             var edgesToPivot = EdgesToPivot;
             var tasks = new Stack<T[]>();
-            tasks.Push(new [] { from });
+            tasks.Push(new [] { to });
 
             while (tasks.Count > 0)
             {
                 var route = tasks.Pop();
 
-                if (!edgesToPivot.TryGetValue(route[route.Length - 1], out var nextPoints))
+                if (!edgesToPivot.TryGetValue(route[0], out var nextPoints))
                 {
                     yield return route;
                     continue;
@@ -155,11 +165,11 @@ namespace TSKT
                 foreach (var nextPoint in nextPoints)
                 {
                     var builder = new ArrayBuilder<T>(route.Length + 1);
+                    builder.Add(nextPoint);
                     foreach (var it in route)
                     {
                         builder.Add(it);
                     }
-                    builder.Add(nextPoint);
                     tasks.Push(builder.Array);
                 }
             }

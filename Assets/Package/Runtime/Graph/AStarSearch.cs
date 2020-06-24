@@ -171,18 +171,17 @@ namespace TSKT
                 }
             }
 
-            foreach (var reversedPath in distanceMap.ComputeRoutesToPivotFrom(goal))
+            foreach (var path in distanceMap.ComputeRoutesFromPivotTo(goal))
             {
-                var path = reversedPath.Reverse()
-                    .ToDictionary(_ => _, _ => distanceMap.Distances[_]);
+                var result = path.ToDictionary(_ => _, _ => distanceMap.Distances[_]);
 
                 // goalまでの経路は最適なので蓄積しておく
-                foreach (var it in path)
+                foreach (var it in result)
                 {
                     memo.Distances[it.Key] = it.Value;
                 }
 
-                yield return path;
+                yield return result;
             }
         }
 

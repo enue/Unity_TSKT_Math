@@ -3,7 +3,7 @@
     "com.github.enue.tskt_container": "https://github.com/enue/Unity_TSKT_Container.git?path=Assets/Package",
     "com.unity.collab-proxy": "1.2.16",
     "com.unity.ide.rider": "1.1.4",
-    "com.unity.ide.vscode": "1.2.0",
+    "com.unity.ide.vscode": "1.2.1",
     "com.unity.mathematics": "1.1.0",
     "com.unity.test-framework": "1.1.14",
     "com.unity.textmeshpro": "2.0.1",
@@ -40,11 +40,5 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
-  },
-  "lock": {
-    "com.github.enue.tskt_container": {
-      "revision": "HEAD",
-      "hash": "a9d2ed44394584c3ab8bc4a0003d7912143eee9e"
-    }
   }
 }

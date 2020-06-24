@@ -97,7 +97,7 @@ namespace TSKT
                 this.memo = memo;
             }
         }
-        public Dictionary<T, double> FindPath(T goal)
+        public Dictionary<T, double> SearchPath(T goal)
         {
             if (memo.Distances.ContainsKey(goal))
             {
@@ -109,7 +109,7 @@ namespace TSKT
             return SearchPaths(goal, searchAllPaths: false).FirstOrDefault();
         }
 
-        public IEnumerable<Dictionary<T, double>> FindAllPaths(T goal)
+        public IEnumerable<Dictionary<T, double>> SearchAllPaths(T goal)
         {
             return SearchPaths(goal, searchAllPaths: true);
         }
@@ -193,15 +193,15 @@ namespace TSKT
             }
         }
 
-        static public Dictionary<T, double> FindPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        static public Dictionary<T, double> SearchPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
-            return search.FindPath(goal);
+            return search.SearchPath(goal);
         }
-        static public IEnumerable<Dictionary<T, double>> FindAllPaths(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        static public IEnumerable<Dictionary<T, double>> SearchAllPaths(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
-            return search.FindAllPaths(goal);
+            return search.SearchAllPaths(goal);
         }
     }
 }

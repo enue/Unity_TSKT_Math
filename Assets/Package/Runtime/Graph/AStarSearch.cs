@@ -100,7 +100,7 @@ namespace TSKT
                 {
                     if (expectedDistance >= startToGoalDistance)
                     {
-                        continue;
+                        break;
                     }
                 }
 

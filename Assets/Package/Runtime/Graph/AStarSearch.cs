@@ -99,16 +99,33 @@ namespace TSKT
         }
         public Dictionary<T, double> SearchPath(params T[] goals)
         {
+            var containsAllGoals = true;
+            var minDistance = double.PositiveInfinity;
+            T nearestGoal = default;
             foreach (var goal in goals)
             {
-                if (memo.Distances.ContainsKey(goal))
+                if (memo.Distances.TryGetValue(goal, out var distance))
                 {
-                    var distances = memo.Distances;
-                    return memo.SearchPaths(goal)
-                        .First()
-                        .ToDictionary(_ => _, _ => distances[_]);
+                    if (minDistance > distance)
+                    {
+                        minDistance = distance;
+                        nearestGoal = goal;
+                    }
+                }
+                else
+                {
+                    containsAllGoals = false;
+                    break;
                 }
             }
+            if (containsAllGoals)
+            {
+                var distances = memo.Distances;
+                return memo.SearchPaths(nearestGoal)
+                    .First()
+                    .ToDictionary(_ => _, _ => distances[_]);
+            }
+
             return SearchPaths(goals, searchAllPaths: false).FirstOrDefault();
         }
 

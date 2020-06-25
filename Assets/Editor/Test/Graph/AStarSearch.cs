@@ -62,5 +62,50 @@ namespace TSKT.Tests
                 Assert.AreEqual(aStarPath?.Last(), path?.Last());
             }
         }
+        [Test]
+        [TestCase(100, 100, 1f)]
+        [TestCase(10, 10, 0f)]
+        public void MuitlGoalTest(int width, int height, float costRandom)
+        {
+            var start = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
+            var board = new Board(width, height);
+            for (int i = 0; i < width; ++i)
+            {
+                for (int j = 0; j < height; ++j)
+                {
+                    if (costRandom > 0f)
+                    {
+                        board.SetCost(i, j, 1.0 + UnityEngine.Random.Range(0f, costRandom));
+                    }
+                }
+            }
+
+            var aStarSearch = new AStarSearch<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
+
+            for (int i = 0; i < 10; ++i)
+            {
+                var goal1 = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
+                var goal2 = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
+
+                var aStarPath = aStarSearch.SearchPath(goal1, goal2);
+
+                var distanceMap = board.ComputeDistancesFrom(start);
+                var d1 = distanceMap.Distances[goal1];
+                var d2 = distanceMap.Distances[goal2];
+
+                if (aStarPath.Last().Key == goal1)
+                {
+                    Assert.LessOrEqual(d1, d2);
+                }
+                else if (aStarPath.Last().Key == goal2)
+                {
+                    Assert.GreaterOrEqual(d1, d2);
+                }
+                else
+                {
+                    Assert.Fail();
+                }
+            }
+        }
     }
 }

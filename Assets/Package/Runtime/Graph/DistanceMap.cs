@@ -7,13 +7,13 @@ namespace TSKT
     {
         public T Start { get; }
         public Dictionary<T, double> Distances { get; }
-        public Dictionary<T, (T endNode, double weight)[]> Edges { get; }
+        public Dictionary<T, HashSet<T>> ReversedEdges { get; }
 
-        public DistanceMap(T start, Dictionary<T, double> distances, Dictionary<T, (T node, double distance)[]> edges)
+        public DistanceMap(T start, Dictionary<T, double> distances, Dictionary<T, HashSet<T>> reversedEdges)
         {
             Start = start;
             Distances = distances;
-            Edges = edges;
+            ReversedEdges = reversedEdges;
         }
 
         public DistanceMap(IGraph<T> graph, T start, double maxDistance = double.PositiveInfinity)
@@ -30,7 +30,7 @@ namespace TSKT
         {
             Start = start;
             Distances = new Dictionary<T, double>();
-            Edges = new Dictionary<T, (T node, double distance)[]>();
+            ReversedEdges = new Dictionary<T, HashSet<T>>();
 
             var tasks = new Queue<T>();
             tasks.Enqueue(start);
@@ -56,81 +56,41 @@ namespace TSKT
                     }
                 }
 
-                if (!Edges.TryGetValue(currentNode, out var nexts))
+                var startToCurrentNodeDistance = Distances[currentNode];
+                foreach (var (nextNode, edgeWeight) in graph.GetEdgesFrom(currentNode))
                 {
-                    nexts = graph.GetEdgesFrom(currentNode)?.ToArray();
-                    Edges.Add(currentNode, nexts);
-                }
+                    UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
 
-                if (nexts != null && nexts.Length > 0)
-                {
-                    var startToCurrentNodeDistance = Distances[currentNode];
-                    foreach (var (nextNode, edgeWeight) in nexts)
+                    var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
+                    if (startToNextNodeDistance <= maxDistance)
                     {
-                        UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
-
-                        var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
-                        if (startToNextNodeDistance <= maxDistance)
+                        if (Distances.TryGetValue(nextNode, out var oldDistance))
                         {
-                            if (Distances.TryGetValue(nextNode, out var oldDistance))
+                            if (oldDistance >= startToNextNodeDistance)
                             {
+                                var nearNodes = ReversedEdges[nextNode];
                                 if (oldDistance > startToNextNodeDistance)
                                 {
-                                    tasks.Enqueue(nextNode);
-                                    Distances[nextNode] = startToNextNodeDistance;
+                                    nearNodes.Clear();
                                 }
+                                nearNodes.Add(currentNode);
                             }
-                            else
+                            if (oldDistance <= startToNextNodeDistance)
                             {
-                                tasks.Enqueue(nextNode);
-                                Distances.Add(nextNode, startToNextNodeDistance);
+                                continue;
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        public Dictionary<T, List<T>> ReversedEdges
-        {
-            get
-            {
-                var result = new Dictionary<T, List<T>>();
-                foreach (var edge in Edges)
-                {
-                    if (edge.Value == null)
-                    {
-                        continue;
-                    }
-                    if (edge.Value.Length == 0)
-                    {
-                        continue;
-                    }
-                    var nearNode = edge.Key;
-                    if (!Distances.TryGetValue(nearNode, out var nearNodeDistance))
-                    {
-                        continue;
-                    }
-                    foreach (var (farNode, weight) in edge.Value)
-                    {
-                        if (!Distances.TryGetValue(farNode, out var farNodeDistance))
+                        else
                         {
-                            continue;
-                        }
-                        if (nearNodeDistance + weight != farNodeDistance)
-                        {
-                            continue;
+                            var nearNodes = new HashSet<T>();
+                            ReversedEdges.Add(nextNode, nearNodes);
+                            nearNodes.Add(currentNode);
                         }
 
-                        if (!result.TryGetValue(farNode, out var nexts))
-                        {
-                            nexts = new List<T>();
-                            result.Add(farNode, nexts);
-                        }
-                        nexts.Add(nearNode);
+                        Distances[nextNode] = startToNextNodeDistance;
+                        tasks.Enqueue(nextNode);
                     }
                 }
-                return result;
             }
         }
 
@@ -141,7 +101,6 @@ namespace TSKT
                 yield break;
             }
 
-            var reversedEdge = ReversedEdges;
             var tasks = new Stack<T[]>();
             tasks.Push(new [] { goal });
 
@@ -149,7 +108,7 @@ namespace TSKT
             {
                 var path = tasks.Pop();
 
-                if (!reversedEdge.TryGetValue(path[0], out var nearNodes))
+                if (!ReversedEdges.TryGetValue(path[0], out var nearNodes))
                 {
                     yield return path;
                     continue;

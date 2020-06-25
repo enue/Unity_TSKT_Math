@@ -89,7 +89,7 @@ namespace TSKT
                 this.memo = new DistanceMap<T>(
                     start,
                     new Dictionary<T, double>(),
-                    new Dictionary<T, (T node, double distance)[]>());
+                    new Dictionary<T, HashSet<T>>());
                 this.memo.Distances.Add(start, 0.0);
             }
             else
@@ -136,10 +136,16 @@ namespace TSKT
 
         IEnumerable<Dictionary<T, double>> SearchPaths(T[] goals, bool searchAllPaths)
         {
+            var cloneReversedEdges = new Dictionary<T, HashSet<T>>(memo.ReversedEdges.Count);
+            foreach (var it in memo.ReversedEdges)
+            {
+                cloneReversedEdges.Add(it.Key, new HashSet<T>(it.Value));
+            }
+
             var distanceMap = new DistanceMap<T>(
                 Start,
                 new Dictionary<T, double>(memo.Distances),
-                memo.Edges);
+                cloneReversedEdges);
 
             var tasks = new PriorityQueue();
 
@@ -184,24 +190,34 @@ namespace TSKT
                     }
                 }
 
-                if (!distanceMap.Edges.TryGetValue(currentNode, out var nexts))
-                {
-                    nexts = graph.GetEdgesFrom(currentNode)?.ToArray();
-                    distanceMap.Edges.Add(currentNode, nexts);
-                }
-
                 var startToCurrentNodeDistance = distanceMap.Distances[currentNode];
 
-                foreach (var (next, edgeWeight) in nexts)
+                foreach (var (next, edgeWeight) in graph.GetEdgesFrom(currentNode))
                 {
                     var startToNextNodeDistance = edgeWeight + startToCurrentNodeDistance;
 
                     if (distanceMap.Distances.TryGetValue(next, out var oldDistance))
                     {
+                        if (oldDistance >= startToNextNodeDistance)
+                        {
+                            var nearNodes = distanceMap.ReversedEdges[next];
+                            if (oldDistance > startToNextNodeDistance)
+                            {
+                                nearNodes.Clear();
+                            }
+                            nearNodes.Add(currentNode);
+                        }
+
                         if (oldDistance <= startToNextNodeDistance)
                         {
                             continue;
                         }
+                    }
+                    else
+                    {
+                        var nearNodes = new HashSet<T>();
+                        distanceMap.ReversedEdges.Add(next, nearNodes);
+                        nearNodes.Add(currentNode);
                     }
 
                     distanceMap.Distances[next] = startToNextNodeDistance;
@@ -222,7 +238,26 @@ namespace TSKT
                     // goalまでの経路は最適なので蓄積しておく
                     foreach (var it in result)
                     {
+                        UnityEngine.Assertions.Assert.IsTrue(!memo.Distances.TryGetValue(it.Key, out var value) || value >= it.Value);
                         memo.Distances[it.Key] = it.Value;
+                    }
+
+                    for (int i = 1; i < path.Length; ++i)
+                    {
+                        var nearNode = path[i - 1];
+                        var farNode = path[i];
+                        UnityEngine.Assertions.Assert.IsTrue(memo.Distances[nearNode] <= memo.Distances[farNode]);
+
+                        if (memo.ReversedEdges.TryGetValue(farNode, out var nearNodes))
+                        {
+                            nearNodes.Add(nearNode);
+                        }
+                        else
+                        {
+                            nearNodes = new HashSet<T>();
+                            memo.ReversedEdges.Add(farNode, nearNodes);
+                            nearNodes.Add(nearNode);
+                        }
                     }
 
                     yield return result;

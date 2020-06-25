@@ -64,6 +64,23 @@ namespace TSKT.Tests
             Assert.AreEqual('a', route[0][0]);
         }
 
+        [Test]
+        public void RandomBoardPath()
+        {
+            var board = new Board(10, 10);
+            for (int i = 0; i < board.Width; ++i)
+            {
+                for (int j = 0; j < board.Height; ++j)
+                {
+                    board.SetCost(i, j, UnityEngine.Random.Range(1f, 2f));
+                }
+            }
+            var distance = board.ComputeDistancesFrom(new Vector2Int(0, 0));
+            var paths = distance.SearchPaths(new Vector2Int(9, 9)).ToArray();
+
+            Assert.AreEqual(1, paths.Length);
+        }
+
         public void Performance()
         {
             var board = new Board(100, 1000);

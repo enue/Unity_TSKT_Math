@@ -97,24 +97,27 @@ namespace TSKT
                 this.memo = memo;
             }
         }
-        public Dictionary<T, double> SearchPath(T goal)
+        public Dictionary<T, double> SearchPath(params T[] goals)
         {
-            if (memo.Distances.ContainsKey(goal))
+            foreach (var goal in goals)
             {
-                var distances = memo.Distances;
-                return memo.SearchPaths(goal)
-                    .First()
-                    .ToDictionary(_ => _, _ => distances[_]);
+                if (memo.Distances.ContainsKey(goal))
+                {
+                    var distances = memo.Distances;
+                    return memo.SearchPaths(goal)
+                        .First()
+                        .ToDictionary(_ => _, _ => distances[_]);
+                }
             }
-            return SearchPaths(goal, searchAllPaths: false).FirstOrDefault();
+            return SearchPaths(goals, searchAllPaths: false).FirstOrDefault();
         }
 
-        public IEnumerable<Dictionary<T, double>> SearchAllPaths(T goal)
+        public IEnumerable<Dictionary<T, double>> SearchAllPaths(params T[] goals)
         {
-            return SearchPaths(goal, searchAllPaths: true);
+            return SearchPaths(goals, searchAllPaths: true);
         }
 
-        IEnumerable<Dictionary<T, double>> SearchPaths(T goal, bool searchAllPaths)
+        IEnumerable<Dictionary<T, double>> SearchPaths(T[] goals, bool searchAllPaths)
         {
             var distanceMap = new DistanceMap<T>(
                 Start,
@@ -126,28 +129,41 @@ namespace TSKT
             foreach (var it in distanceMap.Distances)
             {
                 var startToItDistance = it.Value;
-                var expectedDistance = it.Value + heuristicFunction(it.Key, goal);
+                var h = heuristicFunction;
+                var expectedDistance = startToItDistance + goals.Min(_ => h(it.Key, _));
                 tasks.Enqueue(expectedDistance, -startToItDistance, it.Key);
             }
 
             while (tasks.Count > 0)
             {
                 var (expectedDistance, _, currentNode) = tasks.Dequeue();
-                if (distanceMap.Distances.TryGetValue(goal, out var startToGoalDistance))
                 {
-                    if (searchAllPaths)
+                    bool shouldBreak = false;
+                    foreach (var it in goals)
                     {
-                        if (expectedDistance > startToGoalDistance)
+                        if (distanceMap.Distances.TryGetValue(it, out var startToGoalDistance))
                         {
-                            break;
+                            if (searchAllPaths)
+                            {
+                                if (expectedDistance > startToGoalDistance)
+                                {
+                                    shouldBreak = true;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                if (expectedDistance >= startToGoalDistance)
+                                {
+                                    shouldBreak = true;
+                                    break;
+                                }
+                            }
                         }
                     }
-                    else
+                    if (shouldBreak)
                     {
-                        if (expectedDistance >= startToGoalDistance)
-                        {
-                            break;
-                        }
+                        break;
                     }
                 }
 
@@ -173,23 +189,27 @@ namespace TSKT
 
                     distanceMap.Distances[next] = startToNextNodeDistance;
 
-                    var nextExpectedDistance = heuristicFunction(next, goal) + startToNextNodeDistance;
+                    var h = heuristicFunction;
+                    var nextExpectedDistance = goals.Min(_ => h(next, _)) + startToNextNodeDistance;
                     // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
                     tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, next);
                 }
             }
 
-            foreach (var path in distanceMap.SearchPaths(goal))
+            foreach (var goal in goals)
             {
-                var result = path.ToDictionary(_ => _, _ => distanceMap.Distances[_]);
-
-                // goalまでの経路は最適なので蓄積しておく
-                foreach (var it in result)
+                foreach (var path in distanceMap.SearchPaths(goal))
                 {
-                    memo.Distances[it.Key] = it.Value;
-                }
+                    var result = path.ToDictionary(_ => _, _ => distanceMap.Distances[_]);
 
-                yield return result;
+                    // goalまでの経路は最適なので蓄積しておく
+                    foreach (var it in result)
+                    {
+                        memo.Distances[it.Key] = it.Value;
+                    }
+
+                    yield return result;
+                }
             }
         }
 

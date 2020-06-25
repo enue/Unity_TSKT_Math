@@ -225,8 +225,20 @@ namespace TSKT
                 }
             }
 
+            var nearestGoalDistance = goals
+                .Select(_ => distanceMap.Distances.TryGetValue(_, out var d) ? d : double.PositiveInfinity)
+                .Min();
+
             foreach (var goal in goals)
             {
+                if (!distanceMap.Distances.TryGetValue(goal, out var distance))
+                {
+                    continue;
+                }
+                if (distance != nearestGoalDistance)
+                {
+                    continue;
+                }
                 foreach (var path in distanceMap.SearchPaths(goal))
                 {
                     // goalまでの経路は最適なので蓄積しておく

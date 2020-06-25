@@ -107,5 +107,20 @@ namespace TSKT.Tests
                 }
             }
         }
+        [Test]
+        public void MultiGoalWithMemoTest()
+        {
+            var start = new Vector2Int(0, 0);
+            var board = new Board(10, 2);
+            var aStarSearch = new AStarSearch<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
+
+            var goal1 = new Vector2Int(9, 0);
+            var goal2 = new Vector2Int(0, 1);
+
+            aStarSearch.SearchAllPaths(goal1).ToArray();
+
+            var paths = aStarSearch.SearchPath(goal1, goal2);
+            Assert.AreEqual(goal2, paths.Last());
+        }
     }
 }

@@ -97,7 +97,7 @@ namespace TSKT
                 this.memo = memo;
             }
         }
-        public Dictionary<T, double> SearchPath(params T[] goals)
+        public T[] SearchPath(params T[] goals)
         {
             var containsAllGoals = true;
             var minDistance = double.PositiveInfinity;
@@ -120,21 +120,17 @@ namespace TSKT
             }
             if (containsAllGoals)
             {
-                var distances = memo.Distances;
-                return memo.SearchPaths(nearestGoal)
-                    .First()
-                    .ToDictionary(_ => _, _ => distances[_]);
+                return memo.SearchPaths(nearestGoal).First();
             }
-
             return SearchPaths(goals, searchAllPaths: false).FirstOrDefault();
         }
 
-        public IEnumerable<Dictionary<T, double>> SearchAllPaths(params T[] goals)
+        public IEnumerable<T[]> SearchAllPaths(params T[] goals)
         {
             return SearchPaths(goals, searchAllPaths: true);
         }
 
-        IEnumerable<Dictionary<T, double>> SearchPaths(T[] goals, bool searchAllPaths)
+        IEnumerable<T[]> SearchPaths(T[] goals, bool searchAllPaths)
         {
             var cloneReversedEdges = new Dictionary<T, HashSet<T>>(memo.ReversedEdges.Count);
             foreach (var it in memo.ReversedEdges)
@@ -233,13 +229,12 @@ namespace TSKT
             {
                 foreach (var path in distanceMap.SearchPaths(goal))
                 {
-                    var result = path.ToDictionary(_ => _, _ => distanceMap.Distances[_]);
-
                     // goalまでの経路は最適なので蓄積しておく
-                    foreach (var it in result)
+                    foreach (var it in path)
                     {
-                        UnityEngine.Assertions.Assert.IsTrue(!memo.Distances.TryGetValue(it.Key, out var value) || value >= it.Value);
-                        memo.Distances[it.Key] = it.Value;
+                        var value = distanceMap.Distances[it];
+                        UnityEngine.Assertions.Assert.IsTrue(!memo.Distances.TryGetValue(it, out var oldValue) || oldValue == value);
+                        memo.Distances[it] = value;
                     }
 
                     for (int i = 1; i < path.Length; ++i)
@@ -260,17 +255,23 @@ namespace TSKT
                         }
                     }
 
-                    yield return result;
+                    yield return path;
                 }
             }
         }
 
-        static public Dictionary<T, double> SearchPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        public Dictionary<T, double> GetDistances(params T[] nodes)
+        {
+            var distances = memo.Distances;
+            return nodes.ToDictionary(_ => _, _ => distances[_]);
+        }
+
+        static public T[] SearchPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
             return search.SearchPath(goal);
         }
-        static public IEnumerable<Dictionary<T, double>> SearchAllPaths(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        static public IEnumerable<T[]> SearchAllPaths(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
             return search.SearchAllPaths(goal);

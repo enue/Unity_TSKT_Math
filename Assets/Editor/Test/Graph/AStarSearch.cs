@@ -47,15 +47,15 @@ namespace TSKT.Tests
                 }
                 else
                 {
-                    Assert.AreEqual(goalDistanceByDijkstra, aStarPath[goal]);
-                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(aStarPath.Keys)));
+                    Assert.AreEqual(goalDistanceByDijkstra, aStarSearch.memo.Distances[goal]);
+                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(aStarPath)));
                 }
 
                 var aStarPaths = aStarSearch.SearchAllPaths(goal).ToArray();
                 Assert.AreEqual(dijkstraRoutes.Length, aStarPaths.Length);
                 foreach (var it in aStarPaths)
                 {
-                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(it.Keys)));
+                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(it)));
                 }
 
                 var path = AStarSearch<Vector2Int>.SearchPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
@@ -63,9 +63,9 @@ namespace TSKT.Tests
             }
         }
         [Test]
-        [TestCase(100, 100, 1f)]
-        [TestCase(10, 10, 0f)]
-        public void MuitlGoalTest(int width, int height, float costRandom)
+        [TestCase(100, 100, 1f, 1)]
+        [TestCase(10, 10, 0f, 100)]
+        public void MuitlGoalTest(int width, int height, float costRandom, int iterate)
         {
             var start = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
             var board = new Board(width, height);
@@ -82,7 +82,7 @@ namespace TSKT.Tests
 
             var aStarSearch = new AStarSearch<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
 
-            for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < iterate; ++i)
             {
                 var goal1 = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
                 var goal2 = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
@@ -93,13 +93,13 @@ namespace TSKT.Tests
                 var d1 = distanceMap.Distances[goal1];
                 var d2 = distanceMap.Distances[goal2];
 
-                if (aStarPath.Last().Key == goal1)
+                if (aStarPath.Last() == goal1)
                 {
-                    Assert.LessOrEqual(d1, d2);
+                    Assert.LessOrEqual(d1, d2, i.ToString());
                 }
-                else if (aStarPath.Last().Key == goal2)
+                else if (aStarPath.Last() == goal2)
                 {
-                    Assert.GreaterOrEqual(d1, d2);
+                    Assert.GreaterOrEqual(d1, d2, i.ToString());
                 }
                 else
                 {

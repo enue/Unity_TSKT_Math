@@ -22,6 +22,17 @@ namespace TSKT
             }
         }
 
+        public bool TryGetCost(int i, int j, out double value)
+        {
+            if (costs[i, j].HasValue)
+            {
+                value = costs[i, j].Value;
+                return true;
+            }
+            value = default;
+            return false;
+        }
+
         public void SetCost(int i, int j, double cost)
         {
             costs[i, j] = cost;

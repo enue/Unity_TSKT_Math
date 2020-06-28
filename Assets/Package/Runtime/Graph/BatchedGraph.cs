@@ -109,17 +109,19 @@ namespace TSKT
 
             foreach (var it in batches)
             {
-                var goals = new HashSet<T>(reversedGraph.GetEdgesFrom(it).Select(_ => _.endNode.Root));
-                goals.ExceptWith(batchGraph.GetEdgesFrom(it).Select(_ => _.endNode.Root));
+                // 自分に枝を向けているノードに対して双方向になるまで検索範囲を伸ばす。
+                // ただし完全に一方通行なノードだった場合は全検索になってしまうので、うまく連結グラフを成立させるよう修正する必要がある
+                var requiredGoals = new HashSet<T>(reversedGraph.GetEdgesFrom(it).Select(_ => _.endNode.Root));
+                requiredGoals.ExceptWith(batchGraph.GetEdgesFrom(it).Select(_ => _.endNode.Root));
 
-                while (goals.Count > 0)
+                while (requiredGoals.Count > 0)
                 {
                     if (it.distanceMap.Finished)
                     {
                         break;
                     }
 
-                    it.distanceMap.Continue(goals);
+                    it.distanceMap.Continue(requiredGoals);
                     foreach (var batch in batches)
                     {
                         if (it.distanceMap.Distances.TryGetValue(batch.Root, out var distance))
@@ -127,7 +129,7 @@ namespace TSKT
                             if (distance != 0.0)
                             {
                                 batchGraph.Link(it, batch, distance);
-                                goals.Remove(batch.Root);
+                                requiredGoals.Remove(batch.Root);
                             }
                         }
                     }

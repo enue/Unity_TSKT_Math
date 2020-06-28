@@ -171,7 +171,7 @@ namespace TSKT
             var startBatch = nodeBatchMap[startBatchRoot];
 
             {
-                var startToRoot = startToBatch.SearchPaths(startBatchRoot).First().Reverse();
+                var startToRoot = startToBatch.SearchPaths(startBatchRoot).First();
                 foreach (var it in startToRoot)
                 {
                     yield return it;

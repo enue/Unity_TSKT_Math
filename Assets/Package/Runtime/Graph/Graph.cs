@@ -103,6 +103,21 @@ namespace TSKT
             }
         }
 
+        public double GetWeight(T start, T end)
+        {
+            return edges[start][end];
+        }
+
+        public bool TryGetWeight(T start, T end, out double result)
+        {
+            if (edges.TryGetValue(start, out var edge))
+            {
+                return edge.TryGetValue(end, out result);
+            }
+            result = default;
+            return false;
+        }
+
         public DistanceMap<T> ComputeDistancesFrom(T node, double maxDistance = double.PositiveInfinity)
         {
             return new DistanceMap<T>(this, node, maxDistance);

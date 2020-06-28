@@ -48,10 +48,27 @@ namespace TSKT
             var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
             var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
             var path = batchedGraph.GetPath(start, goal).ToArray();
+
             CreatePath(path, Color.green);
 
             var aStarPath = board.CreateAStarSearch(start).SearchPath(goal);
             CreatePath(aStarPath, Color.magenta);
+
+            double totalWeight = 0.0;
+            for (int i = 1; i < path.Length; ++i)
+            {
+                var startNode = path[i - 1];
+                var endNode = path[i];
+                totalWeight += batchedGraph.graph.GetEdgesFrom(startNode).First(_ => _.endNode == endNode).weight;
+            }
+            double aStarTotalWeight = 0.0;
+            for (int i = 1; i < aStarPath.Length; ++i)
+            {
+                var startNode = aStarPath[i - 1];
+                var endNode = aStarPath[i];
+                aStarTotalWeight += batchedGraph.graph.GetEdgesFrom(startNode).First(_ => _.endNode == endNode).weight;
+            }
+            Debug.Log("distance : " + totalWeight + " / " + aStarTotalWeight + " ( " + (totalWeight / aStarTotalWeight) + ")");
         }
 
         void CreatePath(Vector2Int[] path, Color color)

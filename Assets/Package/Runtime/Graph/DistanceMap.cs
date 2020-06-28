@@ -11,6 +11,9 @@ namespace TSKT
 
         readonly Graphs.PriorityQueue<T> tasks;
         readonly IGraph<T> graph;
+        readonly HashSet<T> continueNodes;
+
+        public bool Finished => (tasks == null || tasks.Count == 0) && (continueNodes == null || continueNodes.Count == 0);
 
         public DistanceMap(T start, Dictionary<T, double> distances, Dictionary<T, HashSet<T>> reversedEdges)
         {
@@ -20,6 +23,7 @@ namespace TSKT
 
             graph = null;
             tasks = null;
+            continueNodes = null;
         }
 
         public DistanceMap(IGraph<T> graph, T start, double maxDistance = double.PositiveInfinity)
@@ -39,7 +43,7 @@ namespace TSKT
             Distances = new Dictionary<T, double>();
             ReversedEdges = new Dictionary<T, HashSet<T>>();
             tasks = new Graphs.PriorityQueue<T>();
-
+            continueNodes = new HashSet<T>();
             tasks.Enqueue(0.0, Start);
             Distances.Add(Start, 0.0);
 
@@ -48,6 +52,12 @@ namespace TSKT
 
         public void Continue(HashSet<T> goals, double maxDistance = double.PositiveInfinity)
         {
+            foreach (var it in continueNodes)
+            {
+                tasks.Enqueue(0.0, it);
+            }
+            continueNodes.Clear();
+
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;
@@ -65,7 +75,11 @@ namespace TSKT
                     UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
 
                     var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
-                    if (startToNextNodeDistance <= maxDistance)
+                    if (startToNextNodeDistance > maxDistance)
+                    {
+                        continueNodes.Add(currentNode);
+                    }
+                    else
                     {
                         if (Distances.TryGetValue(nextNode, out var oldDistance))
                         {

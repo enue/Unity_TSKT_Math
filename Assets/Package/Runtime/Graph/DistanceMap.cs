@@ -17,44 +17,36 @@ namespace TSKT
         }
 
         public DistanceMap(IGraph<T> graph, T start, double maxDistance = double.PositiveInfinity)
-            : this(graph, start, false, default, maxDistance)
+            : this(graph, start, null, maxDistance)
         {
         }
 
         public DistanceMap(IGraph<T> graph, T start, T goal, double maxDistance = double.PositiveInfinity)
-            : this(graph, start, true, goal, maxDistance)
+            : this(graph, start, new HashSet<T>() { goal }, maxDistance)
         {
         }
 
-        DistanceMap(IGraph<T> graph, T start, bool goalExists, T goal, double maxDistance = double.PositiveInfinity)
+        public DistanceMap(IGraph<T> graph, T start, HashSet<T> goals, double maxDistance = double.PositiveInfinity)
         {
             Start = start;
             Distances = new Dictionary<T, double>();
             ReversedEdges = new Dictionary<T, HashSet<T>>();
 
-            var tasks = new Queue<T>();
-            tasks.Enqueue(start);
+            var tasks = new Graphs.PriorityQueue<T>();
+            tasks.Enqueue(0.0, start);
 
             Distances.Add(start, 0.0);
 
             while (tasks.Count > 0)
             {
-                var currentNode = tasks.Dequeue();
+                var currentNode = tasks.Peek;
 
-                if (goalExists)
+                if (goals != null && goals.Contains(currentNode))
                 {
-                    if (Distances.TryGetValue(goal, out var startToGoalDistance))
-                    {
-                        if (maxDistance > startToGoalDistance)
-                        {
-                            maxDistance = startToGoalDistance;
-                        }
-                        if (Distances[currentNode] > startToGoalDistance)
-                        {
-                            continue;
-                        }
-                    }
+                    break;
                 }
+
+                tasks.Dequeue();
 
                 var startToCurrentNodeDistance = Distances[currentNode];
                 foreach (var (nextNode, edgeWeight) in graph.GetEdgesFrom(currentNode))
@@ -88,7 +80,7 @@ namespace TSKT
                         }
 
                         Distances[nextNode] = startToNextNodeDistance;
-                        tasks.Enqueue(nextNode);
+                        tasks.Enqueue(startToNextNodeDistance, nextNode);
                     }
                 }
             }

@@ -83,7 +83,7 @@ namespace TSKT
                     }
                 }
             }
-            minCost += DirectionCostMap.Select(_ => _.Value).Min();
+            minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0.0;
             return new AStarSearch<Vector2Int>(this, start, (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * minCost);
         }
     }

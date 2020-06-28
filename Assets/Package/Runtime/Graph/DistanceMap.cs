@@ -9,11 +9,17 @@ namespace TSKT
         public Dictionary<T, double> Distances { get; }
         public Dictionary<T, HashSet<T>> ReversedEdges { get; }
 
+        readonly Graphs.PriorityQueue<T> tasks;
+        readonly IGraph<T> graph;
+
         public DistanceMap(T start, Dictionary<T, double> distances, Dictionary<T, HashSet<T>> reversedEdges)
         {
             Start = start;
             Distances = distances;
             ReversedEdges = reversedEdges;
+
+            graph = null;
+            tasks = null;
         }
 
         public DistanceMap(IGraph<T> graph, T start, double maxDistance = double.PositiveInfinity)
@@ -28,15 +34,20 @@ namespace TSKT
 
         public DistanceMap(IGraph<T> graph, T start, HashSet<T> goals, double maxDistance = double.PositiveInfinity)
         {
+            this.graph = graph;
             Start = start;
             Distances = new Dictionary<T, double>();
             ReversedEdges = new Dictionary<T, HashSet<T>>();
+            tasks = new Graphs.PriorityQueue<T>();
 
-            var tasks = new Graphs.PriorityQueue<T>();
-            tasks.Enqueue(0.0, start);
+            tasks.Enqueue(0.0, Start);
+            Distances.Add(Start, 0.0);
 
-            Distances.Add(start, 0.0);
+            Continue(goals, maxDistance);
+        }
 
+        public void Continue(HashSet<T> goals, double maxDistance = double.PositiveInfinity)
+        {
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;

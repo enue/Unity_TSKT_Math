@@ -91,7 +91,7 @@ namespace TSKT
             return result;
         }
 
-        public IEnumerable<(T, double)> GetEdgesFrom(T node)
+        public IEnumerable<(T endNode, double weight)> GetEdgesFrom(T node)
         {
             var nodes = NextNodesFrom(node);
             if (nodes != null)

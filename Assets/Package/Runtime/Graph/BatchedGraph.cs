@@ -47,6 +47,7 @@ namespace TSKT
         }
         public readonly Graph<Batch> batchGraph = new Graph<Batch>();
         public readonly Dictionary<T, Batch> nodeBatchMap = new Dictionary<T, Batch>();
+        public readonly Dictionary<Batch, Dictionary<Batch, T>> transitMap = new Dictionary<Batch, Dictionary<Batch, T>>();
 
         public BatchedGraph(IGraph<T> graph, T startNode, double batchRadius)
         {
@@ -86,33 +87,55 @@ namespace TSKT
 
                         var currentDistance = currentBatch.distanceMap.Distances[node];
 
-                        if (currentDistance == 0.0)
+                        if (currentDistance > it.Value)
                         {
-                            // node is root
-                            if (batchGraph.TryGetWeight(newBatch, currentBatch, out var currentDistanceBetweenBatches))
+                            nodeBatchMap[node] = newBatch;
+                        }
+
+                        var newDistanceBetweenBatches = currentDistance + it.Value;
+                        if (batchGraph.TryGetWeight(newBatch, currentBatch, out var currentDistanceBetweenBatches))
+                        {
+                            if (currentDistanceBetweenBatches > newDistanceBetweenBatches)
                             {
-                                if (currentDistanceBetweenBatches > it.Value)
+                                batchGraph.DoubleOrderedLink(newBatch, currentBatch, newDistanceBetweenBatches);
+
+                                if (!transitMap.TryGetValue(newBatch, out var newToCurentTransits))
                                 {
-                                    batchGraph.DoubleOrderedLink(newBatch, currentBatch, it.Value);
+                                    newToCurentTransits = new Dictionary<Batch, T>();
+                                    transitMap.Add(newBatch, newToCurentTransits);
                                 }
-                            }
-                            else
-                            {
-                                batchGraph.DoubleOrderedLink(newBatch, currentBatch, it.Value);
+                                newToCurentTransits[currentBatch] = node;
+
+                                if (!transitMap.TryGetValue(currentBatch, out var currentToNewTransits))
+                                {
+                                    currentToNewTransits = new Dictionary<Batch, T>();
+                                    transitMap.Add(currentBatch, currentToNewTransits);
+                                }
+                                currentToNewTransits[newBatch] = node;
                             }
                         }
                         else
                         {
-                            if (currentDistance > it.Value)
+                            batchGraph.DoubleOrderedLink(newBatch, currentBatch, newDistanceBetweenBatches);
+
+                            if (!transitMap.TryGetValue(newBatch, out var newToCurentTransits))
                             {
-                                nodeBatchMap[node] = newBatch;
+                                newToCurentTransits = new Dictionary<Batch, T>();
+                                transitMap.Add(newBatch, newToCurentTransits);
                             }
+                            newToCurentTransits[currentBatch] = node;
+
+                            if (!transitMap.TryGetValue(currentBatch, out var currentToNewTransits))
+                            {
+                                currentToNewTransits = new Dictionary<Batch, T>();
+                                transitMap.Add(currentBatch, currentToNewTransits);
+                            }
+                            currentToNewTransits[newBatch] = node;
                         }
                     }
                     else
                     {
                         nodeBatchMap.Add(node, newBatch);
-                        // 距離は遠い順
                         tasks.Enqueue(-it.Value, node);
                     }
                 }
@@ -129,21 +152,19 @@ namespace TSKT
             {
                 var fromBatch = batchPath[i - 1];
                 var toBatch = batchPath[i];
-                if (toBatch.distanceMap.Distances.ContainsKey(fromBatch.Root))
+
+                var transit = transitMap[fromBatch][toBatch];
+
+                var toTransitPath = fromBatch.distanceMap.SearchPaths(transit).First();
+                foreach (var it in toTransitPath.Skip(1))
                 {
-                    var batchToBatch = toBatch.distanceMap.SearchPaths(fromBatch.Root).First().Reverse().Skip(1);
-                    foreach (var it in batchToBatch)
-                    {
-                        yield return it;
-                    }
+                    yield return it;
                 }
-                else
+
+                var fromTransitPath = toBatch.distanceMap.SearchPaths(transit).First().Reverse();
+                foreach (var it in fromTransitPath.Skip(1))
                 {
-                    var batchToBatch = fromBatch.distanceMap.SearchPaths(toBatch.Root).First().Skip(1);
-                    foreach (var it in batchToBatch)
-                    {
-                        yield return it;
-                    }
+                    yield return it;
                 }
             }
 

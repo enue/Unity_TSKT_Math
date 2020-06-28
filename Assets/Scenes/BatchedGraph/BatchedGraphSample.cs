@@ -19,13 +19,13 @@ namespace TSKT
 
             foreach (var it in batchedGraph.nodeBatchMap)
             {
-                CreateLine(it.Key, it.Value.root, Color.gray, 0.02f, 0f);
+                CreateLine(it.Key, it.Value.Root, Color.gray, 0.02f, 0f);
             }
             foreach (var it in batchedGraph.batchGraph.StartingNodes)
             {
                 foreach (var end in batchedGraph.batchGraph.NextNodesFrom(it))
                 {
-                    CreateLine(it.root, end.Key.root, Color.red, 0.05f, -0.1f);
+                    CreateLine(it.Root, end.Key.Root, Color.red, 0.05f, -0.1f);
                 }
             }
 

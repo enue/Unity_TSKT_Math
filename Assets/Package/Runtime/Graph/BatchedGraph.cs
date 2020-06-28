@@ -25,8 +25,8 @@ namespace TSKT
         {
             this.graph = graph;
 
-            var batchEdgeCountMap = new IntDictionary<Batch>();
             var batches = new List<Batch>();
+            var reversedGraph = new Graph<Batch>();
 
             var tasks = new Graphs.PriorityQueue<T>();
             tasks.Enqueue(0.0, startNode);
@@ -95,65 +95,43 @@ namespace TSKT
                             if (currentDistance > newDistance)
                             {
                                 batchGraph.Link(start, end, newDistance);
-                                ++batchEdgeCountMap[start];
-                                --batchEdgeCountMap[end];
+                                reversedGraph.Link(end, start, newDistance);
                             }
                         }
                         else
                         {
                             batchGraph.Link(start, end, newDistance);
-                            ++batchEdgeCountMap[start];
-                            --batchEdgeCountMap[end];
+                            reversedGraph.Link(end, start, newDistance);
                         }
                     }
                 }
             }
 
-            while (true)
+            foreach (var it in batches)
             {
-                var unfinishedBatch = batchEdgeCountMap
-                    .Where(_ => !_.Key.distanceMap.Finished)
-                    .Where(_ => _.Value < 0)
-                    .FirstOrDefault().Key;
-                if (unfinishedBatch == null)
+                var goals = new HashSet<T>(reversedGraph.GetEdgesFrom(it).Select(_ => _.endNode.Root));
+                goals.ExceptWith(batchGraph.GetEdgesFrom(it).Select(_ => _.endNode.Root));
+
+                while (goals.Count > 0)
                 {
-                    break;
-                }
-
-                CreateEdgeFromBatch(unfinishedBatch);
-            }
-
-            for (int i = 0; i < 2; ++i)
-            {
-                foreach(var batch in batches)
-                {
-                    CreateEdgeFromBatch(batch);
-                }
-            }
-
-            void CreateEdgeFromBatch(Batch batch)
-            {
-                if (batch.distanceMap.Finished)
-                {
-                    return;
-                }
-
-                var goals = new HashSet<T>(batches.Select(_ => _.Root));
-                goals.ExceptWith(batchGraph.GetEdgesFrom(batch).Select(_ => _.endNode.Root));
-                goals.Remove(batch.Root);
-                batch.distanceMap.Continue(goals);
-
-                foreach (var goal in goals)
-                {
-                    if (batch.distanceMap.Distances.TryGetValue(goal, out var distance))
+                    if (it.distanceMap.Finished)
                     {
-                        var b = nodeBatchMap[goal];
-                        batchGraph.Link(batch, b, distance);
-                        ++batchEdgeCountMap[batch];
-                        --batchEdgeCountMap[b];
+                        break;
+                    }
+
+                    it.distanceMap.Continue(goals);
+                    foreach (var batch in batches)
+                    {
+                        if (it.distanceMap.Distances.TryGetValue(batch.Root, out var distance))
+                        {
+                            if (distance != 0.0)
+                            {
+                                batchGraph.Link(it, batch, distance);
+                                goals.Remove(batch.Root);
+                            }
+                        }
                     }
                 }
-
             }
         }
 

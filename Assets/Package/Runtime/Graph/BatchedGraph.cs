@@ -27,12 +27,13 @@ namespace TSKT
 
             var batches = new List<Batch>();
             var reversedGraph = new Graph<Batch>();
+            var referenceCountMap = new IntDictionary<T>();
 
-            var tasks = new Graphs.PriorityQueue<T>();
-            tasks.Enqueue(0.0, startNode);
+            var tasks = new Graphs.DoublePriorityQueue<T>();
+            tasks.Enqueue(0.0, 0.0, startNode);
             while (tasks.Count > 0)
             {
-                var root = tasks.Dequeue();
+                var root = tasks.Dequeue().item;
 
                 var foundUnknownEdge = false;
                 foreach (var (endNode, weight) in graph.GetEdgesFrom(root))
@@ -57,6 +58,7 @@ namespace TSKT
                 foreach (var it in newBatch.distanceMap.Distances)
                 {
                     var node = it.Key;
+                    ++referenceCountMap[node];
                     if (nodeBatchMap.TryGetValue(node, out var currentBatch))
                     {
                         if (currentBatch == newBatch)
@@ -75,7 +77,7 @@ namespace TSKT
                     {
                         nodeBatchMap.Add(node, newBatch);
 
-                        tasks.Enqueue(-it.Value, node);
+                        tasks.Enqueue(-referenceCountMap[node], -it.Value, node);
                     }
                 }
             }

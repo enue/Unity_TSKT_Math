@@ -11,6 +11,7 @@ namespace TSKT
         {
             public T Root => distanceMap.Start;
             readonly public DistanceMap<T> distanceMap;
+            public AStarSearch<Batch>? BatchSearch { get; set; }
 
             public Batch(DistanceMap<T> distanceMap)
             {
@@ -20,10 +21,12 @@ namespace TSKT
         public readonly Graph<Batch> batchGraph = new Graph<Batch>();
         public readonly Dictionary<T, Batch> nodeBatchMap = new Dictionary<T, Batch>();
         public readonly IGraph<T> graph;
+        public readonly System.Func<T, T, double> heuristicFunction;
 
-        public BatchedGraph(IGraph<T> graph, T startNode, double batchRadius, double batchEdgeLength)
+        public BatchedGraph(IGraph<T> graph, T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction = null)
         {
             this.graph = graph;
+            this.heuristicFunction = heuristicFunction;
 
             var batches = new List<Batch>();
             var reversedGraph = new Graph<Batch>();
@@ -77,7 +80,14 @@ namespace TSKT
                     {
                         nodeBatchMap.Add(node, newBatch);
 
-                        tasks.Enqueue(-referenceCountMap[node], -it.Value, node);
+                        if (heuristicFunction == null)
+                        {
+                            tasks.Enqueue(-referenceCountMap[node], -it.Value, node);
+                        }
+                        else
+                        {
+                            tasks.Enqueue(-referenceCountMap[node], -heuristicFunction(root, node), node);
+                        }
                     }
                 }
                 if (batchEdgeLength > batchRadius)
@@ -148,48 +158,84 @@ namespace TSKT
         {
             yield return start.Root;
 
-            var batchDistance = new DistanceMap<Batch>(batchGraph, start, goal);
-            var batchPath = batchDistance.SearchPaths(goal).First();
-            for (int i = 1; i < batchPath.Length; ++i)
+            Batch[] path;
+            if (heuristicFunction == null)
             {
-                var fromBatch = batchPath[i - 1];
-                var toBatch = batchPath[i];
+                var batchDistance = new DistanceMap<Batch>(batchGraph, start, goal);
+                path = batchDistance.SearchPaths(goal).First();
+            }
+            else
+            {
+                if (!start.BatchSearch.HasValue)
+                {
+                    start.BatchSearch = new AStarSearch<Batch>(batchGraph, start, (x, y) => heuristicFunction(x.Root, y.Root));
+                }
+                path = start.BatchSearch.Value.SearchPath(goal);
+            }
 
-                var toTransitPath = fromBatch.distanceMap.SearchPaths(toBatch.Root).First();
-                foreach (var it in toTransitPath.Skip(1))
+            for (int i = 1; i < path.Length; ++i)
+            {
+                var fromBatch = path[i - 1];
+                var toBatch = path[i];
+
+                var nodePath = fromBatch.distanceMap.SearchPaths(toBatch.Root).First();
+                foreach (var it in nodePath.Skip(1))
                 {
                     yield return it;
                 }
             }
-
         }
 
         public IEnumerable<T> GetPath(T start, T goal)
         {
-            if (!nodeBatchMap.TryGetValue(goal, out var goalBatch))
+            if (!nodeBatchMap.TryGetValue(goal, out var lastBatch))
             {
                 yield break;
             }
 
-            var roots = new HashSet<T>(batchGraph.StartingNodes.Select(_ => _.Root));
-            var startToBatch = new DistanceMap<T>(graph, start, roots);
-            var startBatchRoot = roots.First(_ => startToBatch.Distances.ContainsKey(_));
-            var startBatch = nodeBatchMap[startBatchRoot];
-
+            Batch firstBatch;
+            if (heuristicFunction == null)
             {
-                var startToRoot = startToBatch.SearchPaths(startBatchRoot).First();
-                foreach (var it in startToRoot)
+                var roots = new HashSet<T>(batchGraph.StartingNodes.Select(_ => _.Root));
+                var startToBatch = new DistanceMap<T>(graph, start, roots);
+                var firstRoot = roots.First(_ => startToBatch.Distances.ContainsKey(_));
+                var startToFirstRoot = startToBatch.SearchPaths(firstRoot).FirstOrDefault();
+                if (startToFirstRoot == null)
+                {
+                    yield break;
+                }
+
+                firstBatch = nodeBatchMap[firstRoot];
+
+                foreach (var it in startToFirstRoot)
+                {
+                    yield return it;
+                }
+            }
+            else
+            {
+                var roots = batchGraph.StartingNodes.Select(_ => _.Root).ToArray();
+                var aStarSearch = new AStarSearch<T>(graph, start, heuristicFunction);
+                var startToFirstRoot = aStarSearch.SearchPath(roots);
+                if (startToFirstRoot == null)
+                {
+                    yield break;
+                }
+
+                firstBatch = nodeBatchMap[startToFirstRoot[startToFirstRoot.Length - 1]];
+
+                foreach (var it in startToFirstRoot)
                 {
                     yield return it;
                 }
             }
 
-            foreach(var it in GetBatchToBatchPath(startBatch, goalBatch).Skip(1))
+            foreach(var it in GetBatchToBatchPath(firstBatch, lastBatch).Skip(1))
             {
                 yield return it;
             }
             {
-                var goalFromRoot = goalBatch.distanceMap.SearchPaths(goal).First().Skip(1);
+                var goalFromRoot = lastBatch.distanceMap.SearchPaths(goal).First().Skip(1);
                 foreach (var it in goalFromRoot)
                 {
                     yield return it;

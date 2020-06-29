@@ -21,7 +21,7 @@ namespace TSKT
         public readonly Dictionary<T, Batch> nodeBatchMap = new Dictionary<T, Batch>();
         public readonly IGraph<T> graph;
 
-        public BatchedGraph(IGraph<T> graph, T startNode, double batchRadius)
+        public BatchedGraph(IGraph<T> graph, T startNode, double batchRadius, double batchEdgeLength)
         {
             this.graph = graph;
 
@@ -79,6 +79,10 @@ namespace TSKT
 
                         tasks.Enqueue(-referenceCountMap[node], -it.Value, node);
                     }
+                }
+                if (batchEdgeLength > batchRadius)
+                {
+                    newBatch.distanceMap.Continue(null, batchEdgeLength);
                 }
             }
 

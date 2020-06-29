@@ -18,15 +18,15 @@ namespace TSKT
             {
                 for (int j = 0; j < board.Height; ++j)
                 {
-                   // var r = Mathf.PerlinNoise(i * 0.5f, j * 0.5f) * 8f;
-                    var r = UnityEngine.Random.Range(0f, 10f);
+                    var r = Mathf.PerlinNoise(i * 0.5f, j * 0.5f) * 8f;
+                   // var r = UnityEngine.Random.Range(0f, 10f);
                     board.SetCost(i, j, r + 1f);
                 }
             }
 
             var batchedGraph = new BatchedGraph<Vector2Int>(board,
                 new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height)),
-                50.0);
+                25.0, 50.0);
 
             foreach (var it in batchedGraph.nodeBatchMap)
             {

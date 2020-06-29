@@ -13,7 +13,7 @@ namespace TSKT.Tests
         {
             var board = new Board(100, 100);
 
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0);
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0);
 
             for (int i = 0; i < 100; ++i)
             {
@@ -28,7 +28,7 @@ namespace TSKT.Tests
         {
             var size = 10;
             var board = new Board(size, size);
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 3.0);
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 3.0, 3.0);
 
             for (int i = 0; i < size; ++i)
             {
@@ -51,7 +51,7 @@ namespace TSKT.Tests
         {
             var board = new Board(100, 100);
 
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0);
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0);
 
             for (int i = 0; i < 100; ++i)
             {

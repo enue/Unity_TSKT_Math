@@ -188,6 +188,36 @@ namespace TSKT
 
         public IEnumerable<T> GetPath(T start, T goal)
         {
+            if (!nodeBatchMap.TryGetValue(goal, out var lastBatch))
+            {
+                if (heuristicFunction == null)
+                {
+                    var distanceMap = new DistanceMap<T>(graph, start, new HashSet<T>() { goal });
+                    var path = distanceMap.SearchPaths(goal).FirstOrDefault();
+                    if (path != null)
+                    {
+                        foreach (var it in path)
+                        {
+                            yield return it;
+                        }
+                    }
+                }
+                else
+                {
+                    var aStar = new AStarSearch<T>(graph, start, heuristicFunction);
+                    var path = aStar.SearchPath(goal);
+                    if (path != null)
+                    {
+                        foreach (var it in path)
+                        {
+                            yield return it;
+                        }
+                    }
+                }
+
+                yield break;
+            }
+
             T firstRoot;
             T[] startToFirstRoot;
             if (heuristicFunction == null)
@@ -232,11 +262,6 @@ namespace TSKT
                 {
                     yield return it;
                 }
-                yield break;
-            }
-
-            if (!nodeBatchMap.TryGetValue(goal, out var lastBatch))
-            {
                 yield break;
             }
 

@@ -30,7 +30,13 @@ namespace TSKT
                 this.memo = memo;
             }
         }
+
         public T[] SearchPath(params T[] goals)
+        {
+            return SearchPath(double.PositiveInfinity, goals);
+        }
+
+        public T[] SearchPath(double maxDistance, params T[] goals)
         {
             var containsAllGoals = true;
             var minDistance = double.PositiveInfinity;
@@ -55,15 +61,20 @@ namespace TSKT
             {
                 return memo.SearchPaths(nearestGoal).First();
             }
-            return SearchPaths(goals, searchAllPaths: false).FirstOrDefault();
+            return SearchPaths(goals, searchAllPaths: false, maxDistance: maxDistance).FirstOrDefault();
         }
 
         public IEnumerable<T[]> SearchAllPaths(params T[] goals)
         {
-            return SearchPaths(goals, searchAllPaths: true);
+            return SearchAllPaths(double.PositiveInfinity, goals);
         }
 
-        IEnumerable<T[]> SearchPaths(T[] goals, bool searchAllPaths)
+        public IEnumerable<T[]> SearchAllPaths(double maxDistance, params T[] goals)
+        {
+            return SearchPaths(goals, searchAllPaths: true, maxDistance: maxDistance);
+        }
+
+        IEnumerable<T[]> SearchPaths(T[] goals, bool searchAllPaths, double maxDistance)
         {
             var cloneReversedEdges = new Dictionary<T, HashSet<T>>(memo.ReversedEdges.Count);
             foreach (var it in memo.ReversedEdges)
@@ -124,37 +135,39 @@ namespace TSKT
                 foreach (var (next, edgeWeight) in graph.GetEdgesFrom(currentNode))
                 {
                     var startToNextNodeDistance = edgeWeight + startToCurrentNodeDistance;
-
-                    if (distanceMap.Distances.TryGetValue(next, out var oldDistance))
+                    if (startToNextNodeDistance <= maxDistance)
                     {
-                        if (oldDistance >= startToNextNodeDistance)
+                        if (distanceMap.Distances.TryGetValue(next, out var oldDistance))
                         {
-                            var nearNodes = distanceMap.ReversedEdges[next];
-                            if (oldDistance > startToNextNodeDistance)
+                            if (oldDistance >= startToNextNodeDistance)
                             {
-                                nearNodes.Clear();
+                                var nearNodes = distanceMap.ReversedEdges[next];
+                                if (oldDistance > startToNextNodeDistance)
+                                {
+                                    nearNodes.Clear();
+                                }
+                                nearNodes.Add(currentNode);
                             }
+
+                            if (oldDistance <= startToNextNodeDistance)
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            var nearNodes = new HashSet<T>();
+                            distanceMap.ReversedEdges.Add(next, nearNodes);
                             nearNodes.Add(currentNode);
                         }
 
-                        if (oldDistance <= startToNextNodeDistance)
-                        {
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        var nearNodes = new HashSet<T>();
-                        distanceMap.ReversedEdges.Add(next, nearNodes);
-                        nearNodes.Add(currentNode);
-                    }
+                        distanceMap.Distances[next] = startToNextNodeDistance;
 
-                    distanceMap.Distances[next] = startToNextNodeDistance;
-
-                    var h = heuristicFunction;
-                    var nextExpectedDistance = goals.Min(_ => h(next, _)) + startToNextNodeDistance;
-                    // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
-                    tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, next);
+                        var h = heuristicFunction;
+                        var nextExpectedDistance = goals.Min(_ => h(next, _)) + startToNextNodeDistance;
+                        // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
+                        tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, next);
+                    }
                 }
             }
 

@@ -31,6 +31,7 @@ namespace TSKT
             var batches = new List<Batch>();
             var reversedGraph = new Graph<Batch>();
             var referenceCountMap = new IntDictionary<T>();
+            var taskFinishedNodes = new HashSet<T>();
 
             var tasks = new Graphs.DoublePriorityQueue<T>();
             tasks.Enqueue(0.0, 0.0, startNode);
@@ -38,8 +39,14 @@ namespace TSKT
             {
                 var root = tasks.Dequeue().item;
 
+                if (taskFinishedNodes.Contains(root))
+                {
+                    continue;
+                }
+                taskFinishedNodes.Add(root);
+
                 var foundUnknownEdge = false;
-                foreach (var (endNode, weight) in graph.GetEdgesFrom(root))
+                foreach (var (endNode, _) in graph.GetEdgesFrom(root))
                 {
                     if (!nodeBatchMap.ContainsKey(endNode))
                     {
@@ -47,7 +54,6 @@ namespace TSKT
                         break;
                     }
                 }
-
                 if (!foundUnknownEdge)
                 {
                     continue;
@@ -80,13 +86,16 @@ namespace TSKT
                     {
                         nodeBatchMap.Add(node, newBatch);
 
-                        if (heuristicFunction == null)
+                        if (!taskFinishedNodes.Contains(node))
                         {
-                            tasks.Enqueue(-referenceCountMap[node], -it.Value, node);
-                        }
-                        else
-                        {
-                            tasks.Enqueue(-referenceCountMap[node], -heuristicFunction(root, node), node);
+                            if (heuristicFunction == null)
+                            {
+                                tasks.Enqueue(-referenceCountMap[node], -it.Value, node);
+                            }
+                            else
+                            {
+                                tasks.Enqueue(-referenceCountMap[node], -heuristicFunction(root, node), node);
+                            }
                         }
                     }
                 }

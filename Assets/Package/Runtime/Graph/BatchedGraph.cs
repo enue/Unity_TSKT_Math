@@ -163,34 +163,46 @@ namespace TSKT
         }
 
 
-        IEnumerable<T> GetBatchToBatchPath(Batch start, Batch goal)
+        IEnumerable<T> GetBatchToGoalPath(Batch startBatch, Batch lastBatch, T goal)
         {
-            yield return start.Root;
+            yield return startBatch.Root;
 
             Batch[] path;
             if (heuristicFunction == null)
             {
-                var batchDistance = new DistanceMap<Batch>(batchGraph, start, goal);
-                path = batchDistance.SearchPaths(goal).First();
+                var batchDistance = new DistanceMap<Batch>(batchGraph, startBatch, lastBatch);
+                path = batchDistance.SearchPaths(lastBatch).First();
             }
             else
             {
-                if (!start.BatchSearch.HasValue)
+                if (!startBatch.BatchSearch.HasValue)
                 {
-                    start.BatchSearch = new AStarSearch<Batch>(batchGraph, start, (x, y) => heuristicFunction(x.Root, y.Root));
+                    startBatch.BatchSearch = new AStarSearch<Batch>(batchGraph, startBatch, (x, y) => heuristicFunction(x.Root, y.Root));
                 }
-                path = start.BatchSearch.Value.SearchPath(goal);
+                path = startBatch.BatchSearch.Value.SearchPath(lastBatch);
             }
 
-            for (int i = 1; i < path.Length; ++i)
+            for (int i = 0; i < path.Length; ++i)
             {
-                var fromBatch = path[i - 1];
-                var toBatch = path[i];
+                var fromBatch = path[i];
 
-                var nodePath = fromBatch.distanceMap.SearchPaths(toBatch.Root).First();
-                foreach (var it in nodePath.Skip(1))
+                if (fromBatch.distanceMap.Distances.ContainsKey(goal))
                 {
-                    yield return it;
+                    var nodePath = fromBatch.distanceMap.SearchPaths(goal).First();
+                    foreach (var it in nodePath.Skip(1))
+                    {
+                        yield return it;
+                    }
+                    break;
+                }
+                else
+                {
+                    var toBatch = path[i + 1];
+                    var nodePath = fromBatch.distanceMap.SearchPaths(toBatch.Root).First();
+                    foreach (var it in nodePath.Skip(1))
+                    {
+                        yield return it;
+                    }
                 }
             }
         }
@@ -278,16 +290,9 @@ namespace TSKT
             {
                 yield return it;
             }
-            foreach (var it in GetBatchToBatchPath(firstBatch, lastBatch).Skip(1))
+            foreach (var it in GetBatchToGoalPath(firstBatch, lastBatch, goal).Skip(1))
             {
                 yield return it;
-            }
-            {
-                var goalFromRoot = lastBatch.distanceMap.SearchPaths(goal).First().Skip(1);
-                foreach (var it in goalFromRoot)
-                {
-                    yield return it;
-                }
             }
         }
     }

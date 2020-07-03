@@ -132,32 +132,45 @@ namespace TSKT
                 }
             }
 
+            var startNodeBatch = nodeBatchMap[startNode];
+            var linkedBatches = new HashSet<T>();
+            var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
-                // 自分に枝を向けているノードに対して双方向になるまで検索範囲を伸ばす。
-                // ただし完全に一方通行なノードだった場合は全検索になってしまうので、うまく連結グラフを成立させるよう修正する必要がある
-                var requiredGoals = new HashSet<T>(reversedGraph.GetEdgesFrom(it).Select(_ => _.endNode.Root));
-                requiredGoals.ExceptWith(batchGraph.GetEdgesFrom(it).Select(_ => _.endNode.Root));
-
-                while (requiredGoals.Count > 0)
+                var map = new DistanceMap<Batch>(batchGraph, it, startNodeBatch);
+                if (map.Distances.ContainsKey(startNodeBatch))
                 {
-                    if (it.distanceMap.Finished)
+                    linkedBatches.Add(it.Root);
+                }
+                else
+                {
+                    unlinkedBatches.Add(it);
+                }
+            }
+            IEnumerable<Batch> sortedUnlinkcedBatches;
+            if (heuristicFunction == null)
+            {
+                sortedUnlinkcedBatches = unlinkedBatches;
+            }
+            else
+            {
+                sortedUnlinkcedBatches = unlinkedBatches.OrderBy(_ => heuristicFunction(startNode, _.Root));
+            }
+            foreach (var it in sortedUnlinkcedBatches)
+            {
+                it.distanceMap.Continue(linkedBatches);
+                var linked = false;
+                foreach (var linkedBatch in linkedBatches)
+                {
+                    if (it.distanceMap.Distances.TryGetValue(linkedBatch, out var distance))
                     {
-                        break;
+                        batchGraph.Link(it, nodeBatchMap[linkedBatch], distance);
+                        linked = true;
                     }
-
-                    it.distanceMap.Continue(requiredGoals);
-                    foreach (var batch in batches)
-                    {
-                        if (it.distanceMap.Distances.TryGetValue(batch.Root, out var distance))
-                        {
-                            if (distance != 0.0)
-                            {
-                                batchGraph.Link(it, batch, distance);
-                                requiredGoals.Remove(batch.Root);
-                            }
-                        }
-                    }
+                }
+                if (linked)
+                {
+                    linkedBatches.Add(it.Root);
                 }
             }
         }

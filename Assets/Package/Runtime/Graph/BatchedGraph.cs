@@ -18,6 +18,32 @@ namespace TSKT
                 this.distanceMap = distanceMap;
             }
         }
+
+        class PathCombine
+        {
+            public readonly List<T> combinedPath = new List<T>();
+            int fixedCount = 0;
+
+            public void Append(T[] path)
+            {
+                var nextFixedCount = combinedPath.Count;
+                foreach (var it in path)
+                {
+                    var index = combinedPath.IndexOf(it, fixedCount);
+                    if (index >= 0)
+                    {
+                        combinedPath.RemoveRange(index + 1, combinedPath.Count - index - 1);
+                        nextFixedCount = Mathf.Min(nextFixedCount, index + 1);
+                    }
+                    else
+                    {
+                        combinedPath.Add(it);
+                    }
+                }
+                fixedCount = nextFixedCount;
+            }
+        }
+
         public readonly Graph<Batch> batchGraph = new Graph<Batch>();
         public readonly Dictionary<T, Batch> nodeBatchMap = new Dictionary<T, Batch>();
         public readonly IGraph<T> graph;
@@ -176,10 +202,8 @@ namespace TSKT
         }
 
 
-        IEnumerable<T> GetBatchToGoalPath(Batch startBatch, Batch lastBatch, T goal)
+        IEnumerable<T[]> GetBatchToGoalPath(Batch startBatch, Batch lastBatch, T goal)
         {
-            yield return startBatch.Root;
-
             Batch[] path;
             if (heuristicFunction == null)
             {
@@ -202,20 +226,14 @@ namespace TSKT
                 if (fromBatch.distanceMap.Distances.ContainsKey(goal))
                 {
                     var nodePath = fromBatch.distanceMap.SearchPaths(goal).First();
-                    foreach (var it in nodePath.Skip(1))
-                    {
-                        yield return it;
-                    }
+                    yield return nodePath;
                     break;
                 }
                 else
                 {
                     var toBatch = path[i + 1];
                     var nodePath = fromBatch.distanceMap.SearchPaths(toBatch.Root).First();
-                    foreach (var it in nodePath.Skip(1))
-                    {
-                        yield return it;
-                    }
+                    yield return nodePath;
                 }
             }
         }
@@ -299,11 +317,13 @@ namespace TSKT
                 yield break;
             }
 
-            foreach (var it in startToFirstRoot)
+            var pathCombine = new PathCombine();
+            pathCombine.Append(startToFirstRoot);
+            foreach (var it in GetBatchToGoalPath(firstBatch, lastBatch, goal))
             {
-                yield return it;
+                pathCombine.Append(it);
             }
-            foreach (var it in GetBatchToGoalPath(firstBatch, lastBatch, goal).Skip(1))
+            foreach (var it in pathCombine.combinedPath)
             {
                 yield return it;
             }

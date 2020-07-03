@@ -47,6 +47,69 @@ namespace TSKT.Tests
             }
         }
 
+        [Test]
+        //[TestCase(0, 0, 20, 20)]
+        //[TestCase(20, 0, 20, 20)]
+        //[TestCase(40, 0, 20, 20)]
+        //[TestCase(60, 0, 20, 20)]
+        [TestCase(80, 0, 20, 20)]
+        //[TestCase(0, 20, 20, 20)]
+        [TestCase(20, 20, 20, 20)]
+        [TestCase(40, 20, 20, 20)]
+        [TestCase(60, 20, 20, 20)]
+        //[TestCase(80, 20, 20, 20)]
+        [TestCase(0, 40, 20, 20)]
+        //[TestCase(20, 40, 20, 20)]
+        //[TestCase(40, 40, 20, 20)]
+        //[TestCase(60, 40, 20, 20)]
+        //[TestCase(80, 40, 20, 20)]
+        //[TestCase(0, 60, 20, 20)]
+        [TestCase(20, 60, 20, 20)]
+        [TestCase(40, 60, 20, 20)]
+        [TestCase(60, 60, 20, 20)]
+        //[TestCase(80, 60, 20, 20)]
+        //[TestCase(0, 80, 20, 20)]
+        //[TestCase(20, 80, 20, 20)]
+        //[TestCase(40, 80, 20, 20)]
+        //[TestCase(60, 80, 20, 20)]
+        //[TestCase(80, 80, 20, 20)]
+        public void ComTest(int startX, int startY, int xCount, int yCount)
+        {
+            var board = new Board(100, 100);
+
+            for (int i = 0; i < board.Width; ++i)
+            {
+                for (int j = 0; j < board.Height; ++j)
+                {
+                    var r = Mathf.PerlinNoise(i * 0.5f, j * 0.5f) * 8f;
+                    board.SetCost(i, j, r + 1f);
+                }
+            }
+
+            var batchedGraph = new BatchedGraph<Vector2Int>(board,
+                new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height)),
+                25.0, 50.0,
+                (x, y) => TSKT.Vector2IntUtil.GetManhattanDistance(x, y));
+
+            for (int i = startX; i < startX + xCount; ++i)
+            {
+                for (int j = startY; j < startY + yCount; ++j)
+                {
+                    var start = new Vector2Int(i, j);
+                    var s = batchedGraph.GetStartintPoint(start);
+                    for (int p = startX; p < startX + xCount; ++p)
+                    {
+                        for (int q = startY; q < startY + yCount; ++q)
+                        {
+                            var goal = new Vector2Int(p, q);
+                            s.GetPath(goal).ToArray();
+                        }
+                    }
+                }
+            }
+
+        }
+
         public void Performance()
         {
             var board = new Board(100, 100);

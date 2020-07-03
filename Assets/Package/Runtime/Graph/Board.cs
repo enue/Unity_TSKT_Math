@@ -7,7 +7,7 @@ namespace TSKT
 {
     public class Board : IGraph<Vector2Int>
     {
-        readonly double?[,] costs;
+        public readonly double?[,] costs;
         public DirectionMap<double> DirectionCostMap { get; set; }
 
         public Board(int w, int h)
@@ -95,7 +95,25 @@ namespace TSKT
                 }
             }
             minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0.0;
-            return new AStarSearch<Vector2Int>(this, start, (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * minCost);
+            return new AStarSearch<Vector2Int>(this, start, GetHeuristicFunctionForAStarSearch());
+        }
+
+        public System.Func<Vector2Int, Vector2Int, double> GetHeuristicFunctionForAStarSearch()
+        {
+            var minCost = double.PositiveInfinity;
+            foreach (var it in costs)
+            {
+                if (it.HasValue)
+                {
+                    if (minCost > it.Value)
+                    {
+                        minCost = it.Value;
+                    }
+                }
+            }
+            minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0.0;
+            UnityEngine.Assertions.Assert.IsTrue(minCost > 0.0);
+            return (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * minCost;
         }
     }
 }

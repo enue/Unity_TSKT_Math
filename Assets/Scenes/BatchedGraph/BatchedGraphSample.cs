@@ -27,7 +27,7 @@ namespace TSKT
             var batchedGraph = new BatchedGraph<Vector2Int>(board,
                 new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height)),
                 25.0, 50.0,
-                (x, y) => Vector2IntUtil.GetManhattanDistance(x, y));
+                board.GetHeuristicFunctionForAStarSearch());
 
             foreach (var it in batchedGraph.nodeBatchMap)
             {

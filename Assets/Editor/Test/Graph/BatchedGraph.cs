@@ -73,7 +73,7 @@ namespace TSKT.Tests
         //[TestCase(40, 80, 20, 20)]
         //[TestCase(60, 80, 20, 20)]
         //[TestCase(80, 80, 20, 20)]
-        public void ComTest(int startX, int startY, int xCount, int yCount)
+        public void ConstantTest(int startX, int startY, int xCount, int yCount)
         {
             var board = new Board(100, 100);
 
@@ -89,7 +89,7 @@ namespace TSKT.Tests
             var batchedGraph = new BatchedGraph<Vector2Int>(board,
                 new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height)),
                 25.0, 50.0,
-                (x, y) => TSKT.Vector2IntUtil.GetManhattanDistance(x, y));
+                board.GetHeuristicFunctionForAStarSearch());
 
             for (int i = startX; i < startX + xCount; ++i)
             {

@@ -8,6 +8,8 @@ namespace TSKT
     public class Board : IGraph<Vector2Int>
     {
         public readonly double?[,] costs;
+        public int Width => costs.GetLength(0);
+        public int Height => costs.GetLength(1);
         public DirectionMap<double> DirectionCostMap { get; set; }
 
         public Board(int w, int h)
@@ -73,9 +75,6 @@ namespace TSKT
             }
         }
 
-        public int Width => costs.GetLength(0);
-        public int Height => costs.GetLength(1);
-
         public DistanceMap<Vector2Int> ComputeDistancesFrom(Vector2Int node, double maxDistance = double.PositiveInfinity)
         {
             return new DistanceMap<Vector2Int>(this, node, maxDistance);
@@ -112,8 +111,17 @@ namespace TSKT
                 }
             }
             minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0.0;
+
             UnityEngine.Assertions.Assert.IsTrue(minCost > 0.0);
-            return (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * minCost;
+
+            var lessEffectiveDigit = minCost * Width * Height * Unity.Mathematics.math.pow(2.0, -54.0);
+            var cost = minCost - lessEffectiveDigit;
+            if (cost < 0.0)
+            {
+                cost = 0.0;
+            }
+
+            return (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * cost;
         }
     }
 }

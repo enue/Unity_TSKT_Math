@@ -141,41 +141,57 @@ namespace TSKT.Tests
                     board.SetCost(i, j, TSKT.Random.Range(1.0, 2.0));
                 }
             }
-            var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
 
-            var goals = new List<Vector2Int>();
+            var problems = new List<(Vector2Int start, Vector2Int goal)>();
             for (int i = 0; i < 100; ++i)
             {
-                goals.Add(new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height)));
+                problems.Add(
+                    (new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height)),
+                    new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height))));
             }
 
             long batchedScore;
             long aStarScore;
+            long dijkstraScore;
 
-            var sw = new System.Diagnostics.Stopwatch();
             {
+                var sw = new System.Diagnostics.Stopwatch();
                 sw.Start();
-                var graph = new BatchedGraph<Vector2Int>(board, start, 10.0, 10.0);
-                foreach (var goal in goals)
+                var graph = new BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0, board.GetHeuristicFunctionForAStarSearch());
+                foreach (var (start, goal) in problems)
                 {
                     var path = graph.GetPath(start, goal).ToArray();
                 }
                 sw.Stop();
                 batchedScore = sw.ElapsedMilliseconds;
             }
-
             {
+                var sw = new System.Diagnostics.Stopwatch();
                 sw.Restart();
-                var aStar = board.CreateAStarSearch(start);
-                foreach (var goal in goals)
+                foreach (var (start, goal) in problems)
                 {
+                    var aStar = board.CreateAStarSearch(start);
                     var path = aStar.SearchPath(goal).ToArray();
                 }
+                sw.Stop();
                 aStarScore = sw.ElapsedMilliseconds;
+            }
+
+            {
+                var sw = new System.Diagnostics.Stopwatch();
+                sw.Restart();
+                foreach (var (start, goal) in problems)
+                {
+                    var distanceMap = board.ComputeDistancesFrom(start);
+                    var path = distanceMap.SearchPaths(goal).First();
+                }
+                sw.Stop();
+                dijkstraScore = sw.ElapsedMilliseconds;
             }
 
             Debug.Log("Batched : " + batchedScore + "ms");
             Debug.Log("aStar : " + aStarScore + "ms");
+            Debug.Log("dijkstra : " + dijkstraScore + "ms");
         }
     }
 }

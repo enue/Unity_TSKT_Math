@@ -129,5 +129,53 @@ namespace TSKT.Tests
                 Debug.Log(path.Length + " / " + completePath.Length + " from " + start + " to " + goal);
             }
         }
+
+        [Test]
+        public void CompareAStarAndBatched()
+        {
+            var board = new Board(100, 100);
+            for (int i = 0; i < board.Width; ++i)
+            {
+                for (int j = 0; j < board.Height; ++j)
+                {
+                    board.SetCost(i, j, TSKT.Random.Range(1.0, 2.0));
+                }
+            }
+            var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
+
+            var goals = new List<Vector2Int>();
+            for (int i = 0; i < 100; ++i)
+            {
+                goals.Add(new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height)));
+            }
+
+            long batchedScore;
+            long aStarScore;
+
+            var sw = new System.Diagnostics.Stopwatch();
+            {
+                sw.Start();
+                var graph = new BatchedGraph<Vector2Int>(board, start, 10.0, 10.0);
+                foreach (var goal in goals)
+                {
+                    var path = graph.GetPath(start, goal).ToArray();
+                }
+                sw.Stop();
+                batchedScore = sw.ElapsedMilliseconds;
+            }
+
+            {
+                sw.Restart();
+                var aStar = board.CreateAStarSearch(start);
+                foreach (var goal in goals)
+                {
+                    var path = aStar.SearchPath(goal).ToArray();
+                }
+                aStarScore = sw.ElapsedMilliseconds;
+            }
+
+            Debug.Log("Batched : " + batchedScore + "ms");
+            Debug.Log("aStar : " + aStarScore + "ms");
+        }
     }
 }

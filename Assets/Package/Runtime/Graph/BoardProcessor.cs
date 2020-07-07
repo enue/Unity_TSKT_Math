@@ -6,6 +6,8 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
+#if TSKT_MATH_BURST_SUPPORT
+
 namespace TSKT
 {
     [BurstCompile]
@@ -73,14 +75,14 @@ namespace TSKT
 
         readonly struct Edge
         {
-            readonly public int from;
-            readonly public int to;
+            readonly public int start;
+            readonly public int end;
             readonly public double weight;
 
-            public Edge(int from, int to, double weight)
+            public Edge(int start, int end, double weight)
             {
-                this.from = from;
-                this.to = to;
+                this.start = start;
+                this.end = end;
                 this.weight = weight;
             }
         }
@@ -95,62 +97,49 @@ namespace TSKT
         Queue tasks;
         NativeArray<double> distances;
 
-        public static DistanceMap<Vector2Int> Calculate(Vector2Int pivot, List<Vector2Int> allNodes, IGraph<Vector2Int> graph, double maxDistance)
+        public static DistanceMap<Vector2Int> Calculate(Vector2Int startNode, List<Vector2Int> nodes, IGraph<Vector2Int> graph, double maxDistance)
         {
-            var sortedCells = allNodes.ToArray();
+            var sortedCells = nodes.ToArray();
             Array.Sort(sortedCells, Vector2IntComparer.Comparison);
 
-            var edges = new Dictionary<int, List<(int to, double weight)>>();
-            for (int fromId = 0; fromId < sortedCells.Length; ++fromId)
+            var edges = new Dictionary<int, List<(int end, double weight)>>();
+            for (var startNodeId = 0; startNodeId < sortedCells.Length; ++startNodeId)
             {
-                List<(int, double)> toWeightMap = null;
-                foreach (var (next, weight) in graph.GetNextNodeDistancesFrom(sortedCells[fromId]))
+                List<(int, double)> weightMap = null;
+                foreach (var (endNode, weight) in graph.GetEdgesFrom(sortedCells[startNodeId]))
                 {
-                    var nextId = Array.BinarySearch(sortedCells, next, Vector2IntComparer.Instance);
-                    if (nextId >= 0)
+                    var endNodeId = Array.BinarySearch(sortedCells, endNode, Vector2IntComparer.Instance);
+                    if (endNodeId >= 0)
                     {
-                        if (toWeightMap == null)
+                        if (weightMap == null)
                         {
-                            if (!edges.TryGetValue(fromId, out toWeightMap))
+                            if (!edges.TryGetValue(startNodeId, out weightMap))
                             {
-                                toWeightMap = new List<(int, double)>();
-                                edges.Add(fromId, toWeightMap);
+                                weightMap = new List<(int, double)>();
+                                edges.Add(startNodeId, weightMap);
                             }
                         }
-                        toWeightMap.Add((nextId, weight));
+                        weightMap.Add((endNodeId, weight));
                     }
                 }
             }
-            var pivotId = Array.BinarySearch(sortedCells, pivot, Vector2IntComparer.Instance);
+            var pivotId = Array.BinarySearch(sortedCells, startNode, Vector2IntComparer.Instance);
             Debug.Assert(pivotId >= 0);
 
             return Calculate(pivotId, sortedCells, edges, maxDistance);
         }
 
         public static DistanceMap<T> Calculate<T>(
-            int pivotIndex,
+            int startNodeIndex,
             T[] nodes,
-            Dictionary<int, List<(int to, double weight)>> edges,
+            Dictionary<int, List<(int endNodeIndex, double weight)>> edges,
             double maxDistance)
         {
-            using (var processor = new BoardProcessor(pivotIndex, edges, maxDistance))
+            using (var processor = new BoardProcessor(startNodeIndex, edges, maxDistance))
             {
                 var jobHandle = processor.Schedule();
-
-                // jobが回っている間に処理する
-                var finalEdges = new Dictionary<T, (T, double)[]>(edges.Count);
-                foreach (var it in edges)
-                {
-                    var builder = new ArrayBuilder<(T, double)>(it.Value.Count);
-                    foreach (var (to, weight) in it.Value)
-                    {
-                        builder.Add((nodes[to], weight));
-                    }
-
-                    finalEdges.Add(nodes[it.Key], builder.Array);
-                }
-
                 jobHandle.Complete();
+
                 var distances = new Dictionary<T, double>(edges.Count);
                 for (int i = 0; i < processor.distances.Length; ++i)
                 {
@@ -161,10 +150,30 @@ namespace TSKT
                     }
                 }
 
+                var reversedEdges = new Dictionary<T, HashSet<T>>(edges.Count);
+                foreach (var it in edges)
+                {
+                    var startNode = it.Key;
+                    var startNodeDistance = processor.distances[startNode];
+                    foreach (var (endNodeIndex, weight) in it.Value)
+                    {
+                        var endNodeDistance = processor.distances[endNodeIndex];
+                        if (startNodeDistance + weight == endNodeDistance)
+                        {
+                            if (!reversedEdges.TryGetValue(nodes[endNodeIndex], out var startNodes))
+                            {
+                                startNodes = new HashSet<T>();
+                                reversedEdges.Add(nodes[endNodeIndex], startNodes);
+                            }
+                            startNodes.Add(nodes[startNode]);
+                        }
+                    }
+                }
+
                 return new DistanceMap<T>(
-                    pivot: nodes[pivotIndex],
+                    start: nodes[startNodeIndex],
                     distances: distances,
-                    edges: finalEdges);
+                    reversedEdges: reversedEdges);
             }
         }
 
@@ -218,7 +227,7 @@ namespace TSKT
                 for (int i = index; i < edges.Length; ++i)
                 {
                     var edge = edges[i];
-                    if (edge.from == node)
+                    if (edge.start == node)
                     {
                         found = true;
                         var newWeight = edge.weight + distances[node];
@@ -227,15 +236,15 @@ namespace TSKT
                             continue;
                         }
 
-                        if (double.IsPositiveInfinity(distances[edge.to])
-                            || distances[edge.to] > newWeight)
+                        if (double.IsPositiveInfinity(distances[edge.end])
+                            || distances[edge.end] > newWeight)
                         {
-                            distances[edge.to] = newWeight;
+                            distances[edge.end] = newWeight;
                             if (tasks.Count >= tasks.Capacity)
                             {
                                 tasks.Distinct();
                             }
-                            tasks.Enqueue(edge.to);
+                            tasks.Enqueue(edge.end);
                         }
                     }
                     else if (found)
@@ -253,7 +262,7 @@ namespace TSKT
             distances.Dispose();
         }
 
-        int SearchEdges(int fromValue)
+        int SearchEdges(int startNode)
         {
             int left = 0;
             int right = edges.Length;
@@ -262,11 +271,11 @@ namespace TSKT
             while (left <= right)
             {
                 mid = (left + right) / 2;
-                if (edges[mid].from == fromValue)
+                if (edges[mid].start == startNode)
                 {
                     return mid;
                 }
-                else if (edges[mid].from < fromValue)
+                else if (edges[mid].start < startNode)
                 {
                     left = mid + 1;
                 }
@@ -276,6 +285,9 @@ namespace TSKT
                 }
             }
             return ~mid;
+
         }
     }
 }
+
+#endif

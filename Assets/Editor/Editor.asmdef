@@ -1,11 +1,12 @@
 {
-    "name": "TSKT.Math",
+    "name": "Editor",
     "references": [
-        "TSKTContainer",
-        "Unity.Mathematics",
+        "TSKT.Math",
         "Unity.Burst"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

@@ -123,5 +123,24 @@ namespace TSKT
 
             return (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * cost;
         }
+#if TSKT_MATH_BURST_SUPPORT
+        public DistanceMap<Vector2Int> ComputeDistancesWithBurst(Vector2Int node, double maxDistance = double.PositiveInfinity)
+        {
+            var width = Width;
+            var height = Height;
+            var cells = new List<Vector2Int>();
+            for (int i = 0; i < width; ++i)
+            {
+                for (int j = 0; j < height; ++j)
+                {
+                    if (costs[i, j].HasValue)
+                    {
+                        cells.Add(new Vector2Int(i, j));
+                    }
+                }
+            }
+            return BoardProcessor.Calculate(node, cells, this, maxDistance);
+        }
+#endif
     }
 }

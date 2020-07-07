@@ -7,6 +7,15 @@
       "dependencies": {},
       "hash": "5fdbc5f66db8112519f1364dbd224fcf44d7dae1"
     },
+    "com.unity.burst": {
+      "version": "1.2.3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.mathematics": "1.1.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.collab-proxy": {
       "version": "1.2.16",
       "depth": 0,

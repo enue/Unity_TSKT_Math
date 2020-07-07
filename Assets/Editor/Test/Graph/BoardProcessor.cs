@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using System.Linq;
 
+#if TSKT_MATH_BURST_SUPPORT
+
 namespace TSKT.Tests
 {
     public class BoardProcessor
@@ -30,13 +32,12 @@ namespace TSKT.Tests
                 Assert.AreEqual(distanceMapWithoutBurst.Distances[it.Key], it.Value);
             }
 
-            Assert.AreEqual(distanceMapWithoutBurst.Pivot, distanceMapWithBurst.Pivot);
+            Assert.AreEqual(distanceMapWithoutBurst.Start, distanceMapWithBurst.Start);
+            Assert.AreEqual(distanceMapWithoutBurst.ReversedEdges.Count, distanceMapWithBurst.ReversedEdges.Count);
 
-            Assert.AreEqual(distanceMapWithoutBurst.Edges.Count, distanceMapWithBurst.Edges.Count);
-
-            foreach (var it in distanceMapWithBurst.Edges)
+            foreach (var it in distanceMapWithBurst.ReversedEdges)
             {
-                Assert.AreEqual(distanceMapWithoutBurst.Edges[it.Key], it.Value);
+                Assert.AreEqual(distanceMapWithoutBurst.ReversedEdges[it.Key], it.Value);
             }
         }
 
@@ -74,3 +75,4 @@ namespace TSKT.Tests
     }
 }
 
+#endif

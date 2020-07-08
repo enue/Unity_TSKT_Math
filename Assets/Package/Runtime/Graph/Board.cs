@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace TSKT
 {
-    public class Board : IGraph<Vector2Int>
+    public class Board : IGraph<Vector2Int>, IGraph<int>
     {
         public readonly double?[,] costs;
         public int Width => costs.GetLength(0);
@@ -50,7 +50,7 @@ namespace TSKT
             return i >= 0 && j >= 0 && i < Width && j < Height;
         }
 
-        public IEnumerable<(Vector2Int, double)> GetEdgesFrom(Vector2Int node)
+        public IEnumerable<(Vector2Int endNode, double weight)> GetEdgesFrom(Vector2Int node)
         {
             if (!Contains(node.x, node.y))
             {
@@ -73,6 +73,25 @@ namespace TSKT
                     }
                 }
             }
+        }
+
+        public IEnumerable<(int endNode, double weight)> GetEdgesFrom(int begin)
+        {
+            var node = GetCellById(begin);
+            foreach (var (endNode, weight) in GetEdgesFrom(node))
+            {
+                var id = GetCellId(endNode);
+                yield return (id, weight);
+            }
+        }
+
+        public Vector2Int GetCellById(int id)
+        {
+            return new Vector2Int(id % Width, id / Width);
+        }
+        public int GetCellId(Vector2Int cell)
+        {
+            return cell.x + cell.y * Width;
         }
 
         public DistanceMap<Vector2Int> ComputeDistancesFrom(Vector2Int node, double maxDistance = double.PositiveInfinity)
@@ -126,20 +145,16 @@ namespace TSKT
 #if TSKT_MATH_BURST_SUPPORT
         public DistanceMap<Vector2Int> ComputeDistancesWithBurst(Vector2Int node, double maxDistance = double.PositiveInfinity)
         {
-            var width = Width;
-            var height = Height;
-            var cells = new List<Vector2Int>();
-            for (int i = 0; i < width; ++i)
-            {
-                for (int j = 0; j < height; ++j)
-                {
-                    if (costs[i, j].HasValue)
-                    {
-                        cells.Add(new Vector2Int(i, j));
-                    }
-                }
-            }
-            return BoardProcessor.Calculate(node, cells, this, maxDistance);
+            var map = BoardProcessor.Calculate(GetCellId(node), Width * Height, this, maxDistance);
+
+            var reversedEdges = map.ReversedEdges.ToDictionary(
+                _ => GetCellById(_.Key),
+                _ => new HashSet<Vector2Int>(_.Value.Select(x => GetCellById(x))));
+
+            return new DistanceMap<Vector2Int>(
+                GetCellById(map.Start),
+                map.Distances.ToDictionary(_ => GetCellById(_.Key), _ => _.Value),
+                reversedEdges);
         }
 #endif
     }

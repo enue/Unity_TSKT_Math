@@ -5,6 +5,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using System.Linq;
 
 #if TSKT_MATH_BURST_SUPPORT
 
@@ -90,117 +91,48 @@ namespace TSKT
         [ReadOnly]
         readonly NativeArray<Edge> edges;
         [ReadOnly]
-        readonly int pivot;
+        readonly int start;
         [ReadOnly]
         readonly double maxDistance;
 
         Queue tasks;
         NativeArray<double> distances;
 
-        public static DistanceMap<Vector2Int> Calculate(Vector2Int startNode, List<Vector2Int> nodes, IGraph<Vector2Int> graph, double maxDistance)
+        public static DistanceMap<int> Calculate(int startNode, int nodeCount, IGraph<int> graph, double maxDistance)
         {
-            var sortedCells = nodes.ToArray();
-            Array.Sort(sortedCells, Vector2IntComparer.Comparison);
-
-            var edges = new Dictionary<int, List<(int end, double weight)>>();
-            for (var startNodeId = 0; startNodeId < sortedCells.Length; ++startNodeId)
-            {
-                List<(int, double)> weightMap = null;
-                foreach (var (endNode, weight) in graph.GetEdgesFrom(sortedCells[startNodeId]))
-                {
-                    var endNodeId = Array.BinarySearch(sortedCells, endNode, Vector2IntComparer.Instance);
-                    if (endNodeId >= 0)
-                    {
-                        if (weightMap == null)
-                        {
-                            if (!edges.TryGetValue(startNodeId, out weightMap))
-                            {
-                                weightMap = new List<(int, double)>();
-                                edges.Add(startNodeId, weightMap);
-                            }
-                        }
-                        weightMap.Add((endNodeId, weight));
-                    }
-                }
-            }
-            var pivotId = Array.BinarySearch(sortedCells, startNode, Vector2IntComparer.Instance);
-            Debug.Assert(pivotId >= 0);
-
-            return Calculate(pivotId, sortedCells, edges, maxDistance);
-        }
-
-        public static DistanceMap<T> Calculate<T>(
-            int startNodeIndex,
-            T[] nodes,
-            Dictionary<int, List<(int endNodeIndex, double weight)>> edges,
-            double maxDistance)
-        {
-            using (var processor = new BoardProcessor(startNodeIndex, edges, maxDistance))
+            using (var processor = new BoardProcessor(startNode, nodeCount, graph, maxDistance))
             {
                 var jobHandle = processor.Schedule();
                 jobHandle.Complete();
 
-                var distances = new Dictionary<T, double>(edges.Count);
-                for (int i = 0; i < processor.distances.Length; ++i)
-                {
-                    var value = processor.distances[i];
-                    if (!double.IsPositiveInfinity(value))
-                    {
-                        distances.Add(nodes[i], value);
-                    }
-                }
-
-                var reversedEdges = new Dictionary<T, HashSet<T>>(edges.Count);
-                foreach (var it in edges)
-                {
-                    var startNode = it.Key;
-                    var startNodeDistance = processor.distances[startNode];
-                    foreach (var (endNodeIndex, weight) in it.Value)
-                    {
-                        var endNodeDistance = processor.distances[endNodeIndex];
-                        if (startNodeDistance + weight == endNodeDistance)
-                        {
-                            if (!reversedEdges.TryGetValue(nodes[endNodeIndex], out var startNodes))
-                            {
-                                startNodes = new HashSet<T>();
-                                reversedEdges.Add(nodes[endNodeIndex], startNodes);
-                            }
-                            startNodes.Add(nodes[startNode]);
-                        }
-                    }
-                }
-
-                return new DistanceMap<T>(
-                    start: nodes[startNodeIndex],
-                    distances: distances,
-                    reversedEdges: reversedEdges);
+                return processor.Result;
             }
         }
 
-        public BoardProcessor(int pivot, Dictionary<int, List<(int to, double weight)>> edges, double maxDistance)
+        public BoardProcessor(int start, int nodeCount, IGraph<int> graph, double maxDistance)
         {
             int edgeCount = 0;
-            foreach (var it in edges)
+            for (int node = 0; node<nodeCount; ++node)
             {
-                edgeCount += it.Value.Count;
+                edgeCount += graph.GetEdgesFrom(node).Count();
             }
 
-            this.edges = new NativeArray<Edge>(edgeCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            edges = new NativeArray<Edge>(edgeCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             {
                 int index = 0;
-                foreach (var pair in edges)
+                for (int node = 0; node < nodeCount; ++node)
                 {
-                    foreach (var (to, weight) in pair.Value)
+                    foreach(var (endNode, weight) in graph.GetEdgesFrom(node))
                     {
-                        this.edges[index] = new Edge(pair.Key, to, weight);
+                        edges[index] = new Edge(node, endNode, weight);
                         ++index;
                     }
                 }
             }
 
-            tasks = new Queue(edges.Count);
-            distances = new NativeArray<double>(edges.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            this.pivot = pivot;
+            tasks = new Queue(edgeCount);
+            distances = new NativeArray<double>(edgeCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            this.start = start;
             this.maxDistance = maxDistance;
         }
 
@@ -210,26 +142,17 @@ namespace TSKT
             {
                 distances[i] = double.PositiveInfinity;
             }
-            distances[pivot] = 0f;
-            tasks.Enqueue(pivot);
+            distances[start] = 0f;
+            tasks.Enqueue(start);
 
             while (tasks.Count > 0)
             {
                 var node = tasks.Dequeue();
-
-                var index = SearchEdges(node - 1);
-                if (index < 0)
+                if (SearchEdges(node, out var index, out var count))
                 {
-                    index = ~index;
-                }
-                ++index;
-                bool found = false;
-                for (int i = index; i < edges.Length; ++i)
-                {
-                    var edge = edges[i];
-                    if (edge.start == node)
+                    for (int i = 0; i < count; ++i)
                     {
-                        found = true;
+                        var edge = edges[i + index];
                         var newWeight = edge.weight + distances[node];
                         if (newWeight > maxDistance)
                         {
@@ -247,11 +170,46 @@ namespace TSKT
                             tasks.Enqueue(edge.end);
                         }
                     }
-                    else if (found)
+                }
+            }
+        }
+
+        DistanceMap<int> Result
+        {
+            get
+            {
+                var distanceMap = new Dictionary<int, double>(distances.Length);
+                for (int i = 0; i < distances.Length; ++i)
+                {
+                    var value = distances[i];
+                    if (!double.IsPositiveInfinity(value))
                     {
-                        break;
+                        distanceMap.Add(i, value);
                     }
                 }
+
+                var reversedEdges = new Dictionary<int, HashSet<int>>();
+                foreach (var it in edges)
+                {
+                    var startNodeDistance = distances[it.start];
+                    var endNodeDistance = distances[it.end];
+                    var weight = it.weight;
+
+                    if (startNodeDistance + weight == endNodeDistance)
+                    {
+                        if (!reversedEdges.TryGetValue(it.end, out var startNodes))
+                        {
+                            startNodes = new HashSet<int>();
+                            reversedEdges.Add(it.end, startNodes);
+                        }
+                        startNodes.Add(it.start);
+                    }
+                }
+
+                return new DistanceMap<int>(
+                    start: start,
+                    distances: distanceMap,
+                    reversedEdges: reversedEdges);
             }
         }
 
@@ -262,7 +220,7 @@ namespace TSKT
             distances.Dispose();
         }
 
-        int SearchEdges(int startNode)
+        bool SearchEdges(int startNode, out int index, out int count)
         {
             int left = 0;
             int right = edges.Length;
@@ -273,7 +231,27 @@ namespace TSKT
                 mid = (left + right) / 2;
                 if (edges[mid].start == startNode)
                 {
-                    return mid;
+                    index = 0;
+                    var endIndex = edges.Length - 1;
+
+                    for (int i = mid - 1; i >= 0; --i)
+                    {
+                        if (edges[i].start != startNode)
+                        {
+                            index = i + 1;
+                            break;
+                        }
+                    }
+                    for (int i = mid; i < edges.Length; ++i)
+                    {
+                        if (edges[i].start != startNode)
+                        {
+                            endIndex = i - 1;
+                            break;
+                        }
+                    }
+                    count = endIndex - index + 1;
+                    return true;
                 }
                 else if (edges[mid].start < startNode)
                 {
@@ -284,8 +262,10 @@ namespace TSKT
                     right = mid - 1;
                 }
             }
-            return ~mid;
 
+            index = ~mid;
+            count = 0;
+            return false;
         }
     }
 }

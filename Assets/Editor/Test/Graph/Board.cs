@@ -59,6 +59,18 @@ namespace TSKT.Tests
                 Assert.LessOrEqual(f(start, goal), distance);
             }
         }
+
+        [Test]
+        public void GetId()
+        {
+            var board = new Board(100, 100);
+            for(int i=0; i<board.Width * board.Height; ++i)
+            {
+                var cell = board.GetCellById(i);
+                var id = board.GetCellId(cell);
+                Assert.AreEqual(i, id);
+            }
+        }
     }
 }
 

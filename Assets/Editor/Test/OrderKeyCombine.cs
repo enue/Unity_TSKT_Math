@@ -90,5 +90,28 @@ namespace TSKT.Tests
             Assert.AreEqual(OrderKeyCombine.capacity, combine.Length);
             Assert.Catch(() => combine.Append(true));
         }
+
+        [Test]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(4)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        public void Append(int splitCount)
+        {
+            var k = OrderKeyConvert.ToUint64(Random.Range(0.0, double.MaxValue));
+            var combine = new OrderKeyCombine();
+
+            var splitSize = 64 / splitCount;
+            for (int i = 0; i < splitCount; ++i)
+            {
+                combine.Append(k, splitSize * i, splitSize);
+            }
+
+            Assert.AreEqual(k, combine.Result);
+            Assert.AreEqual(OrderKeyCombine.capacity, combine.Length);
+            Assert.Catch(() => combine.Append(true));
+        }
     }
 }

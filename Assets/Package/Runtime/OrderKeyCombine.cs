@@ -22,8 +22,7 @@ namespace TSKT
             {
                 throw new System.ArgumentException();
             }
-            var v = OrderKeyConvert.ToUint64(k);
-            Result = v;
+            Result = OrderKeyConvert.ToUint64(k);
             Length = 64;
         }
 
@@ -46,6 +45,25 @@ namespace TSKT
             }
             Result |= (ulong)k << (capacity - Length - 32);
             Length += 32;
+        }
+
+        public void Append(ulong k, int index, int count)
+        {
+            if (Length > capacity - count)
+            {
+                throw new System.ArgumentException();
+            }
+
+            ulong mask = 0;
+            for (int i = 0; i < count; ++i)
+            {
+                mask |= (ulong)1 << (63 + index - i);
+            }
+            var offset = 64 - index - count;
+            var v = (k & mask) >> offset;
+
+            Result |= v << (capacity - Length - count);
+            Length += count;
         }
 
         public void Append(bool k)

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace TSKT
 {
-    public class OrderKeyCombine
+    public struct OrderKeyCombine
     {
         public ulong Result { get; private set; }
         public int Length { get; private set; }
@@ -44,7 +44,7 @@ namespace TSKT
             {
                 throw new System.ArgumentException();
             }
-            Result += (ulong)k << (capacity - Length - 32);
+            Result |= (ulong)k << (capacity - Length - 32);
             Length += 32;
         }
 
@@ -54,7 +54,7 @@ namespace TSKT
             {
                 throw new System.ArgumentException();
             }
-            Result += (ulong)(k ? 1 : 0) << (capacity - Length - 1);
+            Result |= (ulong)(k ? 1 : 0) << (capacity - Length - 1);
             Length += 1;
         }
 
@@ -64,7 +64,7 @@ namespace TSKT
             {
                 throw new System.ArgumentException();
             }
-            Result += (ulong)k << (capacity - Length - 8);
+            Result |= (ulong)k << (capacity - Length - 8);
             Length += 8;
         }
         public void Append(ushort k)
@@ -73,7 +73,7 @@ namespace TSKT
             {
                 throw new System.ArgumentException();
             }
-            Result += (ulong)k << (capacity - Length - 16);
+            Result |= (ulong)k << (capacity - Length - 16);
             Length += 16;
         }
     }

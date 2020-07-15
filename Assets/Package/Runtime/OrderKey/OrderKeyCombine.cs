@@ -57,7 +57,7 @@ namespace TSKT
             ulong mask = 0;
             for (int i = 0; i < count; ++i)
             {
-                mask |= (ulong)1 << (63 + index - i);
+                mask |= (ulong)1 << (63 - index - i);
             }
             var offset = 64 - index - count;
             var v = (k & mask) >> offset;

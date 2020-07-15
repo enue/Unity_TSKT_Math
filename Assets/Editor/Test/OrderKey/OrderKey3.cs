@@ -43,5 +43,25 @@ namespace TSKT.Tests
                     list[i].primaryKey);
             }
         }
+
+        [Test]
+        public void BinarySearch()
+        {
+            var a = new OrderKey3((ulong)Random.Range(0, int.MaxValue), 0, 0);
+            var b = new OrderKey3((ulong)Random.Range(0, int.MaxValue), 0, 0);
+            var c = new OrderKey3((ulong)Random.Range(0, int.MaxValue), 0, 0);
+
+            var list = new List<OrderKey3>();
+            list.Add(a);
+            list.Add(b);
+
+            var ulongList = new List<ulong>();
+            ulongList.Add(a.primaryKey);
+            ulongList.Add(b.primaryKey);
+
+            Assert.AreEqual(list.BinarySearch(a), ulongList.BinarySearch(a.primaryKey));
+            Assert.AreEqual(list.BinarySearch(b), ulongList.BinarySearch(b.primaryKey));
+            Assert.AreEqual(list.BinarySearch(c), ulongList.BinarySearch(c.primaryKey));
+        }
     }
 }

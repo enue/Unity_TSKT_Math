@@ -42,10 +42,17 @@ namespace TSKT.Graphs
 
         public void Enqueue(double primaryKey, double secondaryKey, T item)
         {
-            // Dequeueの時に末尾からとりたいのでキーをマイナスにしておく
+            Enqueue(
+                OrderKeyConvert.ToUint64(primaryKey),
+                OrderKeyConvert.ToUint64(secondaryKey),
+                item);
+        }
+        public void Enqueue(ulong primaryKey, ulong secondaryKey, T item)
+        {
+            // Dequeueの時に末尾からとりたいのでキーを補数にしておく
             var key = new OrderKey2(
-                OrderKeyConvert.ToUint64(-primaryKey),
-                OrderKeyConvert.ToUint64(-secondaryKey));
+                ~primaryKey,
+                ~secondaryKey);
             var index = keys.BinarySearch(key);
             if (index < 0)
             {

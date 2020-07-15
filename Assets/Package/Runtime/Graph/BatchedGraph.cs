@@ -129,7 +129,7 @@ namespace TSKT
             tasks.Enqueue(0.0, 0.0, startNode);
             while (tasks.Count > 0)
             {
-                var root = tasks.Dequeue().item;
+                var root = tasks.Dequeue();
 
                 if (taskFinishedNodes.Contains(root))
                 {

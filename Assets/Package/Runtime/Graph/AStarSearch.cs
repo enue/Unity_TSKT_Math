@@ -99,21 +99,21 @@ namespace TSKT
                 new Dictionary<T, double>(memo.Distances),
                 cloneReversedEdges);
 
-            var tasks = new Graphs.DoublePriorityQueue<T>();
+            var tasks = new Graphs.DoublePriorityQueue<(T node, double expectedDistance)>();
 
             foreach (var it in distanceMap.Distances)
             {
                 var startToItDistance = it.Value;
                 var h = heuristicFunction;
                 var expectedDistance = startToItDistance + goals.Min(_ => h(it.Key, _));
-                tasks.Enqueue(expectedDistance, -startToItDistance, it.Key);
+                tasks.Enqueue(expectedDistance, -startToItDistance, (it.Key, expectedDistance));
             }
 
             var farestNodeSearched = 0.0;
 
             while (tasks.Count > 0)
             {
-                var (expectedDistance, _, currentNode) = tasks.Dequeue();
+                var (currentNode, expectedDistance) = tasks.Dequeue();
                 {
                     bool shouldBreak = false;
                     foreach (var it in sortedGoals)
@@ -189,7 +189,7 @@ namespace TSKT
                             .Min(_ => h(next, _)) + startToNextNodeDistance;
 
                         // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
-                        tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, next);
+                        tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, (next, nextExpectedDistance));
 
                         if (farestNodeSearched < startToNextNodeDistance)
                         {

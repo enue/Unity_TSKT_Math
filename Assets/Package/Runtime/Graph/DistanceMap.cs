@@ -44,7 +44,7 @@ namespace TSKT
             ReversedEdges = new Dictionary<T, HashSet<T>>();
             tasks = new Graphs.PriorityQueue<T>();
             continueNodes = new HashSet<T>();
-            tasks.Enqueue(0.0, Start);
+            tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), Start);
             Distances.Add(Start, 0.0);
 
             Continue(goals, maxDistance);
@@ -54,7 +54,7 @@ namespace TSKT
         {
             foreach (var it in continueNodes)
             {
-                tasks.Enqueue(0.0, it);
+                tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), it);
             }
             continueNodes.Clear();
 
@@ -105,7 +105,7 @@ namespace TSKT
                         }
 
                         Distances[nextNode] = startToNextNodeDistance;
-                        tasks.Enqueue(startToNextNodeDistance, nextNode);
+                        tasks.Enqueue(OrderKeyConvert.ToUint64(startToNextNodeDistance), nextNode);
                     }
                 }
             }

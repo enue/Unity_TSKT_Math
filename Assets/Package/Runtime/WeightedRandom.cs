@@ -10,6 +10,21 @@ namespace TSKT
         List<float> weights;
         float[] selectKeys;
 
+        public float TotalWeight
+        {
+            get
+            {
+                if (selectKeys == null)
+                {
+                    Refresh();
+                }
+                if (selectKeys.Length == 0)
+                {
+                    return 0f;
+                }
+                return selectKeys[selectKeys.Length - 1];
+            }
+        }
         public int Count
         {
             get

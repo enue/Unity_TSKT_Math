@@ -6,30 +6,31 @@ namespace TSKT
 {
     public static class SnapAngle
     {
-        public static Vector2 SnapTo8(float horizontal, float vertical)
+        public static Vector2 Snap(float horizontal, float vertical, int devide)
         {
-            var snappedAngle = GetSnappedAngle(horizontal, vertical, 45f * Mathf.Deg2Rad);
+            var snappedAngle = GetSnappedAngle(horizontal, vertical, 360f / devide * Mathf.Deg2Rad, out _);
             var magnitude = Mathf.Sqrt(horizontal * horizontal + vertical * vertical);
             return new Vector2(
                 Mathf.Cos(snappedAngle) * magnitude,
                  Mathf.Sin(snappedAngle) * magnitude);
         }
 
-        public static Vector2 SnapTo16(float horizontal, float vertical)
+        public static Vector2 SnapTo8(float horizontal, float vertical)
         {
-            var snappedAngle = GetSnappedAngle(horizontal, vertical, 22.5f * Mathf.Deg2Rad);
-            var magnitude = Mathf.Sqrt(horizontal * horizontal + vertical * vertical);
-            return new Vector2(
-                Mathf.Cos(snappedAngle) * magnitude,
-                Mathf.Sin(snappedAngle) * magnitude);
+            return Snap(horizontal, vertical, 8);
         }
 
-        static float GetSnappedAngle(float x, float y, float snapAngle)
+        public static Vector2 SnapTo16(float horizontal, float vertical)
+        {
+            return Snap(horizontal, vertical, 16);
+        }
+
+        public static float GetSnappedAngle(float x, float y, float unitAngle, out int index)
         {
             var angle = Mathf.Atan2(y, x);
 
-            var index = Mathf.RoundToInt(angle / snapAngle);
-            return index * snapAngle;
+            index = Mathf.RoundToInt(angle / unitAngle);
+            return index * unitAngle;
         }
     }
 }

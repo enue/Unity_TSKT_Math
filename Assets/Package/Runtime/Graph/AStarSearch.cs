@@ -7,7 +7,7 @@ namespace TSKT
 {
     public readonly struct AStarSearch<T>
     {
-        readonly IGraph<T> graph;
+        readonly public IGraph<T> graph;
         readonly System.Func<T, T, double> heuristicFunction;
         public readonly DistanceMap<T> memo;
         public T Start => memo.Start;

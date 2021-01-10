@@ -7,6 +7,7 @@ namespace TSKT
     public class Graph<T> : IGraph<T>
     {
         readonly Dictionary<T, Dictionary<T, double>> edges = new Dictionary<T, Dictionary<T, double>>();
+        public Dictionary<T, Dictionary<T, double>>.KeyCollection StartingNodes => edges.Keys;
 
         public void Clear()
         {
@@ -23,10 +24,19 @@ namespace TSKT
             return false;
         }
 
+        void CreateNode(T node, out Dictionary<T, double> endNodes)
+        {
+            if (!edges.TryGetValue(node, out endNodes))
+            {
+                endNodes = new Dictionary<T, double>();
+                edges.Add(node, endNodes);
+            }
+        }
+
         public void Link(T first, T second, double weight)
         {
-            CreateNode(first);
-            edges[first][second] = weight;
+            CreateNode(first, out var edge);
+            edge[second] = weight;
         }
 
         public void DoubleOrderedLink(T first, T second, double weight)
@@ -77,8 +87,6 @@ namespace TSKT
                 return null;
             }
         }
-
-        public Dictionary<T, Dictionary<T, double>>.KeyCollection StartingNodes => edges.Keys;
 
         public HashSet<T> ComputeAllNodes()
         {

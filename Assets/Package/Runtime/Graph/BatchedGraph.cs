@@ -121,7 +121,6 @@ namespace TSKT
             this.heuristicFunction = heuristicFunction;
 
             var batches = new List<Batch>();
-            var reversedGraph = new Graph<Batch>();
             var referenceCountMap = new IntDictionary<T>();
             var taskFinishedNodes = new HashSet<T>();
 
@@ -212,13 +211,11 @@ namespace TSKT
                             if (currentDistance > newDistance)
                             {
                                 batchGraph.Link(start, end, newDistance);
-                                reversedGraph.Link(end, start, newDistance);
                             }
                         }
                         else
                         {
                             batchGraph.Link(start, end, newDistance);
-                            reversedGraph.Link(end, start, newDistance);
                         }
                     }
                 }

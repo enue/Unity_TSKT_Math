@@ -67,13 +67,10 @@ namespace TSKT
                     if (owner.heuristicFunction == null)
                     {
                         var distanceMap = new DistanceMap<T>(owner.graph, start, new HashSet<T>() { goal });
-                        var path = distanceMap.SearchPaths(goal).FirstOrDefault();
-                        if (path != null)
+                        var path = distanceMap.SearchPath(goal);
+                        foreach (var it in path)
                         {
-                            foreach (var it in path)
-                            {
-                                yield return it;
-                            }
+                            yield return it;
                         }
                     }
                     else
@@ -287,8 +284,8 @@ namespace TSKT
                 {
                     return null;
                 }
-
-                return startToBatch.SearchPaths(firstRoot).First();
+                
+                return startToBatch.SearchPath(firstRoot);
             }
             else
             {
@@ -304,7 +301,7 @@ namespace TSKT
             if (heuristicFunction == null)
             {
                 var batchDistance = new DistanceMap<Batch>(batchGraph, startBatch, lastBatch);
-                path = batchDistance.SearchPaths(lastBatch).First();
+                path = batchDistance.SearchPath(lastBatch);
             }
             else
             {
@@ -321,14 +318,14 @@ namespace TSKT
 
                 if (fromBatch.distanceMap.Distances.ContainsKey(goal))
                 {
-                    var nodePath = fromBatch.distanceMap.SearchPaths(goal).First();
+                    var nodePath = fromBatch.distanceMap.SearchPath(goal);
                     yield return nodePath;
                     break;
                 }
                 else
                 {
                     var toBatch = path[i + 1];
-                    var nodePath = fromBatch.distanceMap.SearchPaths(toBatch.Root).First();
+                    var nodePath = fromBatch.distanceMap.SearchPath(toBatch.Root);
                     yield return nodePath;
                 }
             }

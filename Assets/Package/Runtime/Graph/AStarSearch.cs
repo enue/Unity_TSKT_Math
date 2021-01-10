@@ -59,7 +59,7 @@ namespace TSKT
             }
             if (containsAllGoals)
             {
-                return memo.SearchPaths(nearestGoal).First();
+                return memo.SearchPath(nearestGoal);
             }
             return SearchPaths(goals, searchAllPaths: false, maxDistance: maxDistance).FirstOrDefault();
         }
@@ -200,7 +200,7 @@ namespace TSKT
             }
 
             var nearestGoalDistance = double.PositiveInfinity;
-            foreach(var it in sortedGoals)
+            foreach (var it in sortedGoals)
             {
                 if (heuristicFunction(Start, it) > nearestGoalDistance)
                 {
@@ -229,7 +229,17 @@ namespace TSKT
                 {
                     continue;
                 }
-                foreach (var path in distanceMap.SearchPaths(goal))
+
+                IEnumerable<T[]> paths;
+                if (searchAllPaths)
+                {
+                    paths = distanceMap.SearchPaths(goal);
+                }
+                else
+                {
+                    paths = System.Array.Empty<T[]>().Append(distanceMap.SearchPath(goal));
+                }
+                foreach (var path in paths)
                 {
                     // goalまでの経路は最適なので蓄積しておく
                     foreach (var it in path)

@@ -142,5 +142,33 @@ namespace TSKT
                 }
             }
         }
+
+        public T[] SearchPath(T goal)
+        {
+            var result = new List<T>();
+            SearchPath(goal, ref result);
+            return result.ToArray();
+        }
+
+        public void SearchPath(T goal, ref List<T> result)
+        {
+            result.Clear();
+
+            if (!Distances.ContainsKey(goal))
+            {
+                return;
+            }
+
+            result.Add(goal);
+
+            while (true)
+            {
+                if (!ReversedEdges.TryGetValue(result[0], out var nearNodes))
+                {
+                    break;
+                }
+                result.Insert(0, nearNodes.First());
+            }
+        }
     }
 }

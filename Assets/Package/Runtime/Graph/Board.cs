@@ -75,12 +75,12 @@ namespace TSKT
             }
         }
 
-        public DistanceMap<Vector2Int> ComputeDistancesFrom(Vector2Int node, double maxDistance = double.PositiveInfinity)
+        public DistanceMap<Vector2Int> ComputeDistancesFrom(in Vector2Int node, double maxDistance = double.PositiveInfinity)
         {
             return new DistanceMap<Vector2Int>(this, node, maxDistance);
         }
 
-        public AStarSearch<Vector2Int> CreateAStarSearch(Vector2Int start)
+        public AStarSearch<Vector2Int> CreateAStarSearch(in Vector2Int start)
         {
             var minCost = double.PositiveInfinity;
             foreach (var it in costs)

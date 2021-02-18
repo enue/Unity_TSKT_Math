@@ -15,7 +15,7 @@ namespace TSKT
             secondaryKey = key2;
         }
 
-        public int CompareTo(OrderKey2 other)
+        readonly public int CompareTo(OrderKey2 other)
         {
             if (primaryKey > other.primaryKey)
             {

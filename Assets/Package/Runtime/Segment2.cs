@@ -16,7 +16,7 @@ namespace TSKT
             this.to = to;
         }
 
-        public bool Intersect(in Segment2 target)
+        readonly public bool Intersect(in Segment2 target)
         {
             {
                 Vector3 a = to - from;
@@ -72,7 +72,7 @@ namespace TSKT
             return true;
         }
 
-        public bool Collide(Rect rect)
+        readonly public bool Collide(in Rect rect)
         {
             if (rect.Contains(from))
             {
@@ -106,7 +106,7 @@ namespace TSKT
             return false;
         }
 
-        public Rect Bounds
+        readonly public Rect Bounds
         {
             get
             {
@@ -118,12 +118,12 @@ namespace TSKT
             }
         }
 
-        public override int GetHashCode()
+        readonly public override int GetHashCode()
         {
             return to.GetHashCode() ^ from.GetHashCode();
         }
 
-        bool IEquatable<Segment2>.Equals(Segment2 other)
+        readonly bool IEquatable<Segment2>.Equals(Segment2 other)
         {
             return from == other.from
                 && to == other.to;

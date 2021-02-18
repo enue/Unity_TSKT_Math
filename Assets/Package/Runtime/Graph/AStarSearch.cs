@@ -10,9 +10,9 @@ namespace TSKT
         readonly public IGraph<T> graph;
         readonly System.Func<T, T, double> heuristicFunction;
         public readonly DistanceMap<T> memo;
-        public T Start => memo.Start;
-        
-        public AStarSearch(IGraph<T> graph, T start, System.Func<T, T, double> heuristicFunction, DistanceMap<T> memo = default)
+        readonly public T Start => memo.Start;
+
+        public AStarSearch(IGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction, DistanceMap<T> memo = default)
         {
             this.heuristicFunction = heuristicFunction;
             this.graph = graph;
@@ -31,12 +31,12 @@ namespace TSKT
             }
         }
 
-        public T[] SearchPath(params T[] goals)
+        readonly public T[] SearchPath(params T[] goals)
         {
             return SearchPath(double.PositiveInfinity, goals);
         }
 
-        public T[] SearchPath(double maxDistance, params T[] goals)
+        readonly public T[] SearchPath(double maxDistance, params T[] goals)
         {
             var containsAllGoals = true;
             var minDistance = double.PositiveInfinity;
@@ -64,17 +64,17 @@ namespace TSKT
             return SearchPaths(goals, searchAllPaths: false, maxDistance: maxDistance).FirstOrDefault();
         }
 
-        public IEnumerable<T[]> SearchAllPaths(params T[] goals)
+        readonly public IEnumerable<T[]> SearchAllPaths(params T[] goals)
         {
             return SearchAllPaths(double.PositiveInfinity, goals);
         }
 
-        public IEnumerable<T[]> SearchAllPaths(double maxDistance, params T[] goals)
+        readonly public IEnumerable<T[]> SearchAllPaths(double maxDistance, params T[] goals)
         {
             return SearchPaths(goals, searchAllPaths: true, maxDistance: maxDistance);
         }
 
-        IEnumerable<T[]> SearchPaths(T[] goals, bool searchAllPaths, double maxDistance)
+        readonly IEnumerable<T[]> SearchPaths(T[] goals, bool searchAllPaths, double maxDistance)
         {
             T[] sortedGoals;
             if (goals.Length < 2)
@@ -272,18 +272,18 @@ namespace TSKT
             }
         }
 
-        public Dictionary<T, double> GetDistances(params T[] nodes)
+        readonly public Dictionary<T, double> GetDistances(params T[] nodes)
         {
             var distances = memo.Distances;
             return nodes.ToDictionary(_ => _, _ => distances[_]);
         }
 
-        static public T[] SearchPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        static public T[] SearchPath(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
             return search.SearchPath(goal);
         }
-        static public IEnumerable<T[]> SearchAllPaths(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        static public IEnumerable<T[]> SearchAllPaths(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
             return search.SearchAllPaths(goal);

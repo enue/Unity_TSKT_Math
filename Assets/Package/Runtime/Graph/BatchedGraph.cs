@@ -48,11 +48,11 @@ namespace TSKT
         {
             readonly BatchedGraph<T> owner;
             readonly T[] startToFirstRoot;
-            T FirstRoot => startToFirstRoot[startToFirstRoot.Length - 1];
+            readonly T FirstRoot => startToFirstRoot[startToFirstRoot.Length - 1];
             public readonly T start;
             readonly AStarSearch<T> aStar;
 
-            public StartintPoint(BatchedGraph<T> owner, T start)
+            public StartintPoint(BatchedGraph<T> owner, in T start)
             {
                 this.start = start;
                 this.owner = owner;
@@ -60,7 +60,7 @@ namespace TSKT
                 startToFirstRoot = owner.SearchRootToNearestRoot(start, out aStar);
             }
 
-            public IEnumerable<T> GetPath(T goal)
+            readonly public IEnumerable<T> GetPath(T goal)
             {
                 if (!owner.nodeBatchMap.TryGetValue(goal, out var lastBatch))
                 {
@@ -112,7 +112,7 @@ namespace TSKT
         public readonly IGraph<T> graph;
         public readonly System.Func<T, T, double> heuristicFunction;
 
-        public BatchedGraph(IGraph<T> graph, T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction = null)
+        public BatchedGraph(IGraph<T> graph, in T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction = null)
         {
             this.graph = graph;
             this.heuristicFunction = heuristicFunction;
@@ -240,7 +240,8 @@ namespace TSKT
             }
             else
             {
-                sortedUnlinkcedBatches = unlinkedBatches.OrderBy(_ => heuristicFunction(startNode, _.Root));
+                var _startNode = startNode;
+                sortedUnlinkcedBatches = unlinkedBatches.OrderBy(_ => heuristicFunction(_startNode, _.Root));
             }
             foreach (var it in sortedUnlinkcedBatches)
             {
@@ -261,7 +262,7 @@ namespace TSKT
             }
         }
 
-        T[] SearchRootToNearestRoot(T start, out AStarSearch<T> aStar)
+        T[] SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
         {
             if (heuristicFunction == null)
             {
@@ -331,12 +332,12 @@ namespace TSKT
             }
         }
 
-        public StartintPoint GetStartintPoint(T start)
+        public StartintPoint GetStartintPoint(in T start)
         {
             return new StartintPoint(this, start);
         }
 
-        public IEnumerable<T> GetPath(T start, T goal)
+        public IEnumerable<T> GetPath(in T start, in T goal)
         {
             return GetStartintPoint(start).GetPath(goal);
         }

@@ -17,17 +17,17 @@ namespace TSKT
             this.c = c;
             this.d = d;
         }
-        public float Evaluate(float x)
+        readonly public float Evaluate(float x)
         {
             return a * x * x * x + b * x * x + c * x + d;
         }
 
-        public float Velocity(float x)
+        readonly public float Velocity(float x)
         {
             return 3f * a * x * x + 2f * b * x + c;
         }
 
-        public float Acceleration(float x)
+        readonly public float Acceleration(float x)
         {
             return 6f * a * x + 2f * b;
         }

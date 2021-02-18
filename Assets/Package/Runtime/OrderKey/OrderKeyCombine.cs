@@ -6,8 +6,8 @@ namespace TSKT
 {
     public struct OrderKeyCombine
     {
-        public ulong Result { get; private set; }
-        public int Length { get; private set; }
+        public ulong Result { readonly get; private set; }
+        public int Length { readonly get; private set; }
         public const int capacity = 64;
 
         public void Clear()

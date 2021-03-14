@@ -71,6 +71,11 @@ namespace TSKT
 
         void Refresh()
         {
+            if (weights == null)
+            {
+                selectKeys = System.Array.Empty<float>();
+                return;
+            }
             selectKeys = new float[weights.Count];
             for (int i = 0; i < weights.Count; ++i)
             {

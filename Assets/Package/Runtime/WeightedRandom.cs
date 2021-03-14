@@ -6,7 +6,7 @@ namespace TSKT
 {
     public class WeightedRandom<T>
     {
-        List<T> Values { get; set; }
+        List<T> values;
         List<float> weights;
         float[] selectKeys;
 
@@ -29,11 +29,11 @@ namespace TSKT
         {
             get
             {
-                if (Values == null)
+                if (values == null)
                 {
                     return 0;
                 }
-                return Values.Count;
+                return values.Count;
             }
         }
         public void Add(float weight, T t)
@@ -52,19 +52,19 @@ namespace TSKT
                         weight
                     };
 
-                    Values = new List<T>();
+                    values = new List<T>();
                 }
                 else
                 {
                     weights.Add(weight);
                 }
-                Values.Add(t);
+                values.Add(t);
             }
         }
 
         void Remove(int index)
         {
-            Values.RemoveAt(index);
+            values.RemoveAt(index);
             weights.RemoveAt(index);
             selectKeys = null;
         }
@@ -104,20 +104,20 @@ namespace TSKT
 
         public T Select()
         {
-            return Values[SelectIndex()];
+            return values[SelectIndex()];
         }
 
         public T SelectAndRemove()
         {
             var index = SelectIndex();
-            var result = Values[index];
+            var result = values[index];
             Remove(index);
             return result;
         }
 
         public float SearchProbability(T t)
         {
-            var i = Values.IndexOf(t);
+            var i = values.IndexOf(t);
             if (i < 0)
             {
                 return 0f;

@@ -27,5 +27,15 @@ namespace TSKT
         {
             RandomProvider.GetThreadRandom().Shuffle(ref list);
         }
+
+        static public T Sample<T>(T[] array)
+        {
+            return array[Random.Range(0, array.Length)];
+        }
+
+        static public T Sample<T>(List<T> list)
+        {
+            return list[Random.Range(0, list.Count)];
+        }
     }
 }

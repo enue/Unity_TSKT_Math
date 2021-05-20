@@ -78,13 +78,22 @@ namespace TSKT
 
         public Dictionary<T, double> NextNodesFrom(T node)
         {
-            if (edges.TryGetValue(node, out var nodes))
+            if (TryGetNextNodesFrom(node, out var result))
             {
-                return nodes;
+                return result;
+            }
+            return new Dictionary<T, double>();
+        }
+
+        public bool TryGetNextNodesFrom(T node, out Dictionary<T, double> result)
+        {
+            if (edges.TryGetValue(node, out result))
+            {
+                return true;
             }
             else
             {
-                return null;
+                return false;
             }
         }
 
@@ -101,8 +110,7 @@ namespace TSKT
 
         public IEnumerable<(T endNode, double weight)> GetEdgesFrom(T node)
         {
-            var nodes = NextNodesFrom(node);
-            if (nodes != null)
+            if (TryGetNextNodesFrom(node, out var nodes))
             {
                 foreach (var it in nodes)
                 {

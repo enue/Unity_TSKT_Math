@@ -9,6 +9,19 @@ namespace TSKT
         readonly Dictionary<T, Dictionary<T, double>> edges = new Dictionary<T, Dictionary<T, double>>();
         public Dictionary<T, Dictionary<T, double>>.KeyCollection StartingNodes => edges.Keys;
 
+        public Graph()
+        {
+        }
+
+        public Graph(Graph<T> source)
+        {
+            foreach(var it in source.edges)
+            {
+                var endNodes = new Dictionary<T, double>(it.Value);
+                edges.Add(it.Key, endNodes);
+            }
+        }
+
         public void Clear()
         {
             edges.Clear();

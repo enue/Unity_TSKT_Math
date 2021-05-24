@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
@@ -59,7 +60,7 @@ namespace TSKT
             }
             if (containsAllGoals)
             {
-                return memo.SearchPath(nearestGoal);
+                return memo.SearchPath(nearestGoal!);
             }
             return SearchPaths(goals, searchAllPaths: false, maxDistance: maxDistance).FirstOrDefault();
         }

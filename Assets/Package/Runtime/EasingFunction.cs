@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+#nullable enable
 
 // Terms of Use: Easing Functions(Equations)
 // Open source under the MIT License and the 3-Clause BSD License.

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
@@ -47,8 +48,7 @@ namespace TSKT
         public readonly struct StartintPoint
         {
             readonly BatchedGraph<T> owner;
-            readonly T[] startToFirstRoot;
-            readonly T FirstRoot => startToFirstRoot[startToFirstRoot.Length - 1];
+            readonly T[]? startToFirstRoot;
             public readonly T start;
             readonly AStarSearch<T> aStar;
 
@@ -93,7 +93,8 @@ namespace TSKT
                     yield break;
                 }
 
-                owner.nodeBatchMap.TryGetValue(FirstRoot, out var firstBatch);
+                var firstRoot = startToFirstRoot[startToFirstRoot.Length - 1];
+                owner.nodeBatchMap.TryGetValue(firstRoot, out var firstBatch);
                 var pathCombine = new PathCombine();
                 pathCombine.Append(startToFirstRoot);
                 foreach (var it in owner.GetBatchToGoalPath(firstBatch, lastBatch, goal))
@@ -110,9 +111,9 @@ namespace TSKT
         public readonly Graph<Batch> batchGraph = new Graph<Batch>();
         public readonly Dictionary<T, Batch> nodeBatchMap = new Dictionary<T, Batch>();
         public readonly IGraph<T> graph;
-        public readonly System.Func<T, T, double> heuristicFunction;
+        public readonly System.Func<T, T, double>? heuristicFunction;
 
-        public BatchedGraph(IGraph<T> graph, in T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction = null)
+        public BatchedGraph(IGraph<T> graph, in T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double>? heuristicFunction = null)
         {
             this.graph = graph;
             this.heuristicFunction = heuristicFunction;
@@ -262,7 +263,7 @@ namespace TSKT
             }
         }
 
-        T[] SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
+        T[]? SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
         {
             if (heuristicFunction == null)
             {
@@ -286,7 +287,7 @@ namespace TSKT
                     return null;
                 }
                 
-                return startToBatch.SearchPath(firstRoot);
+                return startToBatch.SearchPath(firstRoot!);
             }
             else
             {

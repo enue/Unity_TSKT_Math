@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
@@ -9,9 +10,9 @@ namespace TSKT
         readonly public Dictionary<T, double> Distances { get; }
         readonly public Dictionary<T, HashSet<T>> ReversedEdges { get; }
 
-        readonly Graphs.PriorityQueue<T> tasks;
-        readonly IGraph<T> graph;
-        readonly HashSet<T> continueNodes;
+        readonly Graphs.PriorityQueue<T>? tasks;
+        readonly IGraph<T>? graph;
+        readonly HashSet<T>? continueNodes;
 
         readonly public bool Finished => (tasks == null || tasks.Count == 0) && (continueNodes == null || continueNodes.Count == 0);
 
@@ -36,7 +37,7 @@ namespace TSKT
         {
         }
 
-        public DistanceMap(IGraph<T> graph, in T start, HashSet<T> goals, double maxDistance = double.PositiveInfinity)
+        public DistanceMap(IGraph<T> graph, in T start, HashSet<T>? goals, double maxDistance = double.PositiveInfinity)
         {
             this.graph = graph;
             Start = start;
@@ -50,8 +51,21 @@ namespace TSKT
             Continue(goals, maxDistance);
         }
 
-        readonly public void Continue(HashSet<T> goals, double maxDistance = double.PositiveInfinity)
+        readonly public void Continue(HashSet<T>? goals, double maxDistance = double.PositiveInfinity)
         {
+            if (continueNodes == null)
+            {
+                throw new System.NullReferenceException();
+            }
+            if (tasks == null)
+            {
+                throw new System.NullReferenceException();
+            }
+            if (graph == null)
+            {
+                throw new System.NullReferenceException();
+            }
+
             foreach (var it in continueNodes)
             {
                 tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), it);

@@ -1,14 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+#nullable enable
 
 namespace TSKT
 {
     public class WeightedRandom<T>
     {
-        List<T> values;
-        List<float> weights;
-        float[] selectKeys;
+        readonly List<T> values = new List<T>();
+        readonly List<float> weights = new List<float>();
+        float[]? selectKeys;
 
         public float TotalWeight
         {
@@ -18,24 +19,15 @@ namespace TSKT
                 {
                     Refresh();
                 }
-                if (selectKeys.Length == 0)
+                if (selectKeys!.Length == 0)
                 {
                     return 0f;
                 }
                 return selectKeys[selectKeys.Length - 1];
             }
         }
-        public int Count
-        {
-            get
-            {
-                if (values == null)
-                {
-                    return 0;
-                }
-                return values.Count;
-            }
-        }
+        public int Count => values.Count;
+
         public void Add(float weight, T t)
         {
             if (weight < 0f)
@@ -45,19 +37,7 @@ namespace TSKT
             if (weight > 0f)
             {
                 selectKeys = null;
-                if (weights == null)
-                {
-                    weights = new List<float>
-                    {
-                        weight
-                    };
-
-                    values = new List<T>();
-                }
-                else
-                {
-                    weights.Add(weight);
-                }
+                weights.Add(weight);
                 values.Add(t);
             }
         }
@@ -71,12 +51,15 @@ namespace TSKT
 
         void Refresh()
         {
-            if (weights == null)
+            if (weights.Count == 0)
             {
                 selectKeys = System.Array.Empty<float>();
                 return;
             }
-            selectKeys = new float[weights.Count];
+            if (selectKeys == null || selectKeys.Length != weights.Count)
+            {
+                selectKeys = new float[weights.Count];
+            }
             for (int i = 0; i < weights.Count; ++i)
             {
                 if (i == 0)
@@ -97,7 +80,7 @@ namespace TSKT
                 Refresh();
             }
 
-            var r = Random.Range(0f, selectKeys[selectKeys.Length - 1]);
+            var r = Random.Range(0f, selectKeys![selectKeys.Length - 1]);
             var i = System.Array.BinarySearch(selectKeys, r);
             if (i < 0)
             {
@@ -134,7 +117,7 @@ namespace TSKT
                     Refresh();
                 }
 
-                return weights[i] / selectKeys[selectKeys.Length - 1];
+                return weights[i] / selectKeys![selectKeys.Length - 1];
             }
         }
     }

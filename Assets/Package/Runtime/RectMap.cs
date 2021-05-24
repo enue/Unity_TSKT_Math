@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
@@ -10,7 +11,7 @@ namespace TSKT
         readonly float cellSize = 1f;
         readonly float offset = 0.5f;
 
-        UnlimitedArray2<List<(Rect key, T value)>> cells;
+        UnlimitedArray2<List<(Rect key, T value)>>? cells;
 
         public RectMap(float cellSize, float offset)
         {
@@ -57,7 +58,7 @@ namespace TSKT
             {
                 for (int j = 0; j < range.height + 1; ++j)
                 {
-                    var pairs = cells?[i + range.xMin, j + range.yMin];
+                    var pairs = cells[i + range.xMin, j + range.yMin];
                     if (pairs != null && pairs.Count > 0)
                     {
                         foreach (var pair in pairs)
@@ -87,7 +88,7 @@ namespace TSKT
             {
                 for (int j = 0; j < range.height + 1; ++j)
                 {
-                    var pairs = cells?[i + range.xMin, j + range.yMin];
+                    var pairs = cells[i + range.xMin, j + range.yMin];
                     if (pairs != null && pairs.Count > 0)
                     {
                         foreach(var pair in pairs)

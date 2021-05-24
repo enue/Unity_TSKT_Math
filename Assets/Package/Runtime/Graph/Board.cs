@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
@@ -10,7 +11,7 @@ namespace TSKT
         public readonly double?[,] costs;
         public int Width => costs.GetLength(0);
         public int Height => costs.GetLength(1);
-        public DirectionMap<double> DirectionCostMap { get; set; }
+        public DirectionMap<double>? DirectionCostMap { get; set; }
 
         public Board(int w, int h)
         {
@@ -26,9 +27,10 @@ namespace TSKT
 
         public bool TryGetCost(int i, int j, out double value)
         {
-            if (costs[i, j].HasValue)
+            var cost = costs[i, j];
+            if (cost.HasValue)
             {
-                value = costs[i, j].Value;
+                value = cost.Value;
                 return true;
             }
             value = default;
@@ -62,14 +64,14 @@ namespace TSKT
                 var next = it + node;
                 if (Contains(next.x, next.y))
                 {
-                    if (costs[next.x, next.y].HasValue)
+                    var cost = costs[next.x, next.y];
+                    if (cost.HasValue)
                     {
-                        var cost = costs[next.x, next.y].Value;
                         if (DirectionCostMap != null)
                         {
                             cost += DirectionCostMap[it];
                         }
-                        yield return (next, cost);
+                        yield return (next, cost.Value);
                     }
                 }
             }

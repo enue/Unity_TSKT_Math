@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Unity.Mathematics;
+#nullable enable
 
 // http://neue.cc/2013/03/06_399.html
 

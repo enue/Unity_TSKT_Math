@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+#nullable enable
 
 namespace TSKT
 {

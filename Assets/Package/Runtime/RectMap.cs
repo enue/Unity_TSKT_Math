@@ -11,7 +11,7 @@ namespace TSKT
         readonly float cellSize = 1f;
         readonly float offset = 0.5f;
 
-        UnlimitedArray2<List<(Rect key, T value)>>? cells;
+        Dictionary<Vector2Int, List<(Rect key, T value)>>? cells;
 
         public RectMap(float cellSize, float offset)
         {
@@ -21,24 +21,20 @@ namespace TSKT
 
         public void Add(Rect rect, T value)
         {
-            var range = GetCellRange(rect);
             if (cells == null)
             {
-                cells = new UnlimitedArray2<List<(Rect key, T value)>>(range.xMin, range.yMin, range.width, range.height);
+                cells = new Dictionary<Vector2Int, List<(Rect key, T value)>>();
             }
-            else
-            {
-                cells.EnsureCapacity(range);
-            }
+            var range = GetCellRange(rect);
             for (int i = 0; i < range.width + 1; ++i)
             {
                 for (int j = 0; j < range.height + 1; ++j)
                 {
-                    var list = cells[i + range.xMin, j + range.yMin];
-                    if (list == null)
+                    var pos = new Vector2Int(i + range.xMin, j + range.yMin);
+                    if (!cells.TryGetValue(pos, out var list))
                     {
                         list = new List<(Rect key, T value)>();
-                        cells[i + range.xMin, j + range.yMin] = list;
+                        cells[pos] = list;
                     }
                     list.Add((rect, value));
                 }
@@ -58,8 +54,8 @@ namespace TSKT
             {
                 for (int j = 0; j < range.height + 1; ++j)
                 {
-                    var pairs = cells[i + range.xMin, j + range.yMin];
-                    if (pairs != null && pairs.Count > 0)
+                    var pos = new Vector2Int(i + range.xMin, j + range.yMin);
+                    if (cells.TryGetValue(pos, out var pairs))
                     {
                         foreach (var pair in pairs)
                         {
@@ -88,8 +84,8 @@ namespace TSKT
             {
                 for (int j = 0; j < range.height + 1; ++j)
                 {
-                    var pairs = cells[i + range.xMin, j + range.yMin];
-                    if (pairs != null && pairs.Count > 0)
+                    var pos = new Vector2Int(i + range.xMin, j + range.yMin);
+                    if (cells.TryGetValue(pos, out var pairs))
                     {
                         foreach(var pair in pairs)
                         {

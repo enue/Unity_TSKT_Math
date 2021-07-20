@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 #nullable enable
 
 namespace TSKT
@@ -33,11 +32,11 @@ namespace TSKT
             return 6f * a * x + 2f * b;
         }
 
-        static public CubicFunction Process3PointsAndVelocity(
-            float pt, float p,
-            float qt, float q,
-            float rt, float r,
-            float vt, float v)
+        static public CubicFunction Solve3PointsAndVelocity(
+            (float t, float v) p1,
+            (float t, float v) p2,
+            (float t, float v) p3,
+            (float t, float v) v)
         {
             // a * pt^3 + b * pt^2 + c * pt + d = p;
             // a * qt^3 + b * qt^2 + c * qt + d = q;
@@ -45,27 +44,27 @@ namespace TSKT
             // 3a * vt^2 + 2b * vt + c = v;
             var matrix = new Matrix4x4()
             {
-                m00 = pt * pt * pt,
-                m01 = pt * pt,
-                m02 = pt,
+                m00 = p1.t * p1.t * p1.t,
+                m01 = p1.t * p1.t,
+                m02 = p1.t,
                 m03 = 1f,
 
-                m10 = qt * qt * qt,
-                m11 = qt * qt,
-                m12 = qt,
+                m10 = p2.t * p2.t * p2.t,
+                m11 = p2.t * p2.t,
+                m12 = p2.t,
                 m13 = 1f,
 
-                m20 = rt * rt * rt,
-                m21 = rt * rt,
-                m22 = rt,
+                m20 = p3.t * p3.t * p3.t,
+                m21 = p3.t * p3.t,
+                m22 = p3.t,
                 m23 = 1f,
 
-                m30 = 3f * vt * vt,
-                m31 = 2f * vt,
+                m30 = 3f * v.t * v.t,
+                m31 = 2f * v.t,
                 m32 = 1f,
                 m33 = 0f
             };
-            var rightMatrix = new Vector4(p, q, r, v);
+            var rightMatrix = new Vector4(p1.v, p2.v, p3.v, v.v);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
@@ -78,11 +77,11 @@ namespace TSKT
             return result;
         }
 
-        static public CubicFunction Process2PointsAnd2Velocities(
-            float pt, float p,
-            float qt, float q,
-            float ut, float u,
-            float vt, float v)
+        static public CubicFunction Solve2PointsAnd2Velocities(
+            (float t, float v) p1,
+            (float t, float v) p2,
+            (float t, float v) v1,
+            (float t, float v) v2)
         {
             // a * pt^3 + b * pt^2 + c * pt + d = p;
             // a * qt^3 + b * qt^2 + c * qt + d = q;
@@ -91,28 +90,28 @@ namespace TSKT
 
             var matrix = new Matrix4x4()
             {
-                m00 = pt * pt * pt,
-                m01 = pt * pt,
-                m02 = pt,
+                m00 = p1.t * p1.t * p1.t,
+                m01 = p1.t * p1.t,
+                m02 = p1.t,
                 m03 = 1f,
 
-                m10 = qt * qt * qt,
-                m11 = qt * qt,
-                m12 = qt,
+                m10 = p2.t * p2.t * p2.t,
+                m11 = p2.t * p2.t,
+                m12 = p2.t,
                 m13 = 1f,
 
-                m20 = 3f * ut * ut,
-                m21 = 2f * ut,
+                m20 = 3f * v1.t * v1.t,
+                m21 = 2f * v1.t,
                 m22 = 1f,
                 m23 = 0f,
 
-                m30 = 3f * vt * vt,
-                m31 = 2f * vt,
+                m30 = 3f * v2.t * v2.t,
+                m31 = 2f * v2.t,
                 m32 = 1f,
                 m33 = 0f
             };
 
-            var rightMatrix = new Vector4(p, q, u, v);
+            var rightMatrix = new Vector4(p1.v, p2.v, v1.v, v2.v);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
@@ -124,9 +123,9 @@ namespace TSKT
             return result;
         }
 
-        static public CubicFunction Process2PointsAndConstantAccel(
-            float pt, float p,
-            float qt, float q,
+        static public CubicFunction Solve2PointsAndConstantAccel(
+            (float t, float v) p1,
+            (float t, float v) p2,
             float accell)
         {
             // b * pt^2 + pt * c + d = p
@@ -137,13 +136,13 @@ namespace TSKT
             var matrix = new Matrix4x4()
             {
                 m00 = 0f,
-                m01 = pt * pt,
-                m02 = pt,
+                m01 = p1.t * p1.t,
+                m02 = p1.t,
                 m03 = 1f,
 
                 m10 = 0f,
-                m11 = qt * qt,
-                m12 = qt,
+                m11 = p2.t * p2.t,
+                m12 = p2.t,
                 m13 = 1f,
 
                 m20 = 0f,
@@ -157,7 +156,7 @@ namespace TSKT
                 m33 = 0f
             };
 
-            var rightMatrix = new Vector4(p, q, accell, 0f);
+            var rightMatrix = new Vector4(p1.v, p2.v, accell, 0f);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
@@ -170,11 +169,11 @@ namespace TSKT
         }
 
 
-        static public CubicFunction Process2PointsVelocityAndAccel(
-            float pt, float p,
-            float qt, float q,
-            float vt, float v,
-            float accelT, float accel)
+        static public CubicFunction Solve2PointsVelocityAndAccel(
+            (float t, float v) p1,
+            (float t, float v) p2,
+            (float t, float v) v,
+            (float t, float v) a)
         {
             // a * pt^3 + b * pt^2 + c * pt + d = p;
             // a * qt^3 + b * qt^2 + c * qt + d = q;
@@ -183,28 +182,28 @@ namespace TSKT
 
             var matrix = new Matrix4x4()
             {
-                m00 = pt * pt * pt,
-                m01 = pt * pt,
-                m02 = pt,
+                m00 = p1.t * p1.t * p1.t,
+                m01 = p1.t * p1.t,
+                m02 = p1.t,
                 m03 = 1f,
 
-                m10 = qt * qt * qt,
-                m11 = qt * qt,
-                m12 = qt,
+                m10 = p2.t * p2.t * p2.t,
+                m11 = p2.t * p2.t,
+                m12 = p2.t,
                 m13 = 1f,
 
-                m20 = 3f * vt * vt,
-                m21 = 2f * vt,
+                m20 = 3f * v.t * v.t,
+                m21 = 2f * v.t,
                 m22 = 1f,
                 m23 = 0f,
 
-                m30 = 6f * accelT,
+                m30 = 6f * a.t,
                 m31 = 2f,
                 m32 = 0f,
                 m33 = 0f
             };
 
-            var rightMatrix = new Vector4(p, q, v, accel);
+            var rightMatrix = new Vector4(p1.v, p2.v, v.v, a.v);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
@@ -217,10 +216,10 @@ namespace TSKT
         }
 
 
-        static public CubicFunction Process3Points(
-            float pt, float p,
-            float qt, float q,
-            float rt, float r)
+        static public CubicFunction Solve3Points(
+            (float t, float v) p1,
+            (float t, float v) p2,
+            (float t, float v) p3)
         {
             // a * pt^3 + b * pt^2 + c * pt + d = p;
             // a * qt^3 + b * qt^2 + c * qt + d = q;
@@ -230,18 +229,18 @@ namespace TSKT
             var matrix = new Matrix4x4()
             {
                 m00 = 0f,
-                m01 = pt * pt,
-                m02 = pt,
+                m01 = p1.t * p1.t,
+                m02 = p1.t,
                 m03 = 1f,
 
                 m10 = 0f,
-                m11 = qt * qt,
-                m12 = qt,
+                m11 = p2.t * p2.t,
+                m12 = p2.t,
                 m13 = 1f,
 
                 m20 = 0f,
-                m21 = rt * rt,
-                m22 = rt,
+                m21 = p3.t * p3.t,
+                m22 = p3.t,
                 m23 = 1f,
 
                 m30 = 1f,
@@ -250,7 +249,7 @@ namespace TSKT
                 m33 = 0f
             };
 
-            var rightMatrix = new Vector4(p, q, r, 0f);
+            var rightMatrix = new Vector4(p1.v, p2.v, p3.v, 0f);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
@@ -262,11 +261,11 @@ namespace TSKT
             return result;
         }
 
-        static public CubicFunction Process4Points(
-            float pt, float p,
-            float qt, float q,
-            float rt, float r,
-            float st, float s)
+        static public CubicFunction Solve4Points(
+            (float t, float v) p1,
+            (float t, float v) p2,
+            (float t, float v) p3,
+            (float t, float v) p4)
         {
             // a * pt^3 + b * pt^2 + c * pt + d = p;
             // a * qt^3 + b * qt^2 + c * qt + d = q;
@@ -275,28 +274,28 @@ namespace TSKT
 
             var matrix = new Matrix4x4()
             {
-                m00 = pt * pt * pt,
-                m01 = pt * pt,
-                m02 = pt,
+                m00 = p1.t * p1.t * p1.t,
+                m01 = p1.t * p1.t,
+                m02 = p1.t,
                 m03 = 1f,
 
-                m10 = qt * qt * qt,
-                m11 = qt * qt,
-                m12 = qt,
+                m10 = p2.t * p2.t * p2.t,
+                m11 = p2.t * p2.t,
+                m12 = p2.t,
                 m13 = 1f,
 
-                m20 = rt * rt * rt,
-                m21 = rt * rt,
-                m22 = rt,
+                m20 = p3.t * p3.t * p3.t,
+                m21 = p3.t * p3.t,
+                m22 = p3.t,
                 m23 = 1f,
 
-                m30 = st * st * st,
-                m31 = st * st,
-                m32 = st,
+                m30 = p4.t * p4.t * p4.t,
+                m31 = p4.t * p4.t,
+                m32 = p4.t,
                 m33 = 1f
             };
 
-            var rightMatrix = new Vector4(p, q, r, s);
+            var rightMatrix = new Vector4(p1.v, p2.v, p3.v, p4.v);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
@@ -308,10 +307,10 @@ namespace TSKT
             return result;
         }
 
-        static public CubicFunction Process2PointsAndVelocity(
-            float pt, float p,
-            float qt, float q,
-            float vt, float v)
+        static public CubicFunction Solve2PointsAndVelocity(
+            (float t, float v) p1,
+            (float t, float v) p2,
+            (float t, float v) v)
         {
             // a * pt^3 + b * pt^2 + c * pt + d = p;
             // a * qt^3 + b * qt^2 + c * qt + d = q;
@@ -321,17 +320,17 @@ namespace TSKT
             var matrix = new Matrix4x4()
             {
                 m00 = 0f,
-                m01 = pt * pt,
-                m02 = pt,
+                m01 = p1.t * p1.t,
+                m02 = p1.t,
                 m03 = 1f,
 
                 m10 = 0f,
-                m11 = qt * qt,
-                m12 = qt,
+                m11 = p2.t * p2.t,
+                m12 = p2.t,
                 m13 = 1f,
 
                 m20 = 0f,
-                m21 = 2f * vt,
+                m21 = 2f * v.t,
                 m22 = 1,
                 m23 = 0f,
 
@@ -341,7 +340,7 @@ namespace TSKT
                 m33 = 0f
             };
 
-            var rightMatrix = new Vector4(p, q, v, 0f);
+            var rightMatrix = new Vector4(p1.v, p2.v, v.v, 0f);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
@@ -353,9 +352,9 @@ namespace TSKT
             return result;
         }
 
-        static public CubicFunction ProcessPointAndVelocityAndConstantAccel(
-            float pt, float p,
-            float vt, float v,
+        static public CubicFunction SolvePointAndVelocityAndConstantAccel(
+            (float t, float v) p,
+            (float t, float v) v,
             float accel)
         {
             // a * pt^3 + b * pt^2 + c * pt + d = p;
@@ -366,12 +365,12 @@ namespace TSKT
             var matrix = new Matrix4x4()
             {
                 m00 = 0f,
-                m01 = pt * pt,
-                m02 = pt,
+                m01 = p.t * p.t,
+                m02 = p.t,
                 m03 = 1f,
 
                 m10 = 0f,
-                m11 = 2f * vt,
+                m11 = 2f * v.t,
                 m12 = 1f,
                 m13 = 0f,
 
@@ -386,7 +385,7 @@ namespace TSKT
                 m33 = 0f
             };
 
-            var rightMatrix = new Vector4(p, v, accel, 0f);
+            var rightMatrix = new Vector4(p.v, v.v, accel, 0f);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(
@@ -398,9 +397,9 @@ namespace TSKT
             return result;
         }
 
-        static public CubicFunction Process2Points(
-            float pt, float p,
-            float qt, float q)
+        static public CubicFunction Solve2Points(
+            (float t, float v) p1,
+            (float t, float v) p2)
         {
             // a * pt^3 + b * pt^2 + c * pt + d = p;
             // a * qt^3 + b * qt^2 + c * qt + d = q;
@@ -411,12 +410,12 @@ namespace TSKT
             {
                 m00 = 0f,
                 m01 = 0f,
-                m02 = pt,
+                m02 = p1.t,
                 m03 = 1f,
 
                 m10 = 0f,
                 m11 = 0f,
-                m12 = qt,
+                m12 = p2.t,
                 m13 = 1f,
 
                 m20 = 1f,
@@ -430,7 +429,7 @@ namespace TSKT
                 m33 = 0f
             };
 
-            var rightMatrix = new Vector4(p, q, 0f, 0f);
+            var rightMatrix = new Vector4(p1.v, p2.v, 0f, 0f);
             var inversedMatrix = matrix.inverse;
 
             var result = new CubicFunction(

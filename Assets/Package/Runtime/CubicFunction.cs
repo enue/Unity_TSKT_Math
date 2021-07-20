@@ -132,36 +132,28 @@ namespace TSKT
             // 2b = accell
             // a = 0
 
-            var matrix = new float4x4(
-                m00: 0f,
-                m10: p1.t * p1.t,
-                m20: p1.t,
-                m30: 1f,
+            var matrix = new float3x3(
+                m00: p1.t * p1.t,
+                m10: p1.t,
+                m20: 1f,
 
-                m01: 0f,
-                m11: p2.t * p2.t,
-                m21: p2.t,
-                m31: 1f,
+                m01: p2.t * p2.t,
+                m11: p2.t,
+                m21: 1f,
 
-                m02: 0f,
-                m12: 2f,
-                m22: 0f,
-                m32: 0f,
-
-                m03: 1f,
-                m13: 0f,
-                m23: 0f,
-                m33: 0f
+                m02: 2f,
+                m12: 0f,
+                m22: 0f
             );
 
-            var rightMatrix = new float4(p1.v, p2.v, accell, 0f);
+            var rightMatrix = new float3(p1.v, p2.v, accell);
             var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
-                b: math.dot(inversedMatrix.c1, rightMatrix),
-                c: math.dot(inversedMatrix.c2, rightMatrix),
-                d: math.dot(inversedMatrix.c3, rightMatrix));
+                b: math.dot(inversedMatrix.c0, rightMatrix),
+                c: math.dot(inversedMatrix.c1, rightMatrix),
+                d: math.dot(inversedMatrix.c2, rightMatrix));
 
             return result;
         }
@@ -223,36 +215,28 @@ namespace TSKT
             // a * rt^3 + b * rt^2 + c * rt + d = r;
             // a = 0
 
-            var matrix = new float4x4(
-                m00: 0f,
-                m10: p1.t * p1.t,
-                m20: p1.t,
-                m30: 1f,
+            var matrix = new float3x3(
+                m00: p1.t * p1.t,
+                m10: p1.t,
+                m20: 1f,
 
-                m01: 0f,
-                m11: p2.t * p2.t,
-                m21: p2.t,
-                m31: 1f,
+                m01: p2.t * p2.t,
+                m11: p2.t,
+                m21: 1f,
 
-                m02: 0f,
-                m12: p3.t * p3.t,
-                m22: p3.t,
-                m32: 1f,
-
-                m03: 1f,
-                m13: 0f,
-                m23: 0f,
-                m33: 0f
+                m02: p3.t * p3.t,
+                m12: p3.t,
+                m22: 1f
             );
 
-            var rightMatrix = new float4(p1.v, p2.v, p3.v, 0f);
+            var rightMatrix = new float3(p1.v, p2.v, p3.v);
             var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
-                b: math.dot(inversedMatrix.c1, rightMatrix),
-                c: math.dot(inversedMatrix.c2, rightMatrix),
-                d: math.dot(inversedMatrix.c3, rightMatrix));
+                b: math.dot(inversedMatrix.c0, rightMatrix),
+                c: math.dot(inversedMatrix.c1, rightMatrix),
+                d: math.dot(inversedMatrix.c2, rightMatrix));
 
             return result;
         }
@@ -312,36 +296,28 @@ namespace TSKT
             // 3a * vt^2 + 2b * vt + c = v;
             // a = 0;
 
-            var matrix = new float4x4(
-                m00: 0f,
-                m10: p1.t * p1.t,
-                m20: p1.t,
-                m30: 1f,
+            var matrix = new float3x3(
+                m00: p1.t * p1.t,
+                m10: p1.t,
+                m20: 1f,
 
-                m01: 0f,
-                m11: p2.t * p2.t,
-                m21: p2.t,
-                m31: 1f,
+                m01: p2.t * p2.t,
+                m11: p2.t,
+                m21: 1f,
 
-                m02: 0f,
-                m12: 2f * v.t,
-                m22: 1,
-                m32: 0f,
-
-                m03: 1f,
-                m13: 0f,
-                m23: 0f,
-                m33: 0f
+                m02: 2f * v.t,
+                m12: 1,
+                m22: 0f
             );
 
-            var rightMatrix = new float4(p1.v, p2.v, v.v, 0f);
+            var rightMatrix = new float3(p1.v, p2.v, v.v);
             var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
-                b: math.dot(inversedMatrix.c1, rightMatrix),
-                c: math.dot(inversedMatrix.c2, rightMatrix),
-                d: math.dot(inversedMatrix.c3, rightMatrix));
+                b: math.dot(inversedMatrix.c0, rightMatrix),
+                c: math.dot(inversedMatrix.c1, rightMatrix),
+                d: math.dot(inversedMatrix.c2, rightMatrix));
 
             return result;
         }
@@ -356,36 +332,28 @@ namespace TSKT
             // 2b = accel
             // a = 0;
 
-            var matrix = new float4x4(
-                m00: 0f,
-                m10: p.t * p.t,
-                m20: p.t,
-                m30: 1f,
+            var matrix = new float3x3(
+                m00: p.t * p.t,
+                m10: p.t,
+                m20: 1f,
 
-                m01: 0f,
-                m11: 2f * v.t,
-                m21: 1f,
-                m31: 0f,
+                m01: 2f * v.t,
+                m11: 1f,
+                m21: 0f,
 
-                m02: 0f,
-                m12: 2f,
-                m22: 0f,
-                m32: 0f,
-
-                m03: 1f,
-                m13: 0f,
-                m23: 0f,
-                m33: 0f
+                m02: 2f,
+                m12: 0f,
+                m22: 0f
             );
 
-            var rightMatrix = new float4(p.v, v.v, accel, 0f);
+            var rightMatrix = new float3(p.v, v.v, accel);
             var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
-                b: math.dot(inversedMatrix.c1, rightMatrix),
-                c: math.dot(inversedMatrix.c2, rightMatrix),
-                d: math.dot(inversedMatrix.c3, rightMatrix));
+                b: math.dot(inversedMatrix.c0, rightMatrix),
+                c: math.dot(inversedMatrix.c1, rightMatrix),
+                d: math.dot(inversedMatrix.c2, rightMatrix));
 
             return result;
         }
@@ -399,36 +367,22 @@ namespace TSKT
             // a = 0;
             // b = 0;
 
-            var matrix = new float4x4(
-                m00: 0f,
-                m10: 0f,
-                m20: p1.t,
-                m30: 1f,
+            var matrix = new float2x2(
+                m00: p1.t,
+                m10: 1f,
 
-                m01: 0f,
-                m11: 0f,
-                m21: p2.t,
-                m31: 1f,
-
-                m02: 1f,
-                m12: 0f,
-                m22: 0f,
-                m32: 0f,
-
-                m03: 0f,
-                m13: 1f,
-                m23: 0f,
-                m33: 0f
+                m01: p2.t,
+                m11: 1f
             );
 
-            var rightMatrix = new float4(p1.v, p2.v, 0f, 0f);
+            var rightMatrix = new float2(p1.v, p2.v);
             var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
                 b: 0f,
-                c: math.dot(inversedMatrix.c2, rightMatrix),
-                d: math.dot(inversedMatrix.c3, rightMatrix));
+                c: math.dot(inversedMatrix.c0, rightMatrix),
+                d: math.dot(inversedMatrix.c1, rightMatrix));
 
             return result;
         }

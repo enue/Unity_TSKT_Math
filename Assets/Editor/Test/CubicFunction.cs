@@ -58,7 +58,7 @@ namespace TSKT.Tests
         {
             var f = TSKT.CubicFunction.SolvePointAndVelocityAndConstantAccel((t1, p1), (t2, v2), a);
             Assert.True(Mathf.Approximately(p1, f.Evaluate(t1)));
-            Assert.True(Mathf.Approximately(v2, f.Velocity(t2)));
+            Assert.True(Mathf.Approximately(v2, f.Velocity(t2)), v2 + ", " + f.Velocity(t2));
             Assert.True(Mathf.Approximately(a, f.Acceleration(0f)));
             Assert.AreEqual(0f, f.a);
         }

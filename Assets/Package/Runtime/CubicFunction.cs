@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Mathematics;
+using UnityEngine;
 #nullable enable
 
 namespace TSKT
@@ -42,36 +43,35 @@ namespace TSKT
             // a * qt^3 + b * qt^2 + c * qt + d = q;
             // a * rt^3 + b * rt^2 + c * rt + d = r;
             // 3a * vt^2 + 2b * vt + c = v;
-            var matrix = new Matrix4x4()
-            {
-                m00 = p1.t * p1.t * p1.t,
-                m01 = p1.t * p1.t,
-                m02 = p1.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: p1.t * p1.t * p1.t,
+                m10: p1.t * p1.t,
+                m20: p1.t,
+                m30: 1f,
 
-                m10 = p2.t * p2.t * p2.t,
-                m11 = p2.t * p2.t,
-                m12 = p2.t,
-                m13 = 1f,
+                m01: p2.t * p2.t * p2.t,
+                m11: p2.t * p2.t,
+                m21: p2.t,
+                m31: 1f,
 
-                m20 = p3.t * p3.t * p3.t,
-                m21 = p3.t * p3.t,
-                m22 = p3.t,
-                m23 = 1f,
+                m02: p3.t * p3.t * p3.t,
+                m12: p3.t * p3.t,
+                m22: p3.t,
+                m32: 1f,
 
-                m30 = 3f * v.t * v.t,
-                m31 = 2f * v.t,
-                m32 = 1f,
-                m33 = 0f
-            };
-            var rightMatrix = new Vector4(p1.v, p2.v, p3.v, v.v);
-            var inversedMatrix = matrix.inverse;
+                m03: 3f * v.t * v.t,
+                m13: 2f * v.t,
+                m23: 1f,
+                m33: 0f);
+            var inversedMatrix =  math.inverse(matrix);
+
+            var rightMatrix = new float4(p1.v, p2.v, p3.v, v.v);
 
             var result = new CubicFunction(
-                a: Vector4.Dot(inversedMatrix.GetRow(0), rightMatrix),
-                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix)
+                a: math.dot(inversedMatrix.c0, rightMatrix),
+                b: math.dot(inversedMatrix.c1, rightMatrix),
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix)
             );
 
             return result;
@@ -88,37 +88,36 @@ namespace TSKT
             // 3a * ut^2 + 2b * ut + c = u;
             // 3a * vt^2 + 2b * vt + c = v;
 
-            var matrix = new Matrix4x4()
-            {
-                m00 = p1.t * p1.t * p1.t,
-                m01 = p1.t * p1.t,
-                m02 = p1.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: p1.t * p1.t * p1.t,
+                m10: p1.t * p1.t,
+                m20: p1.t,
+                m30: 1f,
 
-                m10 = p2.t * p2.t * p2.t,
-                m11 = p2.t * p2.t,
-                m12 = p2.t,
-                m13 = 1f,
+                m01: p2.t * p2.t * p2.t,
+                m11: p2.t * p2.t,
+                m21: p2.t,
+                m31: 1f,
 
-                m20 = 3f * v1.t * v1.t,
-                m21 = 2f * v1.t,
-                m22 = 1f,
-                m23 = 0f,
+                m02: 3f * v1.t * v1.t,
+                m12: 2f * v1.t,
+                m22: 1f,
+                m32: 0f,
 
-                m30 = 3f * v2.t * v2.t,
-                m31 = 2f * v2.t,
-                m32 = 1f,
-                m33 = 0f
-            };
+                m03: 3f * v2.t * v2.t,
+                m13: 2f * v2.t,
+                m23: 1f,
+                m33: 0f
+            );
 
-            var rightMatrix = new Vector4(p1.v, p2.v, v1.v, v2.v);
-            var inversedMatrix = matrix.inverse;
+            var rightMatrix = new float4(p1.v, p2.v, v1.v, v2.v);
+            var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
-                a: Vector4.Dot(inversedMatrix.GetRow(0), rightMatrix),
-                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+                a: math.dot(inversedMatrix.c0, rightMatrix),
+                b: math.dot(inversedMatrix.c1, rightMatrix),
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix));
 
             return result;
         }
@@ -133,37 +132,36 @@ namespace TSKT
             // 2b = accell
             // a = 0
 
-            var matrix = new Matrix4x4()
-            {
-                m00 = 0f,
-                m01 = p1.t * p1.t,
-                m02 = p1.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: 0f,
+                m10: p1.t * p1.t,
+                m20: p1.t,
+                m30: 1f,
 
-                m10 = 0f,
-                m11 = p2.t * p2.t,
-                m12 = p2.t,
-                m13 = 1f,
+                m01: 0f,
+                m11: p2.t * p2.t,
+                m21: p2.t,
+                m31: 1f,
 
-                m20 = 0f,
-                m21 = 2f,
-                m22 = 0f,
-                m23 = 0f,
+                m02: 0f,
+                m12: 2f,
+                m22: 0f,
+                m32: 0f,
 
-                m30 = 1f,
-                m31 = 0f,
-                m32 = 0f,
-                m33 = 0f
-            };
+                m03: 1f,
+                m13: 0f,
+                m23: 0f,
+                m33: 0f
+            );
 
-            var rightMatrix = new Vector4(p1.v, p2.v, accell, 0f);
-            var inversedMatrix = matrix.inverse;
+            var rightMatrix = new float4(p1.v, p2.v, accell, 0f);
+            var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
-                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+                b: math.dot(inversedMatrix.c1, rightMatrix),
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix));
 
             return result;
         }
@@ -180,37 +178,36 @@ namespace TSKT
             // 3a * vt^2 + 2b * vt + c = v;
             // 6a * accelT + 2b = accel;
 
-            var matrix = new Matrix4x4()
-            {
-                m00 = p1.t * p1.t * p1.t,
-                m01 = p1.t * p1.t,
-                m02 = p1.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: p1.t * p1.t * p1.t,
+                m10: p1.t * p1.t,
+                m20: p1.t,
+                m30: 1f,
 
-                m10 = p2.t * p2.t * p2.t,
-                m11 = p2.t * p2.t,
-                m12 = p2.t,
-                m13 = 1f,
+                m01: p2.t * p2.t * p2.t,
+                m11: p2.t * p2.t,
+                m21: p2.t,
+                m31: 1f,
 
-                m20 = 3f * v.t * v.t,
-                m21 = 2f * v.t,
-                m22 = 1f,
-                m23 = 0f,
+                m02: 3f * v.t * v.t,
+                m12: 2f * v.t,
+                m22: 1f,
+                m32: 0f,
 
-                m30 = 6f * a.t,
-                m31 = 2f,
-                m32 = 0f,
-                m33 = 0f
-            };
+                m03: 6f * a.t,
+                m13: 2f,
+                m23: 0f,
+                m33: 0f
+            );
 
-            var rightMatrix = new Vector4(p1.v, p2.v, v.v, a.v);
-            var inversedMatrix = matrix.inverse;
+            var rightMatrix = new float4(p1.v, p2.v, v.v, a.v);
+            var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
-                a: Vector4.Dot(inversedMatrix.GetRow(0), rightMatrix),
-                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+                a: math.dot(inversedMatrix.c0, rightMatrix),
+                b: math.dot(inversedMatrix.c1, rightMatrix),
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix));
 
             return result;
         }
@@ -226,37 +223,36 @@ namespace TSKT
             // a * rt^3 + b * rt^2 + c * rt + d = r;
             // a = 0
 
-            var matrix = new Matrix4x4()
-            {
-                m00 = 0f,
-                m01 = p1.t * p1.t,
-                m02 = p1.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: 0f,
+                m10: p1.t * p1.t,
+                m20: p1.t,
+                m30: 1f,
 
-                m10 = 0f,
-                m11 = p2.t * p2.t,
-                m12 = p2.t,
-                m13 = 1f,
+                m01: 0f,
+                m11: p2.t * p2.t,
+                m21: p2.t,
+                m31: 1f,
 
-                m20 = 0f,
-                m21 = p3.t * p3.t,
-                m22 = p3.t,
-                m23 = 1f,
+                m02: 0f,
+                m12: p3.t * p3.t,
+                m22: p3.t,
+                m32: 1f,
 
-                m30 = 1f,
-                m31 = 0f,
-                m32 = 0f,
-                m33 = 0f
-            };
+                m03: 1f,
+                m13: 0f,
+                m23: 0f,
+                m33: 0f
+            );
 
-            var rightMatrix = new Vector4(p1.v, p2.v, p3.v, 0f);
-            var inversedMatrix = matrix.inverse;
+            var rightMatrix = new float4(p1.v, p2.v, p3.v, 0f);
+            var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
-                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+                b: math.dot(inversedMatrix.c1, rightMatrix),
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix));
 
             return result;
         }
@@ -272,37 +268,36 @@ namespace TSKT
             // a * rt^3 + b * rt^2 + c * rt + d = r;
             // a * st^3 + b * st^2 + c * st + d = s;
 
-            var matrix = new Matrix4x4()
-            {
-                m00 = p1.t * p1.t * p1.t,
-                m01 = p1.t * p1.t,
-                m02 = p1.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: p1.t * p1.t * p1.t,
+                m10: p1.t * p1.t,
+                m20: p1.t,
+                m30: 1f,
 
-                m10 = p2.t * p2.t * p2.t,
-                m11 = p2.t * p2.t,
-                m12 = p2.t,
-                m13 = 1f,
+                m01: p2.t * p2.t * p2.t,
+                m11: p2.t * p2.t,
+                m21: p2.t,
+                m31: 1f,
 
-                m20 = p3.t * p3.t * p3.t,
-                m21 = p3.t * p3.t,
-                m22 = p3.t,
-                m23 = 1f,
+                m02: p3.t * p3.t * p3.t,
+                m12: p3.t * p3.t,
+                m22: p3.t,
+                m32: 1f,
 
-                m30 = p4.t * p4.t * p4.t,
-                m31 = p4.t * p4.t,
-                m32 = p4.t,
-                m33 = 1f
-            };
+                m03: p4.t * p4.t * p4.t,
+                m13: p4.t * p4.t,
+                m23: p4.t,
+                m33: 1f
+            );
 
-            var rightMatrix = new Vector4(p1.v, p2.v, p3.v, p4.v);
-            var inversedMatrix = matrix.inverse;
+            var rightMatrix = new float4(p1.v, p2.v, p3.v, p4.v);
+            var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
-                a: Vector4.Dot(inversedMatrix.GetRow(0), rightMatrix),
-                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+                a: math.dot(inversedMatrix.c0, rightMatrix),
+                b: math.dot(inversedMatrix.c1, rightMatrix),
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix));
 
             return result;
         }
@@ -317,37 +312,36 @@ namespace TSKT
             // 3a * vt^2 + 2b * vt + c = v;
             // a = 0;
 
-            var matrix = new Matrix4x4()
-            {
-                m00 = 0f,
-                m01 = p1.t * p1.t,
-                m02 = p1.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: 0f,
+                m10: p1.t * p1.t,
+                m20: p1.t,
+                m30: 1f,
 
-                m10 = 0f,
-                m11 = p2.t * p2.t,
-                m12 = p2.t,
-                m13 = 1f,
+                m01: 0f,
+                m11: p2.t * p2.t,
+                m21: p2.t,
+                m31: 1f,
 
-                m20 = 0f,
-                m21 = 2f * v.t,
-                m22 = 1,
-                m23 = 0f,
+                m02: 0f,
+                m12: 2f * v.t,
+                m22: 1,
+                m32: 0f,
 
-                m30 = 1f,
-                m31 = 0f,
-                m32 = 0f,
-                m33 = 0f
-            };
+                m03: 1f,
+                m13: 0f,
+                m23: 0f,
+                m33: 0f
+            );
 
-            var rightMatrix = new Vector4(p1.v, p2.v, v.v, 0f);
-            var inversedMatrix = matrix.inverse;
+            var rightMatrix = new float4(p1.v, p2.v, v.v, 0f);
+            var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
-                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+                b: math.dot(inversedMatrix.c1, rightMatrix),
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix));
 
             return result;
         }
@@ -362,37 +356,36 @@ namespace TSKT
             // 2b = accel
             // a = 0;
 
-            var matrix = new Matrix4x4()
-            {
-                m00 = 0f,
-                m01 = p.t * p.t,
-                m02 = p.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: 0f,
+                m10: p.t * p.t,
+                m20: p.t,
+                m30: 1f,
 
-                m10 = 0f,
-                m11 = 2f * v.t,
-                m12 = 1f,
-                m13 = 0f,
+                m01: 0f,
+                m11: 2f * v.t,
+                m21: 1f,
+                m31: 0f,
 
-                m20 = 0f,
-                m21 = 2f,
-                m22 = 0f,
-                m23 = 0f,
+                m02: 0f,
+                m12: 2f,
+                m22: 0f,
+                m32: 0f,
 
-                m30 = 1f,
-                m31 = 0f,
-                m32 = 0f,
-                m33 = 0f
-            };
+                m03: 1f,
+                m13: 0f,
+                m23: 0f,
+                m33: 0f
+            );
 
-            var rightMatrix = new Vector4(p.v, v.v, accel, 0f);
-            var inversedMatrix = matrix.inverse;
+            var rightMatrix = new float4(p.v, v.v, accel, 0f);
+            var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
-                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+                b: math.dot(inversedMatrix.c1, rightMatrix),
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix));
 
             return result;
         }
@@ -406,37 +399,36 @@ namespace TSKT
             // a = 0;
             // b = 0;
 
-            var matrix = new Matrix4x4()
-            {
-                m00 = 0f,
-                m01 = 0f,
-                m02 = p1.t,
-                m03 = 1f,
+            var matrix = new float4x4(
+                m00: 0f,
+                m10: 0f,
+                m20: p1.t,
+                m30: 1f,
 
-                m10 = 0f,
-                m11 = 0f,
-                m12 = p2.t,
-                m13 = 1f,
+                m01: 0f,
+                m11: 0f,
+                m21: p2.t,
+                m31: 1f,
 
-                m20 = 1f,
-                m21 = 0f,
-                m22 = 0f,
-                m23 = 0f,
+                m02: 1f,
+                m12: 0f,
+                m22: 0f,
+                m32: 0f,
 
-                m30 = 0f,
-                m31 = 1f,
-                m32 = 0f,
-                m33 = 0f
-            };
+                m03: 0f,
+                m13: 1f,
+                m23: 0f,
+                m33: 0f
+            );
 
-            var rightMatrix = new Vector4(p1.v, p2.v, 0f, 0f);
-            var inversedMatrix = matrix.inverse;
+            var rightMatrix = new float4(p1.v, p2.v, 0f, 0f);
+            var inversedMatrix = math.inverse(matrix);
 
             var result = new CubicFunction(
                 a: 0f,
                 b: 0f,
-                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
-                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+                c: math.dot(inversedMatrix.c2, rightMatrix),
+                d: math.dot(inversedMatrix.c3, rightMatrix));
 
             return result;
         }

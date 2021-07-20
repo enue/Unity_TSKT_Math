@@ -53,6 +53,17 @@ namespace TSKT.Tests
         }
 
         [Test]
+        [TestCase(1f, 2f, 3f, 4f, 5f)]
+        public void SolvePointAndVelocityAndConstantAccel(float t1, float p1, float t2, float v2, float a)
+        {
+            var f = TSKT.CubicFunction.ProcessPointAndVelocityAndConstantAccel(t1, p1, t2, v2, a);
+            Assert.True(Mathf.Approximately(p1, f.Evaluate(t1)));
+            Assert.True(Mathf.Approximately(v2, f.Velocity(t2)));
+            Assert.True(Mathf.Approximately(a, f.Acceleration(0f)));
+            Assert.AreEqual(0f, f.a);
+        }
+
+        [Test]
         [TestCase(3f, 5f, 6f, 2f, 0f, 1f, 3f, 2f)]
         public void Process2PointsVelocityAndAccel(float t1, float v1, float t2, float v2, float t3, float v3, float t4, float v4)
         {

@@ -353,6 +353,51 @@ namespace TSKT
             return result;
         }
 
+        static public CubicFunction ProcessPointAndVelocityAndConstantAccel(
+            float pt, float p,
+            float vt, float v,
+            float accel)
+        {
+            // a * pt^3 + b * pt^2 + c * pt + d = p;
+            // 3a * vt^2 + 2b * vt + c = v;
+            // 2b = accel
+            // a = 0;
+
+            var matrix = new Matrix4x4()
+            {
+                m00 = 0f,
+                m01 = pt * pt,
+                m02 = pt,
+                m03 = 1f,
+
+                m10 = 0f,
+                m11 = 2f * vt,
+                m12 = 1f,
+                m13 = 0f,
+
+                m20 = 0f,
+                m21 = 2f,
+                m22 = 0f,
+                m23 = 0f,
+
+                m30 = 1f,
+                m31 = 0f,
+                m32 = 0f,
+                m33 = 0f
+            };
+
+            var rightMatrix = new Vector4(p, v, accel, 0f);
+            var inversedMatrix = matrix.inverse;
+
+            var result = new CubicFunction(
+                a: 0f,
+                b: Vector4.Dot(inversedMatrix.GetRow(1), rightMatrix),
+                c: Vector4.Dot(inversedMatrix.GetRow(2), rightMatrix),
+                d: Vector4.Dot(inversedMatrix.GetRow(3), rightMatrix));
+
+            return result;
+        }
+
         static public CubicFunction Process2Points(
             float pt, float p,
             float qt, float q)

@@ -14,7 +14,7 @@ namespace TSKT
             return RandomProvider.GetThreadRandom().GenerateShuffledRange(start, count);
         }
 
-        static public T[] GenerateShuffledArray<T>(List<T> list)
+        static public T[] GenerateShuffledArray<T>(IReadOnlyList<T> list)
         {
             return RandomProvider.GetThreadRandom().GenerateShuffledArray(list);
         }

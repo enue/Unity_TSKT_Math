@@ -53,7 +53,7 @@ namespace TSKT
                 return result;
             }
 
-            public T[] GenerateShuffledArray<T>(List<T> list)
+            public T[] GenerateShuffledArray<T>(IReadOnlyList<T> list)
             {
                 if (list.Count == 0)
                 {

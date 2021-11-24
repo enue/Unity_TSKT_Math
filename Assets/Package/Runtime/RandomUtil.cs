@@ -31,12 +31,24 @@ namespace TSKT
 
         static public T Sample<T>(T[] array)
         {
-            return array[Random.Range(0, array.Length)];
+            return Sample(array, out _);
         }
 
-        static public T Sample<T>(List<T> list)
+        static public T Sample<T>(T[] array, out int index)
         {
-            return list[Random.Range(0, list.Count)];
+            index = Random.Range(0, array.Length);
+            return array[index];
+        }
+
+        static public T Sample<T>(IReadOnlyList<T> list)
+        {
+            return Sample(list, out _);
+        }
+
+        static public T Sample<T>(IReadOnlyList<T> list, out int index)
+        {
+            index = Random.Range(0, list.Count);
+            return list[index];
         }
     }
 }

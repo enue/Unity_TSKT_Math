@@ -2,17 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
     public readonly struct AStarSearch<T>
     {
-        readonly IGraph<T> graph;
+        readonly public IGraph<T> graph;
         readonly System.Func<T, T, double> heuristicFunction;
         public readonly DistanceMap<T> memo;
-        public T Start => memo.Start;
-        
-        public AStarSearch(IGraph<T> graph, T start, System.Func<T, T, double> heuristicFunction, DistanceMap<T> memo = default)
+        readonly public T Start => memo.Start;
+
+        public AStarSearch(IGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction, DistanceMap<T> memo = default)
         {
             this.heuristicFunction = heuristicFunction;
             this.graph = graph;
@@ -31,12 +32,12 @@ namespace TSKT
             }
         }
 
-        public T[] SearchPath(params T[] goals)
+        readonly public T[] SearchPath(params T[] goals)
         {
             return SearchPath(double.PositiveInfinity, goals);
         }
 
-        public T[] SearchPath(double maxDistance, params T[] goals)
+        readonly public T[] SearchPath(double maxDistance, params T[] goals)
         {
             var containsAllGoals = true;
             var minDistance = double.PositiveInfinity;
@@ -59,22 +60,22 @@ namespace TSKT
             }
             if (containsAllGoals)
             {
-                return memo.SearchPaths(nearestGoal).First();
+                return memo.SearchPath(nearestGoal!);
             }
             return SearchPaths(goals, searchAllPaths: false, maxDistance: maxDistance).FirstOrDefault();
         }
 
-        public IEnumerable<T[]> SearchAllPaths(params T[] goals)
+        readonly public IEnumerable<T[]> SearchAllPaths(params T[] goals)
         {
             return SearchAllPaths(double.PositiveInfinity, goals);
         }
 
-        public IEnumerable<T[]> SearchAllPaths(double maxDistance, params T[] goals)
+        readonly public IEnumerable<T[]> SearchAllPaths(double maxDistance, params T[] goals)
         {
             return SearchPaths(goals, searchAllPaths: true, maxDistance: maxDistance);
         }
 
-        IEnumerable<T[]> SearchPaths(T[] goals, bool searchAllPaths, double maxDistance)
+        readonly IEnumerable<T[]> SearchPaths(T[] goals, bool searchAllPaths, double maxDistance)
         {
             T[] sortedGoals;
             if (goals.Length < 2)
@@ -99,21 +100,21 @@ namespace TSKT
                 new Dictionary<T, double>(memo.Distances),
                 cloneReversedEdges);
 
-            var tasks = new Graphs.DoublePriorityQueue<T>();
+            var tasks = new Graphs.DoublePriorityQueue<(T node, double expectedDistance)>();
 
             foreach (var it in distanceMap.Distances)
             {
                 var startToItDistance = it.Value;
                 var h = heuristicFunction;
                 var expectedDistance = startToItDistance + goals.Min(_ => h(it.Key, _));
-                tasks.Enqueue(expectedDistance, -startToItDistance, it.Key);
+                tasks.Enqueue(expectedDistance, -startToItDistance, (it.Key, expectedDistance));
             }
 
             var farestNodeSearched = 0.0;
 
             while (tasks.Count > 0)
             {
-                var (expectedDistance, _, currentNode) = tasks.Dequeue();
+                var (currentNode, expectedDistance) = tasks.Dequeue();
                 {
                     bool shouldBreak = false;
                     foreach (var it in sortedGoals)
@@ -189,7 +190,7 @@ namespace TSKT
                             .Min(_ => h(next, _)) + startToNextNodeDistance;
 
                         // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
-                        tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, next);
+                        tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, (next, nextExpectedDistance));
 
                         if (farestNodeSearched < startToNextNodeDistance)
                         {
@@ -200,7 +201,7 @@ namespace TSKT
             }
 
             var nearestGoalDistance = double.PositiveInfinity;
-            foreach(var it in sortedGoals)
+            foreach (var it in sortedGoals)
             {
                 if (heuristicFunction(Start, it) > nearestGoalDistance)
                 {
@@ -229,7 +230,17 @@ namespace TSKT
                 {
                     continue;
                 }
-                foreach (var path in distanceMap.SearchPaths(goal))
+
+                IEnumerable<T[]> paths;
+                if (searchAllPaths)
+                {
+                    paths = distanceMap.SearchPaths(goal);
+                }
+                else
+                {
+                    paths = System.Array.Empty<T[]>().Append(distanceMap.SearchPath(goal));
+                }
+                foreach (var path in paths)
                 {
                     // goalまでの経路は最適なので蓄積しておく
                     foreach (var it in path)
@@ -262,18 +273,18 @@ namespace TSKT
             }
         }
 
-        public Dictionary<T, double> GetDistances(params T[] nodes)
+        readonly public Dictionary<T, double> GetDistances(params T[] nodes)
         {
             var distances = memo.Distances;
             return nodes.ToDictionary(_ => _, _ => distances[_]);
         }
 
-        static public T[] SearchPath(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        static public T[] SearchPath(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
             return search.SearchPath(goal);
         }
-        static public IEnumerable<T[]> SearchAllPaths(IGraph<T> graph, T start, T goal, System.Func<T, T, double> heuristicFunction)
+        static public IEnumerable<T[]> SearchAllPaths(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
             return search.SearchAllPaths(goal);

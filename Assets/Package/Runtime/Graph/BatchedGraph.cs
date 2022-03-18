@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
@@ -47,12 +48,11 @@ namespace TSKT
         public readonly struct StartintPoint
         {
             readonly BatchedGraph<T> owner;
-            readonly T[] startToFirstRoot;
-            T FirstRoot => startToFirstRoot[startToFirstRoot.Length - 1];
+            readonly T[]? startToFirstRoot;
             public readonly T start;
             readonly AStarSearch<T> aStar;
 
-            public StartintPoint(BatchedGraph<T> owner, T start)
+            public StartintPoint(BatchedGraph<T> owner, in T start)
             {
                 this.start = start;
                 this.owner = owner;
@@ -60,20 +60,17 @@ namespace TSKT
                 startToFirstRoot = owner.SearchRootToNearestRoot(start, out aStar);
             }
 
-            public IEnumerable<T> GetPath(T goal)
+            readonly public IEnumerable<T> GetPath(T goal)
             {
                 if (!owner.nodeBatchMap.TryGetValue(goal, out var lastBatch))
                 {
                     if (owner.heuristicFunction == null)
                     {
                         var distanceMap = new DistanceMap<T>(owner.graph, start, new HashSet<T>() { goal });
-                        var path = distanceMap.SearchPaths(goal).FirstOrDefault();
-                        if (path != null)
+                        var path = distanceMap.SearchPath(goal);
+                        foreach (var it in path)
                         {
-                            foreach (var it in path)
-                            {
-                                yield return it;
-                            }
+                            yield return it;
                         }
                     }
                     else
@@ -96,7 +93,8 @@ namespace TSKT
                     yield break;
                 }
 
-                owner.nodeBatchMap.TryGetValue(FirstRoot, out var firstBatch);
+                var firstRoot = startToFirstRoot[startToFirstRoot.Length - 1];
+                owner.nodeBatchMap.TryGetValue(firstRoot, out var firstBatch);
                 var pathCombine = new PathCombine();
                 pathCombine.Append(startToFirstRoot);
                 foreach (var it in owner.GetBatchToGoalPath(firstBatch, lastBatch, goal))
@@ -113,15 +111,14 @@ namespace TSKT
         public readonly Graph<Batch> batchGraph = new Graph<Batch>();
         public readonly Dictionary<T, Batch> nodeBatchMap = new Dictionary<T, Batch>();
         public readonly IGraph<T> graph;
-        public readonly System.Func<T, T, double> heuristicFunction;
+        public readonly System.Func<T, T, double>? heuristicFunction;
 
-        public BatchedGraph(IGraph<T> graph, T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction = null)
+        public BatchedGraph(IGraph<T> graph, in T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double>? heuristicFunction = null)
         {
             this.graph = graph;
             this.heuristicFunction = heuristicFunction;
 
             var batches = new List<Batch>();
-            var reversedGraph = new Graph<Batch>();
             var referenceCountMap = new IntDictionary<T>();
             var taskFinishedNodes = new HashSet<T>();
 
@@ -129,7 +126,7 @@ namespace TSKT
             tasks.Enqueue(0.0, 0.0, startNode);
             while (tasks.Count > 0)
             {
-                var root = tasks.Dequeue().item;
+                var root = tasks.Dequeue();
 
                 if (taskFinishedNodes.Contains(root))
                 {
@@ -212,13 +209,11 @@ namespace TSKT
                             if (currentDistance > newDistance)
                             {
                                 batchGraph.Link(start, end, newDistance);
-                                reversedGraph.Link(end, start, newDistance);
                             }
                         }
                         else
                         {
                             batchGraph.Link(start, end, newDistance);
-                            reversedGraph.Link(end, start, newDistance);
                         }
                     }
                 }
@@ -246,7 +241,8 @@ namespace TSKT
             }
             else
             {
-                sortedUnlinkcedBatches = unlinkedBatches.OrderBy(_ => heuristicFunction(startNode, _.Root));
+                var _startNode = startNode;
+                sortedUnlinkcedBatches = unlinkedBatches.OrderBy(_ => heuristicFunction(_startNode, _.Root));
             }
             foreach (var it in sortedUnlinkcedBatches)
             {
@@ -267,7 +263,7 @@ namespace TSKT
             }
         }
 
-        T[] SearchRootToNearestRoot(T start, out AStarSearch<T> aStar)
+        T[]? SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
         {
             if (heuristicFunction == null)
             {
@@ -290,8 +286,8 @@ namespace TSKT
                 {
                     return null;
                 }
-
-                return startToBatch.SearchPaths(firstRoot).First();
+                
+                return startToBatch.SearchPath(firstRoot!);
             }
             else
             {
@@ -307,7 +303,7 @@ namespace TSKT
             if (heuristicFunction == null)
             {
                 var batchDistance = new DistanceMap<Batch>(batchGraph, startBatch, lastBatch);
-                path = batchDistance.SearchPaths(lastBatch).First();
+                path = batchDistance.SearchPath(lastBatch);
             }
             else
             {
@@ -324,25 +320,25 @@ namespace TSKT
 
                 if (fromBatch.distanceMap.Distances.ContainsKey(goal))
                 {
-                    var nodePath = fromBatch.distanceMap.SearchPaths(goal).First();
+                    var nodePath = fromBatch.distanceMap.SearchPath(goal);
                     yield return nodePath;
                     break;
                 }
                 else
                 {
                     var toBatch = path[i + 1];
-                    var nodePath = fromBatch.distanceMap.SearchPaths(toBatch.Root).First();
+                    var nodePath = fromBatch.distanceMap.SearchPath(toBatch.Root);
                     yield return nodePath;
                 }
             }
         }
 
-        public StartintPoint GetStartintPoint(T start)
+        public StartintPoint GetStartintPoint(in T start)
         {
             return new StartintPoint(this, start);
         }
 
-        public IEnumerable<T> GetPath(T start, T goal)
+        public IEnumerable<T> GetPath(in T start, in T goal)
         {
             return GetStartintPoint(start).GetPath(goal);
         }

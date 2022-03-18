@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Unity.Mathematics;
+#nullable enable
 
 // http://neue.cc/2013/03/06_399.html
 
@@ -52,7 +53,7 @@ namespace TSKT
                 return result;
             }
 
-            public T[] GenerateShuffledArray<T>(List<T> list)
+            public T[] GenerateShuffledArray<T>(IReadOnlyList<T> list)
             {
                 if (list.Count == 0)
                 {

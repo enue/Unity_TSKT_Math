@@ -1,21 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
     public readonly struct DistanceMap<T>
     {
-        public T Start { get; }
-        public Dictionary<T, double> Distances { get; }
-        public Dictionary<T, HashSet<T>> ReversedEdges { get; }
+        readonly public T Start { get; }
+        readonly public Dictionary<T, double> Distances { get; }
+        readonly public Dictionary<T, HashSet<T>> ReversedEdges { get; }
 
-        readonly Graphs.PriorityQueue<T> tasks;
-        readonly IGraph<T> graph;
-        readonly HashSet<T> continueNodes;
+        readonly Graphs.PriorityQueue<T>? tasks;
+        readonly IGraph<T>? graph;
+        readonly HashSet<T>? continueNodes;
 
-        public bool Finished => (tasks == null || tasks.Count == 0) && (continueNodes == null || continueNodes.Count == 0);
+        readonly public bool Finished => (tasks == null || tasks.Count == 0) && (continueNodes == null || continueNodes.Count == 0);
 
-        public DistanceMap(T start, Dictionary<T, double> distances, Dictionary<T, HashSet<T>> reversedEdges)
+        public DistanceMap(in T start, Dictionary<T, double> distances, Dictionary<T, HashSet<T>> reversedEdges)
         {
             Start = start;
             Distances = distances;
@@ -26,17 +27,17 @@ namespace TSKT
             continueNodes = null;
         }
 
-        public DistanceMap(IGraph<T> graph, T start, double maxDistance = double.PositiveInfinity)
+        public DistanceMap(IGraph<T> graph, in T start, double maxDistance = double.PositiveInfinity)
             : this(graph, start, null, maxDistance)
         {
         }
 
-        public DistanceMap(IGraph<T> graph, T start, T goal, double maxDistance = double.PositiveInfinity)
+        public DistanceMap(IGraph<T> graph, in T start, in T goal, double maxDistance = double.PositiveInfinity)
             : this(graph, start, new HashSet<T>() { goal }, maxDistance)
         {
         }
 
-        public DistanceMap(IGraph<T> graph, T start, HashSet<T> goals, double maxDistance = double.PositiveInfinity)
+        public DistanceMap(IGraph<T> graph, in T start, HashSet<T>? goals, double maxDistance = double.PositiveInfinity)
         {
             this.graph = graph;
             Start = start;
@@ -44,17 +45,30 @@ namespace TSKT
             ReversedEdges = new Dictionary<T, HashSet<T>>();
             tasks = new Graphs.PriorityQueue<T>();
             continueNodes = new HashSet<T>();
-            tasks.Enqueue(0.0, Start);
+            tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), Start);
             Distances.Add(Start, 0.0);
 
             Continue(goals, maxDistance);
         }
 
-        public void Continue(HashSet<T> goals, double maxDistance = double.PositiveInfinity)
+        readonly public void Continue(HashSet<T>? goals, double maxDistance = double.PositiveInfinity)
         {
+            if (continueNodes == null)
+            {
+                throw new System.NullReferenceException();
+            }
+            if (tasks == null)
+            {
+                throw new System.NullReferenceException();
+            }
+            if (graph == null)
+            {
+                throw new System.NullReferenceException();
+            }
+
             foreach (var it in continueNodes)
             {
-                tasks.Enqueue(0.0, it);
+                tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), it);
             }
             continueNodes.Clear();
 
@@ -105,13 +119,13 @@ namespace TSKT
                         }
 
                         Distances[nextNode] = startToNextNodeDistance;
-                        tasks.Enqueue(startToNextNodeDistance, nextNode);
+                        tasks.Enqueue(OrderKeyConvert.ToUint64(startToNextNodeDistance), nextNode);
                     }
                 }
             }
         }
 
-        public IEnumerable<T[]> SearchPaths(T goal)
+        readonly public IEnumerable<T[]> SearchPaths(T goal)
         {
             if (!Distances.ContainsKey(goal))
             {
@@ -140,6 +154,34 @@ namespace TSKT
                     }
                     tasks.Push(builder.Array);
                 }
+            }
+        }
+
+        readonly public T[] SearchPath(in T goal)
+        {
+            var result = new List<T>();
+            SearchPath(goal, ref result);
+            return result.ToArray();
+        }
+
+        readonly public void SearchPath(in T goal, ref List<T> result)
+        {
+            result.Clear();
+
+            if (!Distances.ContainsKey(goal))
+            {
+                return;
+            }
+
+            result.Add(goal);
+
+            while (true)
+            {
+                if (!ReversedEdges.TryGetValue(result[0], out var nearNodes))
+                {
+                    break;
+                }
+                result.Insert(0, nearNodes.First());
             }
         }
     }

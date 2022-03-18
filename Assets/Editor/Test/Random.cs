@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace TSKT.Tests
 {
-    public class Random
+    public class RandomTest
     {
         [Test]
         public void RangeInt()

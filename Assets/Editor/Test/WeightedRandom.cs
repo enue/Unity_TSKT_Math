@@ -23,6 +23,12 @@ namespace TSKT.Tests
             Assert.AreEqual(2f / 8f, selector.SearchProbability("d"));
         }
 
+        [Test]
+        public void TotalWeight()
+        {
+            var selector = new WeightedRandom<string>();
+            Assert.AreEqual(0f, selector.TotalWeight);
+        }
     }
 }
 

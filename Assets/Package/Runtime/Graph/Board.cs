@@ -2,15 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+#nullable enable
 
 namespace TSKT
 {
-    public class Board : IGraph<Vector2Int>, IGraph<int>
+    public class Board : IGraph<Vector2Int>
     {
         public readonly double?[,] costs;
         public int Width => costs.GetLength(0);
         public int Height => costs.GetLength(1);
-        public DirectionMap<double> DirectionCostMap { get; set; }
+        public DirectionMap<double>? DirectionCostMap { get; set; }
 
         public Board(int w, int h)
         {
@@ -26,9 +27,10 @@ namespace TSKT
 
         public bool TryGetCost(int i, int j, out double value)
         {
-            if (costs[i, j].HasValue)
+            var cost = costs[i, j];
+            if (cost.HasValue)
             {
-                value = costs[i, j].Value;
+                value = cost.Value;
                 return true;
             }
             value = default;
@@ -50,7 +52,7 @@ namespace TSKT
             return i >= 0 && j >= 0 && i < Width && j < Height;
         }
 
-        public IEnumerable<(Vector2Int endNode, double weight)> GetEdgesFrom(Vector2Int node)
+        public IEnumerable<(Vector2Int, double)> GetEdgesFrom(Vector2Int node)
         {
             if (!Contains(node.x, node.y))
             {
@@ -62,14 +64,14 @@ namespace TSKT
                 var next = it + node;
                 if (Contains(next.x, next.y))
                 {
-                    if (costs[next.x, next.y].HasValue)
+                    var cost = costs[next.x, next.y];
+                    if (cost.HasValue)
                     {
-                        var cost = costs[next.x, next.y].Value;
                         if (DirectionCostMap != null)
                         {
                             cost += DirectionCostMap[it];
                         }
-                        yield return (next, cost);
+                        yield return (next, cost.Value);
                     }
                 }
             }
@@ -93,13 +95,12 @@ namespace TSKT
         {
             return cell.x + cell.y * Width;
         }
-
-        public DistanceMap<Vector2Int> ComputeDistancesFrom(Vector2Int node, double maxDistance = double.PositiveInfinity)
+        public DistanceMap<Vector2Int> ComputeDistancesFrom(in Vector2Int node, double maxDistance = double.PositiveInfinity)
         {
             return new DistanceMap<Vector2Int>(this, node, maxDistance);
         }
 
-        public AStarSearch<Vector2Int> CreateAStarSearch(Vector2Int start)
+        public AStarSearch<Vector2Int> CreateAStarSearch(in Vector2Int start)
         {
             var minCost = double.PositiveInfinity;
             foreach (var it in costs)

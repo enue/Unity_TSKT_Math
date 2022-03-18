@@ -1,12 +1,27 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+#nullable enable
 
 namespace TSKT
 {
     public class Graph<T> : IGraph<T>
     {
         readonly Dictionary<T, Dictionary<T, double>> edges = new Dictionary<T, Dictionary<T, double>>();
+        public Dictionary<T, Dictionary<T, double>>.KeyCollection StartingNodes => edges.Keys;
+
+        public Graph()
+        {
+        }
+
+        public Graph(Graph<T> source)
+        {
+            foreach(var it in source.edges)
+            {
+                var endNodes = new Dictionary<T, double>(it.Value);
+                edges.Add(it.Key, endNodes);
+            }
+        }
 
         public void Clear()
         {
@@ -23,10 +38,19 @@ namespace TSKT
             return false;
         }
 
+        void CreateNode(T node, out Dictionary<T, double> endNodes)
+        {
+            if (!edges.TryGetValue(node, out endNodes))
+            {
+                endNodes = new Dictionary<T, double>();
+                edges.Add(node, endNodes);
+            }
+        }
+
         public void Link(T first, T second, double weight)
         {
-            CreateNode(first);
-            edges[first][second] = weight;
+            CreateNode(first, out var edge);
+            edge[second] = weight;
         }
 
         public void DoubleOrderedLink(T first, T second, double weight)
@@ -68,17 +92,24 @@ namespace TSKT
 
         public Dictionary<T, double> NextNodesFrom(T node)
         {
-            if (edges.TryGetValue(node, out var nodes))
+            if (TryGetNextNodesFrom(node, out var result))
             {
-                return nodes;
+                return result;
+            }
+            return new Dictionary<T, double>();
+        }
+
+        public bool TryGetNextNodesFrom(T node, out Dictionary<T, double> result)
+        {
+            if (edges.TryGetValue(node, out result))
+            {
+                return true;
             }
             else
             {
-                return null;
+                return false;
             }
         }
-
-        public Dictionary<T, Dictionary<T, double>>.KeyCollection StartingNodes => edges.Keys;
 
         public HashSet<T> ComputeAllNodes()
         {
@@ -93,8 +124,7 @@ namespace TSKT
 
         public IEnumerable<(T endNode, double weight)> GetEdgesFrom(T node)
         {
-            var nodes = NextNodesFrom(node);
-            if (nodes != null)
+            if (TryGetNextNodesFrom(node, out var nodes))
             {
                 foreach (var it in nodes)
                 {

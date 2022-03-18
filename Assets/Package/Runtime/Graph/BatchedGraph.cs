@@ -190,7 +190,7 @@ namespace TSKT
                 }
                 if (batchEdgeLength > batchRadius)
                 {
-                    newBatch.distanceMap.Continue(null, batchEdgeLength);
+                    newBatch.distanceMap.Solve(null, batchEdgeLength);
                 }
             }
 
@@ -246,7 +246,7 @@ namespace TSKT
             }
             foreach (var it in sortedUnlinkcedBatches)
             {
-                it.distanceMap.Continue(linkedBatches);
+                it.distanceMap.Solve(linkedBatches);
                 var linked = false;
                 foreach (var linkedBatch in linkedBatches)
                 {

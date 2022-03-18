@@ -13,23 +13,16 @@ namespace TSKT
         public readonly DistanceMap<T> memo;
         readonly public T Start => memo.Start;
 
-        public AStarSearch(IGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction, DistanceMap<T> memo = default)
+        public AStarSearch(IGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction)
         {
             this.heuristicFunction = heuristicFunction;
             this.graph = graph;
 
-            if (memo.Distances == null)
-            {
-                this.memo = new DistanceMap<T>(
-                    start,
-                    new Dictionary<T, double>(),
-                    new Dictionary<T, HashSet<T>>());
-                this.memo.Distances.Add(start, 0.0);
-            }
-            else
-            {
-                this.memo = memo;
-            }
+            memo = new DistanceMap<T>(
+                start,
+                new Dictionary<T, double>(),
+                new Dictionary<T, HashSet<T>>());
+            memo.Distances.Add(start, 0.0);
         }
 
         readonly public T[] SearchPath(params T[] goals)
@@ -281,12 +274,12 @@ namespace TSKT
 
         static public T[] SearchPath(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
         {
-            var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
+            var search = new AStarSearch<T>(graph, start, heuristicFunction);
             return search.SearchPath(goal);
         }
         static public IEnumerable<T[]> SearchAllPaths(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
         {
-            var search = new AStarSearch<T>(graph, start, heuristicFunction, default);
+            var search = new AStarSearch<T>(graph, start, heuristicFunction);
             return search.SearchAllPaths(goal);
         }
     }

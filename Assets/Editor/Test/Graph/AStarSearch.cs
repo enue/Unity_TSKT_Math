@@ -43,7 +43,7 @@ namespace TSKT.Tests
                 var aStarPath = aStarSearch.SearchPath(goal);
                 if (dijkstraRoutes.Length == 0)
                 {
-                    Assert.AreEqual(null, aStarPath);
+                    Assert.AreEqual(0, aStarPath.Length);
                 }
                 else
                 {
@@ -59,7 +59,10 @@ namespace TSKT.Tests
                 }
 
                 var path = AStarSearch<Vector2Int>.SearchPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
-                Assert.AreEqual(aStarPath?.Last(), path?.Last());
+                if (aStarPath.Length > 0)
+                {
+                    Assert.AreEqual(aStarPath.Last(), path.Last());
+                }
             }
         }
         [Test]

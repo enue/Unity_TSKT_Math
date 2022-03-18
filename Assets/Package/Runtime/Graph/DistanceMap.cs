@@ -157,14 +157,14 @@ namespace TSKT
             }
         }
 
-        readonly public T[] SearchPath(in T goal)
+        public readonly T[] SearchPath(in T goal)
         {
             var result = new List<T>();
             SearchPath(goal, ref result);
             return result.ToArray();
         }
 
-        readonly public void SearchPath(in T goal, ref List<T> result)
+        public readonly void SearchPath(in T goal, ref List<T> result)
         {
             result.Clear();
 
@@ -177,12 +177,14 @@ namespace TSKT
 
             while (true)
             {
-                if (!ReversedEdges.TryGetValue(result[0], out var nearNodes))
+                if (!ReversedEdges.TryGetValue(result[^1], out var nearNodes))
                 {
                     break;
                 }
-                result.Insert(0, nearNodes.First());
+                result.Add(nearNodes.First());
             }
+
+            result.Reverse();
         }
     }
 }

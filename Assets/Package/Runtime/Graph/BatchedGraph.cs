@@ -48,7 +48,7 @@ namespace TSKT
         public readonly struct StartintPoint
         {
             readonly BatchedGraph<T> owner;
-            readonly T[]? startToFirstRoot;
+            readonly T[] startToFirstRoot;
             public readonly T start;
             readonly AStarSearch<T> aStar;
 
@@ -88,7 +88,7 @@ namespace TSKT
                     yield break;
                 }
 
-                if (startToFirstRoot == null)
+                if (startToFirstRoot.Length == 0)
                 {
                     yield break;
                 }
@@ -263,7 +263,7 @@ namespace TSKT
             }
         }
 
-        T[]? SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
+        T[] SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
         {
             if (heuristicFunction == null)
             {
@@ -271,7 +271,7 @@ namespace TSKT
                 var roots = new HashSet<T>(batchGraph.StartingNodes.Select(_ => _.Root));
                 var startToBatch = new DistanceMap<T>(graph, start, roots);
 
-                T firstRoot = default;
+                T? firstRoot = default;
                 var foundStartToFirstRootPath = false;
                 foreach (var it in roots)
                 {
@@ -284,7 +284,7 @@ namespace TSKT
                 }
                 if (!foundStartToFirstRootPath)
                 {
-                    return null;
+                    return System.Array.Empty<T>();
                 }
                 
                 return startToBatch.SearchPath(firstRoot!);

@@ -12,6 +12,7 @@ namespace TSKT
         readonly System.Func<T, T, double> heuristicFunction;
         public readonly DistanceMap<T> memo;
         public readonly T Start => memo.Start;
+        readonly HashSet<T> tasksToResume;
 
         public AStarSearch(IGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction)
         {
@@ -23,21 +24,33 @@ namespace TSKT
                 new Dictionary<T, double>(),
                 new Dictionary<T, HashSet<T>>());
             memo.Distances.Add(start, 0.0);
+            tasksToResume = new HashSet<T>();
+            tasksToResume.Add(start);
         }
 
-        public readonly T[] SearchPath(params T[] goals)
+        public readonly T[] SearchPath(T goal, double maxDistance = double.PositiveInfinity)
         {
-            return SearchPath(double.PositiveInfinity, goals);
+            return SearchPathToNearestGoal(maxDistance, goal);
         }
 
-        public readonly T[] SearchPath(double maxDistance, params T[] goals)
+        public readonly T[] SearchPathToNearestGoal(params T[] goals)
+        {
+            return SearchPathToNearestGoal(double.PositiveInfinity, goals);
+        }
+
+        public readonly T[] SearchPathToNearestGoal(double maxDistance, params T[] goals)
         {
             var containsAllGoals = true;
             var minDistance = double.PositiveInfinity;
             T? nearestGoal = default;
             foreach (var goal in goals)
             {
-                if (memo.Distances.TryGetValue(goal, out var distance))
+                if (tasksToResume.Contains(goal))
+                {
+                    containsAllGoals = false;
+                    break;
+                }
+                else if (memo.Distances.TryGetValue(goal, out var distance))
                 {
                     if (minDistance > distance)
                     {
@@ -55,64 +68,56 @@ namespace TSKT
             {
                 return memo.SearchPath(nearestGoal!);
             }
-            return SearchPaths(goals, searchAllPaths: false, maxDistance: maxDistance).FirstOrDefault() ?? System.Array.Empty<T>();
-        }
-
-        public readonly IEnumerable<T[]> SearchAllPaths(params T[] goals)
-        {
-            return SearchAllPaths(double.PositiveInfinity, goals);
-        }
-
-        public readonly IEnumerable<T[]> SearchAllPaths(double maxDistance, params T[] goals)
-        {
-            return SearchPaths(goals, searchAllPaths: true, maxDistance: maxDistance);
-        }
-
-        readonly IEnumerable<T[]> SearchPaths(T[] goals, bool searchAllPaths, double maxDistance)
-        {
-            T[] sortedGoals;
-            if (goals.Length < 2)
+            if (SolvePath(goals, searchAllPaths: false, maxDistance: maxDistance, out nearestGoal))
             {
-                sortedGoals = goals;
+                return memo.SearchPath(nearestGoal);
+            }
+            return System.Array.Empty<T>();
+        }
+        public readonly IEnumerable<T[]> SearchAllPaths(T goal, double maxDistance = double.PositiveInfinity)
+        {
+            return SearchAllPathsToNearestGoal(maxDistance, goal);
+        }
+
+        public readonly IEnumerable<T[]> SearchAllPathsToNearestGoal(params T[] goals)
+        {
+            return SearchAllPathsToNearestGoal(double.PositiveInfinity, goals);
+        }
+
+        public readonly IEnumerable<T[]> SearchAllPathsToNearestGoal(double maxDistance, params T[] goals)
+        {
+            if (SolvePath(goals, searchAllPaths: true, maxDistance: maxDistance, out var nearestGoal))
+            {
+                return memo.SearchPaths(nearestGoal);
             }
             else
             {
-                var h = heuristicFunction;
-                var start = Start;
-                sortedGoals = goals.OrderBy(_ => h(start, _)).ToArray();
+                return System.Array.Empty<T[]>();
             }
+        }
 
-            var cloneReversedEdges = new Dictionary<T, HashSet<T>>(memo.ReversedEdges.Count);
-            foreach (var it in memo.ReversedEdges)
-            {
-                cloneReversedEdges.Add(it.Key, new HashSet<T>(it.Value));
-            }
-
-            var distanceMap = new DistanceMap<T>(
-                Start,
-                new Dictionary<T, double>(memo.Distances),
-                cloneReversedEdges);
-
+        readonly bool SolvePath(T[] goals, bool searchAllPaths, double maxDistance, out T nearestGoal)
+        {
             var tasks = new Graphs.DoublePriorityQueue<(T node, double expectedDistance)>();
-
-            foreach (var it in distanceMap.Distances)
+            foreach (var it in tasksToResume)
             {
-                var startToItDistance = it.Value;
+                memo.Distances.TryGetValue(it, out var startToItDistance);
                 var h = heuristicFunction;
-                var expectedDistance = startToItDistance + goals.Min(_ => h(it.Key, _));
-                tasks.Enqueue(expectedDistance, -startToItDistance, (it.Key, expectedDistance));
+                var expectedDistance = startToItDistance + goals.Min(_ => h(it, _));
+                tasks.Enqueue(expectedDistance, -startToItDistance, (it, expectedDistance));
             }
-
-            var farestNodeSearched = 0.0;
+            tasksToResume.Clear();
+            bool memoModified = true;
 
             while (tasks.Count > 0)
             {
-                var (currentNode, expectedDistance) = tasks.Dequeue();
+                var (currentNode, expectedDistance) = tasks.Peek;
+                if (memoModified)
                 {
                     bool shouldBreak = false;
-                    foreach (var it in sortedGoals)
+                    foreach (var it in goals)
                     {
-                        if (distanceMap.Distances.TryGetValue(it, out var startToGoalDistance))
+                        if (memo.Distances.TryGetValue(it, out var startToGoalDistance))
                         {
                             if (searchAllPaths)
                             {
@@ -131,139 +136,82 @@ namespace TSKT
                                 }
                             }
                         }
-                        if (farestNodeSearched < heuristicFunction(Start, it))
-                        {
-                            break;
-                        }
                     }
                     if (shouldBreak)
                     {
                         break;
                     }
+                    memoModified = false;
                 }
-
-                var startToCurrentNodeDistance = distanceMap.Distances[currentNode];
+                tasks.Dequeue();
+                var startToCurrentNodeDistance = memo.Distances[currentNode];
 
                 foreach (var (next, edgeWeight) in graph.GetEdgesFrom(currentNode))
                 {
                     var startToNextNodeDistance = edgeWeight + startToCurrentNodeDistance;
-                    if (startToNextNodeDistance <= maxDistance)
+                    if (startToNextNodeDistance > maxDistance)
                     {
-                        if (distanceMap.Distances.TryGetValue(next, out var oldDistance))
-                        {
-                            if (oldDistance >= startToNextNodeDistance)
-                            {
-                                var nearNodes = distanceMap.ReversedEdges[next];
-                                if (oldDistance > startToNextNodeDistance)
-                                {
-                                    nearNodes.Clear();
-                                }
-                                nearNodes.Add(currentNode);
-                            }
+                        tasksToResume.Add(currentNode);
+                        continue;
+                    }
 
-                            if (oldDistance <= startToNextNodeDistance)
-                            {
-                                continue;
-                            }
-                        }
-                        else
+                    if (memo.Distances.TryGetValue(next, out var oldDistance))
+                    {
+                        if (oldDistance >= startToNextNodeDistance)
                         {
-                            var nearNodes = new HashSet<T>();
-                            distanceMap.ReversedEdges.Add(next, nearNodes);
+                            var nearNodes = memo.ReversedEdges[next];
+                            if (oldDistance > startToNextNodeDistance)
+                            {
+                                nearNodes.Clear();
+                            }
                             nearNodes.Add(currentNode);
                         }
 
-                        distanceMap.Distances[next] = startToNextNodeDistance;
-
-                        var h = heuristicFunction;
-                        var start = Start;
-                        var k = h(next, sortedGoals[0]);
-                        var nextExpectedDistance = sortedGoals
-                            .TakeWhile(_ => h(start, _) <= k + startToNextNodeDistance)
-                            .Min(_ => h(next, _)) + startToNextNodeDistance;
-
-                        // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
-                        tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, (next, nextExpectedDistance));
-
-                        if (farestNodeSearched < startToNextNodeDistance)
+                        if (oldDistance <= startToNextNodeDistance)
                         {
-                            farestNodeSearched = startToNextNodeDistance;
+                            continue;
                         }
                     }
+                    else
+                    {
+                        var nearNodes = new HashSet<T>();
+                        memo.ReversedEdges.Add(next, nearNodes);
+                        nearNodes.Add(currentNode);
+                    }
+
+                    memo.Distances[next] = startToNextNodeDistance;
+                    memoModified = true;
+
+                    var h = heuristicFunction;
+                    var start = Start;
+                    var nextExpectedDistance = goals.Min(_ => h(next, _)) + startToNextNodeDistance;
+
+                    // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
+                    tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, (next, nextExpectedDistance));
                 }
+            }
+            while (tasks.Count > 0)
+            {
+                tasksToResume.Add(tasks.Dequeue().node);
             }
 
             var nearestGoalDistance = double.PositiveInfinity;
-            foreach (var it in sortedGoals)
+            nearestGoal = default!;
+            bool pathExist = false;
+            foreach (var it in goals)
             {
-                if (heuristicFunction(Start, it) > nearestGoalDistance)
-                {
-                    break;
-                }
-                if (distanceMap.Distances.TryGetValue(it, out var d))
+                if (memo.Distances.TryGetValue(it, out var d))
                 {
                     if (nearestGoalDistance > d)
                     {
                         nearestGoalDistance = d;
+                        nearestGoal = it;
+                        pathExist = true;
                     }
                 }
             }
 
-            foreach (var goal in sortedGoals)
-            {
-                if (heuristicFunction(Start, goal) > nearestGoalDistance)
-                {
-                    break;
-                }
-                if (!distanceMap.Distances.TryGetValue(goal, out var distance))
-                {
-                    continue;
-                }
-                if (distance != nearestGoalDistance)
-                {
-                    continue;
-                }
-
-                IEnumerable<T[]> paths;
-                if (searchAllPaths)
-                {
-                    paths = distanceMap.SearchPaths(goal);
-                }
-                else
-                {
-                    paths = System.Array.Empty<T[]>().Append(distanceMap.SearchPath(goal));
-                }
-                foreach (var path in paths)
-                {
-                    // goalまでの経路は最適なので蓄積しておく
-                    foreach (var it in path)
-                    {
-                        var value = distanceMap.Distances[it];
-                        UnityEngine.Assertions.Assert.IsTrue(!memo.Distances.TryGetValue(it, out var oldValue) || oldValue == value);
-                        memo.Distances[it] = value;
-                    }
-
-                    for (int i = 1; i < path.Length; ++i)
-                    {
-                        var nearNode = path[i - 1];
-                        var farNode = path[i];
-                        UnityEngine.Assertions.Assert.IsTrue(memo.Distances[nearNode] <= memo.Distances[farNode]);
-
-                        if (memo.ReversedEdges.TryGetValue(farNode, out var nearNodes))
-                        {
-                            nearNodes.Add(nearNode);
-                        }
-                        else
-                        {
-                            nearNodes = new HashSet<T>();
-                            memo.ReversedEdges.Add(farNode, nearNodes);
-                            nearNodes.Add(nearNode);
-                        }
-                    }
-
-                    yield return path;
-                }
-            }
+            return pathExist;
         }
 
         public readonly Dictionary<T, double> GetDistances(params T[] nodes)

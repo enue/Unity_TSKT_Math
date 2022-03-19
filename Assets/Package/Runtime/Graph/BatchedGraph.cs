@@ -293,7 +293,7 @@ namespace TSKT
             {
                 var roots = batchGraph.StartingNodes.Select(_ => _.Root).ToArray();
                 aStar = new AStarSearch<T>(graph, start, heuristicFunction);
-                return aStar.SearchPath(roots);
+                return aStar.SearchPathToNearestGoal(roots);
             }
         }
 

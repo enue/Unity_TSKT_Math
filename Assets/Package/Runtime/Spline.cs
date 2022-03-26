@@ -9,7 +9,7 @@ namespace TSKT
 {
     public class Spline
     {
-        struct float9
+        struct Double9
         {
             public double a;
             public double b;
@@ -21,50 +21,50 @@ namespace TSKT
             public double h;
             public double i;
 
-            public static float9 LeftValue(double t, double v)
+            public static Double9 LeftValue(double t, double v)
             {
-                return new float9()
+                return new Double9()
                 {
                     a = t * t * t,
                     b = t * t,
                     c = t,
-                    d = 1f,
+                    d = 1,
                     i = v,
                 };
             }
-            public static float9 Velocity(double t)
+            public static Double9 Velocity(double t)
             {
-                return new float9()
+                return new Double9()
                 {
-                    a = 3f * t * t,
-                    b = 2f * t,
-                    c = 1f,
-                    d = 0f,
-                    e = -3f * t * t,
-                    f = -2f * t,
-                    g = -1f,
-                    h = 0f,
-                    i = 0f,
+                    a = 3 * t * t,
+                    b = 2 * t,
+                    c = 1,
+                    d = 0,
+                    e = -3 * t * t,
+                    f = -2 * t,
+                    g = -1,
+                    h = 0,
+                    i = 0,
                 };
             }
-            public static float9 Acceleration(double t)
+            public static Double9 Acceleration(double t)
             {
-                return new float9()
+                return new Double9()
                 {
-                    a = 6f * t,
-                    b = 2f,
-                    c = 0f,
-                    d = 0f,
-                    e = -6f * t,
-                    f = -2f,
-                    g = 0f,
-                    h = 0f,
-                    i = 0f,
+                    a = 6 * t,
+                    b = 2,
+                    c = 0,
+                    d = 0,
+                    e = -6 * t,
+                    f = -2,
+                    g = 0,
+                    h = 0,
+                    i = 0,
                 };
             }
-            public float9 AddScale(float9 src, double scale)
+            public Double9 AddScaling(Double9 src, double scale)
             {
-                return new float9()
+                return new Double9()
                 {
                     a = a + src.a * scale,
                     b = b + src.b * scale,
@@ -79,7 +79,7 @@ namespace TSKT
             }
             public double4 Left
             {
-                get => new double4(a, b, c, d);
+                get => new(a, b, c, d);
                 set
                 {
                     a = value.x;
@@ -91,7 +91,7 @@ namespace TSKT
 
             public double4 Right
             {
-                get => new double4(e, f, g, h);
+                get => new(e, f, g, h);
                 set
                 {
                     e = value.x;
@@ -109,11 +109,11 @@ namespace TSKT
 
         readonly CubicFunction[] intervals;
         public System.ReadOnlySpan<CubicFunction> Intervals => intervals;
-        readonly float[] endTimes;
-        public System.ReadOnlySpan<float> EndTimes => endTimes;
-        public float Duration => endTimes[^1];
+        readonly double[] endTimes;
+        public System.ReadOnlySpan<double> EndTimes => endTimes;
+        public double Duration => endTimes[^1];
 
-        public Spline(params (float time, float value)[] values)
+        public Spline(params (double time, double value)[] values)
         {
             if (values.Length <= 1)
             {
@@ -124,23 +124,21 @@ namespace TSKT
             endTimes = values.Skip(1).Select(_ => _.time).ToArray();
 
             // 最初の加速は0とする.6ax + 2b = 0
-            var current = new float9()
+            var current = new Double9()
             {
                 Right = new double4(0f, 2f, 0f, 0f),
                 Value = 0f,
             };
 
-            var trails = new List<(double4 left, double right)>();
             for (int i = 0; i < values.Length - 1; ++i)
             {
                 var start = values[i];
                 var end = values[i + 1];
-                var a = float9.LeftValue(start.time, start.value);
-                var b = float9.LeftValue(end.time, end.value);
-                var c = float9.Acceleration(end.time);
-                var d = float9.Velocity(end.time);
+                var a = Double9.LeftValue(start.time, start.value);
+                var b = Double9.LeftValue(end.time, end.value);
+                var c = Double9.Acceleration(end.time);
+                var d = Double9.Velocity(end.time);
                 current = Solve(current, a, b, c, d);
-                trails.Add((current.Left, current.Value));
             }
 
             // 最後の加速は0
@@ -152,7 +150,6 @@ namespace TSKT
                 var index = values.Length - i - 1;
                 var t1 = values[index].time;
                 var t2 = values[index - 1].time;
-                //var trail2 = trails[index - 1];
 
                 var matrix = new double4x4(
                     m00: t1 * t1 * t1,
@@ -181,13 +178,12 @@ namespace TSKT
                 right.y = values[index - 1].value;
                 right.z = trail.right;
                 right.w = trail2.right;
-                Debug.Log(right);
 
                 var inversedMatrix = math.inverse(matrix);
                 var k = math.mul(inversedMatrix, right);
                 var interval = new CubicFunction(k.x, k.y, k.z, k.w);
 
-                UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.a), trail.right.ToString());
+                UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.a));
                 UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.b));
                 UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.c));
                 UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.d));
@@ -196,29 +192,25 @@ namespace TSKT
                 var startTime = values[index - 1].time;
                 trail = (new double4(6d * startTime, 2d, 0d, 0d), interval.Acceleration(startTime));
                 trail2 = (new double4(3d * startTime * startTime, 2d * startTime, 1d, 0f), interval.Velocity(startTime));
-                Debug.Log(matrix);
-                Debug.Log(inversedMatrix);
-                Debug.Log(right);
-                Debug.Log((interval.a, interval.b, interval.c, interval.d));
             }
         }
 
-        public double Evaluate(float t)
+        public double Evaluate(double t)
         {
             return Get(t).Evaluate(t);
         }
 
-        public double Velocity(float t)
+        public double Velocity(double t)
         {
             return Get(t).Velocity(t);
         }
 
-        public double Acceleration(float t)
+        public double Acceleration(double t)
         {
             return Get(t).Acceleration(t);
         }
 
-        public CubicFunction Get(float t)
+        public CubicFunction Get(double t)
         {
             var index = System.Array.BinarySearch(endTimes, t);
             if (index < 0)
@@ -232,59 +224,59 @@ namespace TSKT
             return intervals[index];
         }
 
-        float9 Solve(
-            float9 a,
-            float9 b,
-            float9 c,
-            float9 d,
-            float9 e)
+        Double9 Solve(
+            Double9 a,
+            Double9 b,
+            Double9 c,
+            Double9 d,
+            Double9 e)
         {
-            var list = new List<float9>() { a, b, c, d, e };
+            var list = new List<Double9>() { a, b, c, d, e };
             {
-                var x = list.Where(_ => _.d != 0f).ToArray();
-                list.RemoveAll(_ => _.d != 0f);
+                var x = list.Where(_ => _.d != 0).ToArray();
+                list.RemoveAll(_ => _.d != 0);
                 for (int i = 1; i < x.Length; ++i)
                 {
                     var p = x[0];
                     var q = x[i];
-                    var f = p.AddScale(q, -p.d / q.d);
-                    f.d = 0f;
+                    var f = p.AddScaling(q, -p.d / q.d);
+                    f.d = 0;
                     list.Add(f);
                 }
             }
             {
-                var x = list.Where(_ => _.c != 0f).ToArray();
-                list.RemoveAll(_ => _.c != 0f);
+                var x = list.Where(_ => _.c != 0).ToArray();
+                list.RemoveAll(_ => _.c != 0);
                 for (int i = 1; i < x.Length; ++i)
                 {
                     var p = x[0];
                     var q = x[i];
-                    var f = p.AddScale(q, -p.c / q.c);
-                    f.c = 0f;
+                    var f = p.AddScaling(q, -p.c / q.c);
+                    f.c = 0;
                     list.Add(f);
                 }
             }
             {
-                var x = list.Where(_ => _.b != 0f).ToArray();
-                list.RemoveAll(_ => _.b != 0f);
+                var x = list.Where(_ => _.b != 0).ToArray();
+                list.RemoveAll(_ => _.b != 0);
                 for (int i = 1; i < x.Length; ++i)
                 {
                     var p = x[0];
                     var q = x[i];
-                    var f = p.AddScale(q, -p.b / q.b);
-                    f.b = 0f;
+                    var f = p.AddScaling(q, -p.b / q.b);
+                    f.b = 0;
                     list.Add(f);
                 }
             }
             {
-                var x = list.Where(_ => _.a != 0f).ToArray();
-                list.RemoveAll(_ => _.a != 0f);
+                var x = list.Where(_ => _.a != 0).ToArray();
+                list.RemoveAll(_ => _.a != 0);
                 for (int i = 1; i < x.Length; ++i)
                 {
                     var p = x[0];
                     var q = x[i];
-                    var f = p.AddScale(q, -p.a / q.a);
-                    f.a = 0f;
+                    var f = p.AddScaling(q, -p.a / q.a);
+                    f.a = 0;
                     list.Add(f);
                 }
             }
@@ -295,7 +287,7 @@ namespace TSKT
             UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(list[0].f));
             UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(list[0].g));
             UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(list[0].h));
-            return new float9()
+            return new Double9()
             {
                 Left = list[0].Right,
                 Value = list[0].Value,

@@ -33,9 +33,9 @@ namespace TSKT
             yPoints.Add((t, 0f));
             zPoints.Add((t, 0f));
 
-            var x = new Spline(xPoints.ToArray());
-            var y = new Spline(yPoints.ToArray());
-            var z = new Spline(zPoints.ToArray());
+            var x = new Spline(0, 0, xPoints.ToArray());
+            var y = new Spline(0, 0, yPoints.ToArray());
+            var z = new Spline(0, 0, zPoints.ToArray());
 
             var startedTime = Time.time;
             while (true)

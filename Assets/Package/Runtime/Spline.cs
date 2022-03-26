@@ -113,7 +113,7 @@ namespace TSKT
         public System.ReadOnlySpan<double> EndTimes => endTimes;
         public double Duration => endTimes[^1];
 
-        public Spline(params (double time, double value)[] values)
+        public Spline(double startVelocity, double endVelocity, params (double time, double value)[] values)
         {
             if (values.Length <= 1)
             {
@@ -123,11 +123,11 @@ namespace TSKT
             intervals = new CubicFunction[values.Length - 1];
             endTimes = values.Skip(1).Select(_ => _.time).ToArray();
 
-            // 最初の速度は0とする.3ax2 + 2bx + c = 0
+            // 3ax2 + 2bx + c = v
             var current = new Double9()
             {
                 Left = new double4(0, 0, 1, 0),
-                Value = 0f,
+                Value = startVelocity,
             };
 
             for (int i = 0; i < values.Length - 1; ++i)
@@ -141,13 +141,12 @@ namespace TSKT
                 current = Solve(current, a, b, c, d);
             }
 
-            // 最後の速度は0
             var trail = (left: new double4(
                 x: 3.0 * values[^1].time * values[^1].time,
                 y: 2.0 * values[^1].time,
                 z: 1.0, 
                 w: 0.0),
-                right: 0.0);;
+                right: endVelocity);;
             var trail2 = (left: current.Left, right: current.Value);
 
             for (int i = 0; i < values.Length - 1; ++i)

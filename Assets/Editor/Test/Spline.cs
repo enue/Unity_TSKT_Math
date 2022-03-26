@@ -27,8 +27,8 @@ namespace TSKT.Tests
                 endTime += Random.value + 1d;
                 points.Add((endTime, Random.value));
             }
-            var spline = new TSKT.Spline(points.ToArray());
-            Validate(spline, points);
+            var spline = new TSKT.Spline(0, 0, points.ToArray());
+            Validate(spline, 0, 0, points);
         }
 
         [Test]
@@ -41,7 +41,7 @@ namespace TSKT.Tests
         [TestCase(40)]
         [TestCase(50)]
         [TestCase(100)]
-        public void SolvePointse(int pointCount)
+        public void SolvePoints2(int pointCount)
         {
             var points = new List<(double time, double value)>();
             var endTime = 0d;
@@ -50,14 +50,14 @@ namespace TSKT.Tests
                 endTime += 1f;
                 points.Add((endTime, Random.value + 1f));
             }
-            var spline = new TSKT.Spline(points.ToArray());
-            Validate(spline, points);
+            var spline = new TSKT.Spline(1, -1, points.ToArray());
+            Validate(spline, 1, -1, points);
         }
 
-        static void Validate(TSKT.Spline spline, List<(double time, double value)> points)
+        static void Validate(TSKT.Spline spline, double startVelocity, double endVelocity, List<(double time, double value)> points)
         {
-            Assert.AreEqual(0, spline.Velocity(spline.Duration), 0.00001);
-            Assert.AreEqual(0, spline.Velocity(0), 0.00001);
+            Assert.AreEqual(endVelocity, spline.Velocity(spline.Duration), 0.00001);
+            Assert.AreEqual(startVelocity, spline.Velocity(0), 0.00001);
             foreach (var it in points)
             {
                 Assert.AreEqual(it.value, spline.Evaluate(it.time), 0.00001);

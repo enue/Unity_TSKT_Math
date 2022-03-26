@@ -123,10 +123,10 @@ namespace TSKT
             intervals = new CubicFunction[values.Length - 1];
             endTimes = values.Skip(1).Select(_ => _.time).ToArray();
 
-            // 最初の加速は0とする.6ax + 2b = 0
+            // 最初の速度は0とする.3ax2 + 2bx + c = 0
             var current = new Double9()
             {
-                Right = new double4(0f, 2f, 0f, 0f),
+                Left = new double4(0, 0, 1, 0),
                 Value = 0f,
             };
 

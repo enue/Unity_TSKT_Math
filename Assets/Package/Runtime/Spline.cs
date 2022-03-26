@@ -185,12 +185,12 @@ namespace TSKT
 
                 var inversedMatrix = math.inverse(matrix);
                 var k = math.mul(inversedMatrix, right);
-                var interval = new CubicFunction((float)k.x, (float)k.y, (float)k.z, (float)k.w);
+                var interval = new CubicFunction(k.x, k.y, k.z, k.w);
 
-                UnityEngine.Assertions.Assert.IsFalse(float.IsNaN(interval.a), trail.right.ToString());
-                UnityEngine.Assertions.Assert.IsFalse(float.IsNaN(interval.b));
-                UnityEngine.Assertions.Assert.IsFalse(float.IsNaN(interval.c));
-                UnityEngine.Assertions.Assert.IsFalse(float.IsNaN(interval.d));
+                UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.a), trail.right.ToString());
+                UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.b));
+                UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.c));
+                UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.d));
 
                 intervals[index - 1] = interval;
                 var startTime = values[index - 1].time;
@@ -203,17 +203,17 @@ namespace TSKT
             }
         }
 
-        public float Evaluate(float t)
+        public double Evaluate(float t)
         {
             return Get(t).Evaluate(t);
         }
 
-        public float Velocity(float t)
+        public double Velocity(float t)
         {
             return Get(t).Velocity(t);
         }
 
-        public float Acceleration(float t)
+        public double Acceleration(float t)
         {
             return Get(t).Acceleration(t);
         }

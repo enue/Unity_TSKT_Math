@@ -56,6 +56,8 @@ namespace TSKT.Tests
 
         static void Validate(TSKT.Spline spline, List<(double time, double value)> points)
         {
+            Assert.AreEqual(0, spline.Velocity(spline.Duration), 0.00001);
+            Assert.AreEqual(0, spline.Velocity(0), 0.00001);
             foreach (var it in points)
             {
                 Assert.AreEqual(it.value, spline.Evaluate(it.time), 0.00001);

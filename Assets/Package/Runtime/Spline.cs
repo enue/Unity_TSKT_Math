@@ -141,25 +141,30 @@ namespace TSKT
                 current = Solve(current, a, b, c, d);
             }
 
-            // 最後の加速は0
-            var trail = (left: new double4(x: 6.0 * values[^1].time, y: 2.0, z: 0.0, w: 0.0), right: 0.0);;
+            // 最後の速度は0
+            var trail = (left: new double4(
+                x: 3.0 * values[^1].time * values[^1].time,
+                y: 2.0 * values[^1].time,
+                z: 1.0, 
+                w: 0.0),
+                right: 0.0);;
             var trail2 = (left: current.Left, right: current.Value);
 
             for (int i = 0; i < values.Length - 1; ++i)
             {
                 var index = values.Length - i - 1;
-                var t1 = values[index].time;
-                var t2 = values[index - 1].time;
+                var end = values[index];
+                var start = values[index - 1];
 
                 var matrix = new double4x4(
-                    m00: t1 * t1 * t1,
-                    m01: t1 * t1,
-                    m02: t1,
+                    m00: end.time * end.time * end.time,
+                    m01: end.time * end.time,
+                    m02: end.time,
                     m03: 1f,
 
-                    m10: t2 * t2 * t2,
-                    m11: t2 * t2,
-                    m12: t2,
+                    m10: start.time * start.time * start.time,
+                    m11: start.time * start.time,
+                    m12: start.time,
                     m13: 1f,
 
                     m20: trail.left.x,
@@ -174,8 +179,8 @@ namespace TSKT
                 );
 
                 var right = new double4();
-                right.x = values[index].value;
-                right.y = values[index - 1].value;
+                right.x = end.value;
+                right.y = start.value;
                 right.z = trail.right;
                 right.w = trail2.right;
 
@@ -183,14 +188,17 @@ namespace TSKT
                 var interval = new CubicFunction(k.x, k.y, k.z, k.w);
 
                 UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.a));
+                UnityEngine.Assertions.Assert.IsFalse(double.IsInfinity(interval.a));
                 UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.b));
+                UnityEngine.Assertions.Assert.IsFalse(double.IsInfinity(interval.b));
                 UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.c));
+                UnityEngine.Assertions.Assert.IsFalse(double.IsInfinity(interval.c));
                 UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.d));
+                UnityEngine.Assertions.Assert.IsFalse(double.IsInfinity(interval.d));
 
                 intervals[index - 1] = interval;
-                var startTime = values[index - 1].time;
-                trail = (new double4(6d * startTime, 2d, 0d, 0d), interval.Acceleration(startTime));
-                trail2 = (new double4(3d * startTime * startTime, 2d * startTime, 1d, 0f), interval.Velocity(startTime));
+                trail = (new double4(6d * start.time, 2d, 0d, 0d), interval.Acceleration(start.time));
+                trail2 = (new double4(3d * start.time * start.time, 2d * start.time, 1d, 0f), interval.Velocity(start.time));
             }
         }
 

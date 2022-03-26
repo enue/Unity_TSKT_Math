@@ -32,7 +32,7 @@ namespace TSKT
                     i = v,
                 };
             }
-            public static Double9 Velocity(double t)
+            public static Double9 BuildByVelocitiesEquality(double t)
             {
                 return new Double9()
                 {
@@ -47,7 +47,7 @@ namespace TSKT
                     i = 0,
                 };
             }
-            public static Double9 Acceleration(double t)
+            public static Double9 BuildByAccelerationsEquality(double t)
             {
                 return new Double9()
                 {
@@ -136,8 +136,8 @@ namespace TSKT
                 var end = values[i + 1];
                 var a = Double9.LeftValue(start.time, start.value);
                 var b = Double9.LeftValue(end.time, end.value);
-                var c = Double9.Acceleration(end.time);
-                var d = Double9.Velocity(end.time);
+                var c = Double9.BuildByAccelerationsEquality(end.time);
+                var d = Double9.BuildByVelocitiesEquality(end.time);
                 current = Solve(current, a, b, c, d);
             }
 

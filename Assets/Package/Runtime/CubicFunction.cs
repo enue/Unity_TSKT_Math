@@ -65,8 +65,7 @@ namespace TSKT
                 m33: 0f
             );
             var rightMatrix = new double4(p1.v, p2.v, p3.v, v.v);
-            var inversedMatrix = math.inverse(matrix);
-            var k = math.mul(inversedMatrix, rightMatrix);
+            var k = MatrixUtil.SolveSimultaneousEquations(matrix, rightMatrix);
             return new CubicFunction(k.x, k.y, k.z, k.w);
         }
 
@@ -104,9 +103,7 @@ namespace TSKT
             );
 
             var rightMatrix = new double4(p1.v, p2.v, v1.v, v2.v);
-
-            var inversedMatrix = math.inverse(matrix);
-            var k = math.mul(inversedMatrix, rightMatrix);
+            var k = MatrixUtil.SolveSimultaneousEquations(matrix, rightMatrix);
             return new CubicFunction(k.x, k.y, k.z, k.w);
         }
 
@@ -176,8 +173,7 @@ namespace TSKT
             );
 
             var rightMatrix = new double4(p1.v, p2.v, v.v, a.v);
-            var inversedMatrix = math.inverse(matrix);
-            var k = math.mul(inversedMatrix, rightMatrix);
+            var k = MatrixUtil.SolveSimultaneousEquations(matrix, rightMatrix);
             return new CubicFunction(k.x, k.y, k.z, k.w);
         }
 
@@ -246,8 +242,7 @@ namespace TSKT
             );
 
             var rightMatrix = new double4(p1.v, p2.v, p3.v, p4.v);
-            var inversedMatrix = math.inverse(matrix);
-            var k = math.mul(inversedMatrix, rightMatrix);
+            var k = MatrixUtil.SolveSimultaneousEquations(matrix, rightMatrix);
             return new CubicFunction(k.x, k.y, k.z, k.w);
         }
 

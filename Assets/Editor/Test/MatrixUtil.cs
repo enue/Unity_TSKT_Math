@@ -10,6 +10,26 @@ namespace TSKT.Tests
     public class MatrixUtil
     {
         [Test]
+        public void SolveSimultaneousEquations()
+        {
+            var left = new double4x4();
+            for (int i = 0; i < 4; ++i)
+            {
+                for (int j = 0; j < 4; ++j)
+                {
+                    left[i][j] = Random.value;
+                }
+            }
+
+            var right = new double4(Random.value, Random.value, Random.value, Random.value);
+            var k = TSKT.MatrixUtil.SolveSimultaneousEquations(left, right);
+
+            var inversed = math.inverse(left);
+            var l = math.mul(inversed, right);
+            Assert.AreEqual(l, k);
+        }
+
+        [Test]
         public void LUDecomposition()
         {
             var source = new double4x4();
@@ -20,7 +40,8 @@ namespace TSKT.Tests
                     source[i][j] = Random.value;
                 }
             }
-            TSKT.MatrixUtil.LUDecomposition(source, out var L, out var U);
+            var success = TSKT.MatrixUtil.TryLUDecomposition(source, out var L, out var U);
+            Assert.IsTrue(success);
             Assert.AreEqual(1, L.c0.x);
             Assert.AreEqual(0, L.c1.x);
             Assert.AreEqual(0, L.c2.x);
@@ -39,6 +60,24 @@ namespace TSKT.Tests
             Assert.AreEqual(0, U.c1.w);
             Assert.AreEqual(0, U.c2.w);
             Assert.AreEqual(source, math.mul(L, U));
+        }
+
+        [Test]
+        public void LUDecomposition2()
+        {
+            var source = new double4x4();
+            for (int i = 0; i < 4; ++i)
+            {
+                for (int j = 0; j < 4; ++j)
+                {
+                    source[i][j] = Random.value;
+                }
+            }
+            source.c0.z = 0;
+            source.c1.z = 0;
+            source.c2.z = 0;
+            var success = TSKT.MatrixUtil.TryLUDecomposition(source, out var L, out var U);
+            Assert.IsFalse(success);
         }
         [Test]
         public void LUDecomposition3x3()

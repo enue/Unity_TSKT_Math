@@ -179,8 +179,7 @@ namespace TSKT
                 right.z = trail.right;
                 right.w = trail2.right;
 
-                var inversedMatrix = math.inverse(matrix);
-                var k = math.mul(inversedMatrix, right);
+                var k = MatrixUtil.SolveSimultaneousEquations(matrix, right);
                 var interval = new CubicFunction(k.x, k.y, k.z, k.w);
 
                 UnityEngine.Assertions.Assert.IsFalse(double.IsNaN(interval.a));

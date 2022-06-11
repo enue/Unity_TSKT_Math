@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace TSKT
 {
-    public class Board : IGraph<Vector2Int>
+    public class Board : IGraph<Vector2Int>, IGraph<int>
     {
         public readonly double?[,] costs;
         public int Width => costs.GetLength(0);

@@ -14,66 +14,6 @@ namespace TSKT
     [BurstCompile]
     public struct BoardProcessor : IJob, IDisposable
     {
-        struct Queue : IDisposable
-        {
-            NativeArray<int> array;
-            int index;
-            public int Count { get; private set; }
-            public int Capacity => array.Length;
-
-            public Queue(int capacity)
-            {
-                array = new NativeArray<int>(capacity, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-                index = 0;
-                Count = 0;
-            }
-
-            public void Enqueue(int value)
-            {
-                array[(index + Count) % array.Length] = value;
-                ++Count;
-            }
-            public int Dequeue()
-            {
-                var result = array[index];
-                index = (index + 1) % array.Length;
-                --Count;
-                return result;
-            }
-
-            public void Distinct()
-            {
-                var copyedCount = 0;
-
-                for (int i=0; i<Count; ++i)
-                {
-                    var value = array[(index + i) % array.Length];
-
-                    var found = false;
-                    for (var j = 0; j < copyedCount; ++i)
-                    {
-                        if (value == array[(index + j) % array.Length])
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found)
-                    {
-                        array[(index + copyedCount) % array.Length] = value;
-                        ++copyedCount;
-                    }
-                }
-
-                Count = copyedCount;
-            }
-
-            public void Dispose()
-            {
-                array.Dispose();
-            }
-        }
-
         readonly struct Edge
         {
             readonly public int start;
@@ -95,7 +35,7 @@ namespace TSKT
         [ReadOnly]
         readonly double maxDistance;
 
-        Queue tasks;
+        NativeQueue<int> tasks;
         NativeArray<double> distances;
 
         public static DistanceMap<int> Calculate(int startNode, int nodeCount, IGraph<int> graph, double maxDistance)
@@ -130,7 +70,7 @@ namespace TSKT
                 }
             }
 
-            tasks = new Queue(edgeCount);
+            tasks = new NativeQueue<int>(Allocator.TempJob);
             distances = new NativeArray<double>(edgeCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             this.start = start;
             this.maxDistance = maxDistance;
@@ -163,10 +103,6 @@ namespace TSKT
                             || distances[edge.end] > newWeight)
                         {
                             distances[edge.end] = newWeight;
-                            if (tasks.Count >= tasks.Capacity)
-                            {
-                                tasks.Distinct();
-                            }
                             tasks.Enqueue(edge.end);
                         }
                     }

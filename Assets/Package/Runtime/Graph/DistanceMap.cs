@@ -12,9 +12,8 @@ namespace TSKT
 
         readonly Graphs.PriorityQueue<T>? tasks;
         readonly IGraph<T>? graph;
-        readonly HashSet<T>? continueNodes;
 
-        readonly public bool Finished => (tasks == null || tasks.Count == 0) && (continueNodes == null || continueNodes.Count == 0);
+        readonly public bool Finished => (tasks == null || tasks.Count == 0);
 
         public DistanceMap(in T start, Dictionary<T, double> distances, Dictionary<T, HashSet<T>> reversedEdges)
         {
@@ -24,7 +23,6 @@ namespace TSKT
 
             graph = null;
             tasks = null;
-            continueNodes = null;
         }
 
         public DistanceMap(IGraph<T> graph, in T start, double maxDistance = double.PositiveInfinity)
@@ -44,19 +42,14 @@ namespace TSKT
             Distances = new Dictionary<T, double>();
             ReversedEdges = new Dictionary<T, HashSet<T>>();
             tasks = new Graphs.PriorityQueue<T>();
-            continueNodes = new HashSet<T>();
             tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), Start);
             Distances.Add(Start, 0.0);
 
-            Continue(goals, maxDistance);
+            Solve(goals, maxDistance);
         }
 
-        readonly public void Continue(HashSet<T>? goals, double maxDistance = double.PositiveInfinity)
+        readonly public void Solve(HashSet<T>? goals, double maxDistance = double.PositiveInfinity)
         {
-            if (continueNodes == null)
-            {
-                throw new System.NullReferenceException();
-            }
             if (tasks == null)
             {
                 throw new System.NullReferenceException();
@@ -66,16 +59,22 @@ namespace TSKT
                 throw new System.NullReferenceException();
             }
 
-            foreach (var it in continueNodes)
+            if (goals != null)
             {
-                tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), it);
+                foreach (var it in goals)
+                {
+                    if (Distances.ContainsKey(it))
+                    {
+                        return;
+                    }
+                }
             }
-            continueNodes.Clear();
+
+            var continueNodes = new Dictionary<T, double>();
 
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;
-
                 if (goals != null && goals.Contains(currentNode))
                 {
                     break;
@@ -91,7 +90,7 @@ namespace TSKT
                     var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
                     if (startToNextNodeDistance > maxDistance)
                     {
-                        continueNodes.Add(currentNode);
+                        continueNodes[currentNode] = startToCurrentNodeDistance;
                     }
                     else
                     {
@@ -122,6 +121,11 @@ namespace TSKT
                         tasks.Enqueue(OrderKeyConvert.ToUint64(startToNextNodeDistance), nextNode);
                     }
                 }
+            }
+
+            foreach (var (node, distance) in continueNodes)
+            {
+                tasks.Enqueue(OrderKeyConvert.ToUint64(distance), node);
             }
         }
 
@@ -157,14 +161,14 @@ namespace TSKT
             }
         }
 
-        readonly public T[] SearchPath(in T goal)
+        public readonly T[] SearchPath(in T goal)
         {
             var result = new List<T>();
             SearchPath(goal, ref result);
             return result.ToArray();
         }
 
-        readonly public void SearchPath(in T goal, ref List<T> result)
+        public readonly void SearchPath(in T goal, ref List<T> result)
         {
             result.Clear();
 
@@ -177,12 +181,14 @@ namespace TSKT
 
             while (true)
             {
-                if (!ReversedEdges.TryGetValue(result[0], out var nearNodes))
+                if (!ReversedEdges.TryGetValue(result[^1], out var nearNodes))
                 {
                     break;
                 }
-                result.Insert(0, nearNodes.First());
+                result.Add(nearNodes.First());
             }
+
+            result.Reverse();
         }
     }
 }

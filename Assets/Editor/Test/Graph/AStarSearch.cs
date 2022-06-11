@@ -43,7 +43,7 @@ namespace TSKT.Tests
                 var aStarPath = aStarSearch.SearchPath(goal);
                 if (dijkstraRoutes.Length == 0)
                 {
-                    Assert.AreEqual(null, aStarPath);
+                    Assert.AreEqual(0, aStarPath.Length);
                 }
                 else
                 {
@@ -59,7 +59,10 @@ namespace TSKT.Tests
                 }
 
                 var path = AStarSearch<Vector2Int>.SearchPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
-                Assert.AreEqual(aStarPath?.Last(), path?.Last());
+                if (aStarPath.Length > 0)
+                {
+                    Assert.AreEqual(aStarPath.Last(), path.Last());
+                }
             }
         }
         [Test]
@@ -87,7 +90,7 @@ namespace TSKT.Tests
                 var goal1 = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
                 var goal2 = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
 
-                var aStarPath = aStarSearch.SearchPath(goal1, goal2);
+                var aStarPath = aStarSearch.SearchPathToNearestGoal(goal1, goal2);
 
                 var distanceMap = board.ComputeDistancesFrom(start);
                 var d1 = distanceMap.Distances[goal1];
@@ -119,7 +122,7 @@ namespace TSKT.Tests
 
             aStarSearch.SearchAllPaths(goal1).ToArray();
 
-            var paths = aStarSearch.SearchPath(goal1, goal2);
+            var paths = aStarSearch.SearchPathToNearestGoal(goal1, goal2);
             Assert.AreEqual(goal2, paths.Last());
         }
     }

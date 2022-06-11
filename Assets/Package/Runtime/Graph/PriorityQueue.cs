@@ -40,6 +40,7 @@ namespace TSKT.Graphs
         readonly List<T> items = new List<T>();
         readonly List<OrderKey2> keys = new List<OrderKey2>();
         public int Count => keys.Count;
+        public T Peek => items[^1];
 
         public void Enqueue(double primaryKey, double secondaryKey, T item)
         {
@@ -72,5 +73,4 @@ namespace TSKT.Graphs
             return item;
         }
     }
-
 }

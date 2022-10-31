@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+﻿#nullable enable
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 using System.Linq;
+using Unity.PerformanceTesting;
 
 namespace TSKT.Tests
 {
@@ -110,13 +112,14 @@ namespace TSKT.Tests
 
         }
 
+        [Test]
+        [Performance]
         public void Performance()
         {
             var board = new Board(100, 100);
-
             var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0);
-
-            for (int i = 0; i < 100; ++i)
+ 
+            Measure.Method(() =>
             {
                 var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
@@ -127,7 +130,8 @@ namespace TSKT.Tests
 
                 Debug.Log(graph.batchGraph.ComputeAllNodes().Count);
                 Debug.Log(path.Length + " / " + completePath.Length + " from " + start + " to " + goal);
-            }
+            }).MeasurementCount(100)
+            .Run();
         }
 
         [Test]

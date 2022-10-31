@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+﻿#nullable enable
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 using System.Linq;
+using Unity.PerformanceTesting;
 
 namespace TSKT.Tests
 {
@@ -81,10 +83,12 @@ namespace TSKT.Tests
             Assert.AreEqual(1, paths.Length);
         }
 
+        [Test]
+        [Performance]
         public void Performance()
         {
             var board = new Board(100, 1000);
-            for(int i=0; i<board.Width; ++i)
+             for (int i=0; i<board.Width; ++i)
             {
                 for(int j=0; j<board.Height; ++j)
                 {
@@ -94,18 +98,11 @@ namespace TSKT.Tests
                 }
             }
 
-            var watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
-
-            var distanceMap = new DistanceMap<Vector2Int>(board, new Vector2Int(5, 5));
-
-            watch.Stop();
-            Debug.Log(watch.ElapsedMilliseconds);
-
-            watch.Restart();
-            distanceMap.SearchPaths(new Vector2Int(99, 999)).Take(256).ToArray();
-            watch.Stop();
-            Debug.Log(watch.ElapsedMilliseconds);
+            Measure.Method(() =>
+            {
+                var distanceMap = new DistanceMap<Vector2Int>(board, new Vector2Int(5, 5));
+                distanceMap.SearchPaths(new Vector2Int(99, 999)).Take(256).ToArray();
+            }).Run();
         }
     }
 }

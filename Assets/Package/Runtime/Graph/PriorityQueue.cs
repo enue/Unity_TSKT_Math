@@ -7,8 +7,8 @@ namespace TSKT.Graphs
 {
     public class PriorityQueue<T>
     {
-        readonly List<T> items = new List<T>();
-        readonly List<ulong> keys = new List<ulong>();
+        readonly List<T> items = new();
+        readonly List<ulong> keys = new();
         public int Count => keys.Count;
 
         public void Enqueue(ulong key, T item)

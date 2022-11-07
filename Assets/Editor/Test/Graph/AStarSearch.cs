@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 using System.Linq;
+using System;
 
 namespace TSKT.Tests
 {
@@ -48,14 +49,14 @@ namespace TSKT.Tests
                 else
                 {
                     Assert.AreEqual(goalDistanceByDijkstra, aStarSearch.memo.Distances[goal]);
-                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(aStarPath)));
+                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.Span.SequenceEqual(aStarPath)));
                 }
 
                 var aStarPaths = aStarSearch.SearchAllPaths(goal).ToArray();
                 Assert.AreEqual(dijkstraRoutes.Length, aStarPaths.Length);
                 foreach (var it in aStarPaths)
                 {
-                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.SequenceEqual(it)));
+                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.Span.SequenceEqual(it.Span)));
                 }
 
                 var path = AStarSearch<Vector2Int>.SearchPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));

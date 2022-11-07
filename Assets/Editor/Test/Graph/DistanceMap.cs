@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using System.Linq;
 using Unity.PerformanceTesting;
+using System;
 
 namespace TSKT.Tests
 {
@@ -61,9 +62,9 @@ namespace TSKT.Tests
             var route = distanceMap.SearchPaths('d').ToArray();
             Assert.AreEqual(1, route.Length);
             Assert.AreEqual(3, route[0].Length);
-            Assert.AreEqual('d', route[0][2]);
-            Assert.AreEqual('b', route[0][1]);
-            Assert.AreEqual('a', route[0][0]);
+            Assert.AreEqual('d', route[0].Span[2]);
+            Assert.AreEqual('b', route[0].Span[1]);
+            Assert.AreEqual('a', route[0].Span[0]);
         }
 
         [Test]

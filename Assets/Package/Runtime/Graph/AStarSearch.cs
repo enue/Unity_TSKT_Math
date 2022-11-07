@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System;
 #nullable enable
 
 namespace TSKT
@@ -74,17 +75,17 @@ namespace TSKT
             }
             return System.Array.Empty<T>();
         }
-        public readonly IEnumerable<T[]> SearchAllPaths(T goal, double maxDistance = double.PositiveInfinity)
+        public readonly IEnumerable<ReadOnlyMemory<T>> SearchAllPaths(T goal, double maxDistance = double.PositiveInfinity)
         {
             return SearchAllPathsToNearestGoal(maxDistance, goal);
         }
 
-        public readonly IEnumerable<T[]> SearchAllPathsToNearestGoal(params T[] goals)
+        public readonly IEnumerable<ReadOnlyMemory<T>> SearchAllPathsToNearestGoal(params T[] goals)
         {
             return SearchAllPathsToNearestGoal(double.PositiveInfinity, goals);
         }
 
-        public readonly IEnumerable<T[]> SearchAllPathsToNearestGoal(double maxDistance, params T[] goals)
+        public readonly IEnumerable<ReadOnlyMemory<T>> SearchAllPathsToNearestGoal(double maxDistance, params T[] goals)
         {
             if (SolvePath(goals, searchAllPaths: true, maxDistance: maxDistance, out var nearestGoal))
             {
@@ -92,7 +93,7 @@ namespace TSKT
             }
             else
             {
-                return System.Array.Empty<T[]>();
+                return System.Array.Empty<ReadOnlyMemory<T>>();
             }
         }
 
@@ -225,7 +226,7 @@ namespace TSKT
             var search = new AStarSearch<T>(graph, start, heuristicFunction);
             return search.SearchPath(goal);
         }
-        public static IEnumerable<T[]> SearchAllPaths(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
+        public static IEnumerable<ReadOnlyMemory<T>> SearchAllPaths(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction);
             return search.SearchAllPaths(goal);

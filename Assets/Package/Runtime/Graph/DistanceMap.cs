@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.Linq;
 #nullable enable
 
@@ -129,21 +131,21 @@ namespace TSKT
             }
         }
 
-        readonly public IEnumerable<T[]> SearchPaths(T goal)
+        readonly public IEnumerable<ReadOnlyMemory<T>> SearchPaths(T goal)
         {
             if (!Distances.ContainsKey(goal))
             {
                 yield break;
             }
 
-            var tasks = new Stack<T[]>();
+            var tasks = new Stack<ReadOnlyMemory<T>>();
             tasks.Push(new [] { goal });
 
             while (tasks.Count > 0)
             {
                 var path = tasks.Pop();
 
-                if (!ReversedEdges.TryGetValue(path[0], out var nearNodes))
+                if (!ReversedEdges.TryGetValue(path.Span[0], out var nearNodes))
                 {
                     yield return path;
                     continue;
@@ -152,11 +154,8 @@ namespace TSKT
                 {
                     var builder = new ArrayBuilder<T>(path.Length + 1);
                     builder.Add(nearNode);
-                    foreach (var it in path)
-                    {
-                        builder.Add(it);
-                    }
-                    tasks.Push(builder.Array);
+                    builder.writer.Write(path.Span);
+                    tasks.Push(builder.writer.WrittenMemory);
                 }
             }
         }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using System.Linq;
 using Unity.PerformanceTesting;
+using System;
 
 namespace TSKT.Tests
 {
@@ -21,7 +22,7 @@ namespace TSKT.Tests
             {
                 var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
-                var path = graph.GetPath(start, goal).ToArray();
+                var path = graph.GetPath(start, goal);
             }
         }
 
@@ -42,7 +43,7 @@ namespace TSKT.Tests
                         for (int y = 0; y < size; ++y)
                         {
                             var goal = new Vector2Int(x, y);
-                            var path = graph.GetPath(start, goal).ToArray();
+                            var path = graph.GetPath(start, goal);
                         }
                     }
                 }
@@ -123,10 +124,12 @@ namespace TSKT.Tests
             {
                 var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
-                var path = graph.GetPath(start, goal).ToArray();
+                var path = graph.GetPath(start, goal);
 
                 var completeMap = new DistanceMap<Vector2Int>(board, start, goal);
-                var completePath = completeMap.SearchPaths(goal).First();
+                var paths = new ReadOnlyMemory<Vector2Int>[99];
+                completeMap.SearchPaths(goal, paths, out var writtenCount);
+                var completePath = paths[0];
 
                 Debug.Log(graph.batchGraph.ComputeAllNodes().Count);
                 Debug.Log(path.Length + " / " + completePath.Length + " from " + start + " to " + goal);
@@ -164,7 +167,7 @@ namespace TSKT.Tests
                 var graph = new BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0, board.GetHeuristicFunctionForAStarSearch());
                 foreach (var (start, goal) in problems)
                 {
-                    var path = graph.GetPath(start, goal).ToArray();
+                    var path = graph.GetPath(start, goal);
                 }
                 sw.Stop();
                 batchedScore = sw.ElapsedMilliseconds;
@@ -187,7 +190,8 @@ namespace TSKT.Tests
                 foreach (var (start, goal) in problems)
                 {
                     var distanceMap = board.ComputeDistancesFrom(start);
-                    var path = distanceMap.SearchPaths(goal).First();
+                    var buffer = new ReadOnlyMemory<Vector2Int>[1];
+                    distanceMap.SearchPaths(goal, buffer, out _);
                 }
                 sw.Stop();
                 dijkstraScore = sw.ElapsedMilliseconds;

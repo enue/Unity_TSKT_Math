@@ -51,7 +51,7 @@ namespace TSKT
 
             var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
             var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
-            var path = batchedGraph.GetPath(start, goal).ToArray();
+            var path = batchedGraph.GetPath(start, goal);
 
             CreatePath(path, Color.green);
 

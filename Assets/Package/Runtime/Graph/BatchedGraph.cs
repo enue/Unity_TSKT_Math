@@ -22,7 +22,7 @@ namespace TSKT
 
         class PathCombine
         {
-            public readonly List<T> combinedPath = new List<T>();
+            public readonly List<T> combinedPath = new();
             int fixedCount = 0;
 
             public void Append(T[] path)
@@ -60,7 +60,7 @@ namespace TSKT
                 startToFirstRoot = owner.SearchRootToNearestRoot(start, out aStar);
             }
 
-            readonly public IEnumerable<T> GetPath(T goal)
+            public readonly T[] GetPath(T goal)
             {
                 if (!owner.nodeBatchMap.TryGetValue(goal, out var lastBatch))
                 {
@@ -68,48 +68,37 @@ namespace TSKT
                     {
                         var distanceMap = new DistanceMap<T>(owner.graph, start, new HashSet<T>() { goal });
                         var path = distanceMap.SearchPath(goal);
-                        foreach (var it in path)
-                        {
-                            yield return it;
-                        }
+                        return path;
                     }
                     else
                     {
                         var path = aStar.SearchPath(goal);
                         if (path != null)
                         {
-                            foreach (var it in path)
-                            {
-                                yield return it;
-                            }
+                            return path;
                         }
                     }
 
-                    yield break;
+                    return System.Array.Empty<T>();
                 }
 
                 if (startToFirstRoot.Length == 0)
                 {
-                    yield break;
+                    return System.Array.Empty<T>();
                 }
 
                 var firstRoot = startToFirstRoot[startToFirstRoot.Length - 1];
                 owner.nodeBatchMap.TryGetValue(firstRoot, out var firstBatch);
                 var pathCombine = new PathCombine();
                 pathCombine.Append(startToFirstRoot);
-                foreach (var it in owner.GetBatchToGoalPath(firstBatch, lastBatch, goal))
-                {
-                    pathCombine.Append(it);
-                }
-                foreach (var it in pathCombine.combinedPath)
-                {
-                    yield return it;
-                }
+                owner.GetBatchToGoalPath(firstBatch, lastBatch, goal, ref pathCombine);
+
+                return pathCombine.combinedPath.ToArray();
             }
         }
 
-        public readonly Graph<Batch> batchGraph = new Graph<Batch>();
-        public readonly Dictionary<T, Batch> nodeBatchMap = new Dictionary<T, Batch>();
+        public readonly Graph<Batch> batchGraph = new();
+        public readonly Dictionary<T, Batch> nodeBatchMap = new();
         public readonly IGraph<T> graph;
         public readonly System.Func<T, T, double>? heuristicFunction;
 
@@ -297,7 +286,7 @@ namespace TSKT
             }
         }
 
-        IEnumerable<T[]> GetBatchToGoalPath(Batch startBatch, Batch lastBatch, T goal)
+        void GetBatchToGoalPath(Batch startBatch, Batch lastBatch, T goal, ref PathCombine pathCombine)
         {
             Batch[] path;
             if (heuristicFunction == null)
@@ -321,14 +310,14 @@ namespace TSKT
                 if (fromBatch.distanceMap.Distances.ContainsKey(goal))
                 {
                     var nodePath = fromBatch.distanceMap.SearchPath(goal);
-                    yield return nodePath;
+                    pathCombine.Append(nodePath);
                     break;
                 }
                 else
                 {
                     var toBatch = path[i + 1];
                     var nodePath = fromBatch.distanceMap.SearchPath(toBatch.Root);
-                    yield return nodePath;
+                    pathCombine.Append(nodePath);
                 }
             }
         }
@@ -338,7 +327,7 @@ namespace TSKT
             return new StartintPoint(this, start);
         }
 
-        public IEnumerable<T> GetPath(in T start, in T goal)
+        public T[] GetPath(in T start, in T goal)
         {
             return GetStartintPoint(start).GetPath(goal);
         }

@@ -38,25 +38,34 @@ namespace TSKT.Tests
             {
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
 
-                var dijkstraRoutes = distanceMap.SearchPaths(goal).ToArray();
+                var dijkstraRoutes = new ReadOnlyMemory<Vector2Int>[150];
+                distanceMap.SearchPaths(goal, dijkstraRoutes, out var dijkstraWrittenCount);
                 distanceMap.Distances.TryGetValue(goal, out var goalDistanceByDijkstra);
 
                 var aStarPath = aStarSearch.SearchPath(goal);
-                if (dijkstraRoutes.Length == 0)
+                if (dijkstraWrittenCount == 0)
                 {
                     Assert.AreEqual(0, aStarPath.Length);
                 }
                 else
                 {
                     Assert.AreEqual(goalDistanceByDijkstra, aStarSearch.memo.Distances[goal]);
-                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.Span.SequenceEqual(aStarPath)));
+                    // 経路が多くてwrittenCountが溢れた場合にはaStarとダイクストラで結果が一致しないことがある
+                    if (dijkstraWrittenCount < dijkstraRoutes.Length)
+                    {
+                        Assert.IsTrue(dijkstraRoutes.AsSpan(0, dijkstraWrittenCount).ToArray().Any(_ => _.Span.SequenceEqual(aStarPath)));
+                    }
                 }
 
-                var aStarPaths = aStarSearch.SearchAllPaths(goal).ToArray();
-                Assert.AreEqual(dijkstraRoutes.Length, aStarPaths.Length);
-                foreach (var it in aStarPaths)
+                var aStarPaths = new ReadOnlyMemory<Vector2Int>[150];
+                aStarSearch.SearchAllPaths(goal, double.PositiveInfinity, aStarPaths, out var aStarWrittenCount);
+                Assert.AreEqual(dijkstraWrittenCount, aStarWrittenCount);
+                if (dijkstraWrittenCount < dijkstraRoutes.Length)
                 {
-                    Assert.IsTrue(dijkstraRoutes.Any(_ => _.Span.SequenceEqual(it.Span)));
+                    foreach (var it in aStarPaths.AsSpan(..aStarWrittenCount))
+                    {
+                        Assert.IsTrue(dijkstraRoutes.AsSpan(0, dijkstraWrittenCount).ToArray().Any(_ => _.Span.SequenceEqual(it.Span)));
+                    }
                 }
 
                 var path = AStarSearch<Vector2Int>.SearchPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
@@ -121,7 +130,8 @@ namespace TSKT.Tests
             var goal1 = new Vector2Int(9, 0);
             var goal2 = new Vector2Int(0, 1);
 
-            aStarSearch.SearchAllPaths(goal1).ToArray();
+            var i = new ReadOnlyMemory<Vector2Int>[99];
+            aStarSearch.SearchAllPaths(goal1, double.MaxValue, i, out _);
 
             var paths = aStarSearch.SearchPathToNearestGoal(goal1, goal2);
             Assert.AreEqual(goal2, paths.Last());

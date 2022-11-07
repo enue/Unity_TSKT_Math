@@ -75,25 +75,25 @@ namespace TSKT
             }
             return System.Array.Empty<T>();
         }
-        public readonly IEnumerable<ReadOnlyMemory<T>> SearchAllPaths(T goal, double maxDistance = double.PositiveInfinity)
+        public readonly void SearchAllPaths(T goal, double maxDistance, Span<ReadOnlyMemory<T>> destination, out int writtenCount)
         {
-            return SearchAllPathsToNearestGoal(maxDistance, goal);
+            SearchAllPathsToNearestGoal(maxDistance, new[] { goal }, destination, out writtenCount);
         }
 
-        public readonly IEnumerable<ReadOnlyMemory<T>> SearchAllPathsToNearestGoal(params T[] goals)
+        public readonly void SearchAllPathsToNearestGoal(T[] goals, Span<ReadOnlyMemory<T>> destination, out int writtenCount)
         {
-            return SearchAllPathsToNearestGoal(double.PositiveInfinity, goals);
+            SearchAllPathsToNearestGoal(double.PositiveInfinity, goals, destination, out writtenCount);
         }
 
-        public readonly IEnumerable<ReadOnlyMemory<T>> SearchAllPathsToNearestGoal(double maxDistance, params T[] goals)
+        public readonly void SearchAllPathsToNearestGoal(double maxDistance, T[] goals, Span<ReadOnlyMemory<T>> destination, out int writtenCount)
         {
             if (SolvePath(goals, searchAllPaths: true, maxDistance: maxDistance, out var nearestGoal))
             {
-                return memo.SearchPaths(nearestGoal);
+                memo.SearchPaths(nearestGoal, destination, out writtenCount);
             }
             else
             {
-                return System.Array.Empty<ReadOnlyMemory<T>>();
+                writtenCount = 0;
             }
         }
 
@@ -226,10 +226,10 @@ namespace TSKT
             var search = new AStarSearch<T>(graph, start, heuristicFunction);
             return search.SearchPath(goal);
         }
-        public static IEnumerable<ReadOnlyMemory<T>> SearchAllPaths(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
+        public static void SearchAllPaths(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction, Span<ReadOnlyMemory<T>> destination, out int writtenCount)
         {
             var search = new AStarSearch<T>(graph, start, heuristicFunction);
-            return search.SearchAllPaths(goal);
+            search.SearchAllPaths(goal, double.PositiveInfinity, destination, out writtenCount);
         }
     }
 }

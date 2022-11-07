@@ -18,8 +18,9 @@ namespace TSKT.Tests
             var distanceMap = board.ComputeDistancesFrom(new Vector2Int(5, 5));
             Assert.AreEqual(7.0, distanceMap.Distances[new Vector2Int(9, 8)]);
 
-            var paths = distanceMap.SearchPaths(new Vector2Int(7, 7)).ToArray();
-            Assert.AreEqual(6, paths.Length);
+            var paths = new ReadOnlyMemory<Vector2Int>[10];
+            distanceMap.SearchPaths(new Vector2Int(7, 7), paths, out var writtenCount);
+            Assert.AreEqual(6, writtenCount);
         }
 
         [Test]
@@ -28,8 +29,11 @@ namespace TSKT.Tests
             var board = new Board(10, 10);
             var distanceMap = board.ComputeDistancesFrom(new Vector2Int(5, 5), 4.0);
             var edgesToPivot = distanceMap.ReversedEdges;
-            Assert.AreEqual(6, distanceMap.SearchPaths(new Vector2Int(3, 3)).ToArray().Length);
-            Assert.AreEqual(0, distanceMap.SearchPaths(new Vector2Int(7, 8)).ToArray().Length);
+            var paths = new ReadOnlyMemory<Vector2Int>[10];
+            distanceMap.SearchPaths(new Vector2Int(3, 3), paths, out var writtenCount);
+            Assert.AreEqual(6, writtenCount);
+            distanceMap.SearchPaths(new Vector2Int(7, 8), paths, out writtenCount);
+            Assert.AreEqual(0, writtenCount);
         }
 
         [Test]
@@ -37,8 +41,11 @@ namespace TSKT.Tests
         {
             var board = new Board(10, 10);
             var distanceMap = new DistanceMap<Vector2Int>(board, new Vector2Int(5, 5), new Vector2Int(9, 6));
-            Assert.AreNotEqual(0, distanceMap.SearchPaths(new Vector2Int(9, 6)).Count());
-            Assert.AreEqual(0, distanceMap.SearchPaths(new Vector2Int(9, 7)).Count());
+            var paths = new ReadOnlyMemory<Vector2Int>[10];
+            distanceMap.SearchPaths(new Vector2Int(9, 6), paths, out var writtenCount);
+            Assert.AreNotEqual(0, writtenCount);
+            distanceMap.SearchPaths(new Vector2Int(9, 7), paths, out writtenCount);
+            Assert.AreEqual(0, writtenCount);
         }
 
         [Test]
@@ -59,12 +66,13 @@ namespace TSKT.Tests
             graph.DoubleOrderedLink('c', 'd', 2.0 / 7.0);
 
             var distanceMap = new DistanceMap<char>(graph, 'a');
-            var route = distanceMap.SearchPaths('d').ToArray();
-            Assert.AreEqual(1, route.Length);
-            Assert.AreEqual(3, route[0].Length);
-            Assert.AreEqual('d', route[0].Span[2]);
-            Assert.AreEqual('b', route[0].Span[1]);
-            Assert.AreEqual('a', route[0].Span[0]);
+            var paths = new ReadOnlyMemory<char>[10];
+            distanceMap.SearchPaths('d', paths, out var writtenCount);
+            Assert.AreEqual(1, writtenCount);
+            Assert.AreEqual(3, paths[0].Length);
+            Assert.AreEqual('d', paths[0].Span[2]);
+            Assert.AreEqual('b', paths[0].Span[1]);
+            Assert.AreEqual('a', paths[0].Span[0]);
         }
 
         [Test]
@@ -79,9 +87,10 @@ namespace TSKT.Tests
                 }
             }
             var distance = board.ComputeDistancesFrom(new Vector2Int(0, 0));
-            var paths = distance.SearchPaths(new Vector2Int(9, 9)).ToArray();
+            var paths = new ReadOnlyMemory<Vector2Int>[10];
+            distance.SearchPaths(new Vector2Int(9, 9), paths, out var writtenCount);
 
-            Assert.AreEqual(1, paths.Length);
+            Assert.AreEqual(1, writtenCount);
         }
 
         [Test]
@@ -102,7 +111,8 @@ namespace TSKT.Tests
             Measure.Method(() =>
             {
                 var distanceMap = new DistanceMap<Vector2Int>(board, new Vector2Int(5, 5));
-                distanceMap.SearchPaths(new Vector2Int(99, 999)).Take(256).ToArray();
+                var paths = new ReadOnlyMemory<Vector2Int>[256];
+                distanceMap.SearchPaths(new Vector2Int(99, 999), paths, out _);
             }).Run();
         }
     }

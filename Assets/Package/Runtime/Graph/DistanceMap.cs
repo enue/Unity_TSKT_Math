@@ -131,13 +131,19 @@ namespace TSKT
             }
         }
 
-        readonly public IEnumerable<ReadOnlyMemory<T>> SearchPaths(T goal)
+        public readonly void SearchPaths(T goal, Span<ReadOnlyMemory<T>> destination, out int writtenCount)
         {
             if (!Distances.ContainsKey(goal))
             {
-                yield break;
+                writtenCount = 0;
+                return;
             }
-
+            if (destination.Length == 0)
+            {
+                writtenCount = 0;
+                return;
+            }
+            writtenCount = 0;
             var tasks = new Stack<ReadOnlyMemory<T>>();
             tasks.Push(new [] { goal });
 
@@ -147,7 +153,12 @@ namespace TSKT
 
                 if (!ReversedEdges.TryGetValue(path.Span[0], out var nearNodes))
                 {
-                    yield return path;
+                    destination[writtenCount] = path;
+                    ++writtenCount;
+                    if (destination.Length <= writtenCount)
+                    {
+                        return;
+                    }
                     continue;
                 }
                 foreach (var nearNode in nearNodes)

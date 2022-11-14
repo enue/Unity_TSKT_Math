@@ -38,7 +38,7 @@ namespace TSKT.Tests
             {
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
 
-                var dijkstraRoutes = new ReadOnlyMemory<Vector2Int>[150];
+                Span<Vector2Int[]> dijkstraRoutes = new Vector2Int[150][];
                 distanceMap.SearchPaths(goal, dijkstraRoutes, out var dijkstraWrittenCount);
                 distanceMap.Distances.TryGetValue(goal, out var goalDistanceByDijkstra);
 
@@ -53,18 +53,18 @@ namespace TSKT.Tests
                     // 経路が多くてwrittenCountが溢れた場合にはaStarとダイクストラで結果が一致しないことがある
                     if (dijkstraWrittenCount < dijkstraRoutes.Length)
                     {
-                        Assert.IsTrue(dijkstraRoutes.AsSpan(0, dijkstraWrittenCount).ToArray().Any(_ => _.Span.SequenceEqual(aStarPath)));
+                        Assert.IsTrue(dijkstraRoutes.Slice(0, dijkstraWrittenCount).ToArray().Any(_ => _.SequenceEqual(aStarPath)));
                     }
                 }
 
-                var aStarPaths = new ReadOnlyMemory<Vector2Int>[150];
+                Span<Vector2Int[]> aStarPaths = new Vector2Int[150][];
                 aStarSearch.SearchAllPaths(goal, double.PositiveInfinity, aStarPaths, out var aStarWrittenCount);
                 Assert.AreEqual(dijkstraWrittenCount, aStarWrittenCount);
                 if (dijkstraWrittenCount < dijkstraRoutes.Length)
                 {
-                    foreach (var it in aStarPaths.AsSpan(..aStarWrittenCount))
+                    foreach (var it in aStarPaths.Slice(0, aStarWrittenCount))
                     {
-                        Assert.IsTrue(dijkstraRoutes.AsSpan(0, dijkstraWrittenCount).ToArray().Any(_ => _.Span.SequenceEqual(it.Span)));
+                        Assert.IsTrue(dijkstraRoutes.Slice(0, dijkstraWrittenCount).ToArray().Any(_ => _.SequenceEqual(it)));
                     }
                 }
 
@@ -130,7 +130,7 @@ namespace TSKT.Tests
             var goal1 = new Vector2Int(9, 0);
             var goal2 = new Vector2Int(0, 1);
 
-            var i = new ReadOnlyMemory<Vector2Int>[99];
+            var i = new Vector2Int[99][];
             aStarSearch.SearchAllPaths(goal1, double.MaxValue, i, out _);
 
             var paths = aStarSearch.SearchPathToNearestGoal(goal1, goal2);

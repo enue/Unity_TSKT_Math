@@ -131,7 +131,7 @@ namespace TSKT
             }
         }
 
-        public readonly void SearchPaths(T goal, Span<ReadOnlyMemory<T>> destination, out int writtenCount)
+        public readonly void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
         {
             if (!Distances.ContainsKey(goal))
             {
@@ -144,29 +144,42 @@ namespace TSKT
                 return;
             }
             writtenCount = 0;
-            var tasks = new Stack<ReadOnlyMemory<T>>();
-            tasks.Push(new [] { goal });
-
-            while (tasks.Count > 0)
+            var tasks = new Stack<(IMemoryOwner<T> owner, Memory<T> memory)>();
+            try
             {
-                var path = tasks.Pop();
+                var first = MemoryPool<T>.Shared.Rent(1);
+                first.Memory.Span[0] = goal;
+                tasks.Push((first, first.Memory[..1]));
 
-                if (!ReversedEdges.TryGetValue(path.Span[0], out var nearNodes))
+                while (tasks.Count > 0)
                 {
-                    destination[writtenCount] = path;
-                    ++writtenCount;
-                    if (destination.Length <= writtenCount)
+                    var path = tasks.Pop();
+                    using var o = path.owner;
+                    if (!ReversedEdges.TryGetValue(path.memory.Span[0], out var nearNodes))
                     {
-                        return;
+                        destination[writtenCount] = path.memory.ToArray();
+                        ++writtenCount;
+                        if (destination.Length <= writtenCount)
+                        {
+                            return;
+                        }
+                        continue;
                     }
-                    continue;
+                    foreach (var nearNode in nearNodes)
+                    {
+                        var owner = MemoryPool<T>.Shared.Rent(path.memory.Length + 1);
+                        var memory = owner.Memory[..(path.memory.Length + 1)];
+                        memory.Span[0] = nearNode;
+                        path.memory.CopyTo(memory[1..]);
+                        tasks.Push((owner, memory));
+                    }
                 }
-                foreach (var nearNode in nearNodes)
+            }
+            finally
+            {
+                foreach (var (owner, _) in tasks)
                 {
-                    var builder = new ArrayBuilder<T>(path.Length + 1);
-                    builder.Add(nearNode);
-                    builder.writer.Write(path.Span);
-                    tasks.Push(builder.writer.WrittenMemory);
+                    owner.Dispose();
                 }
             }
         }

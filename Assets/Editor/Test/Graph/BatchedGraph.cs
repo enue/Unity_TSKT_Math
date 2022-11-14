@@ -127,7 +127,7 @@ namespace TSKT.Tests
                 var path = graph.GetPath(start, goal);
 
                 var completeMap = new DistanceMap<Vector2Int>(board, start, goal);
-                var paths = new ReadOnlyMemory<Vector2Int>[99];
+                var paths = new Vector2Int[99][];
                 completeMap.SearchPaths(goal, paths, out var writtenCount);
                 var completePath = paths[0];
 
@@ -190,7 +190,7 @@ namespace TSKT.Tests
                 foreach (var (start, goal) in problems)
                 {
                     var distanceMap = board.ComputeDistancesFrom(start);
-                    var buffer = new ReadOnlyMemory<Vector2Int>[1];
+                    var buffer = new Vector2Int[1][];
                     distanceMap.SearchPaths(goal, buffer, out _);
                 }
                 sw.Stop();

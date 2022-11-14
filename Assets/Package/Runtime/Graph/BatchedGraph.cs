@@ -66,7 +66,7 @@ namespace TSKT
                 {
                     if (owner.heuristicFunction == null)
                     {
-                        var distanceMap = new DistanceMap<T>(owner.graph, start, new HashSet<T>() { goal });
+                        var distanceMap = new DistanceMap<T>(owner.graph, start, new T[] { goal });
                         var path = distanceMap.SearchPath(goal);
                         return path;
                     }
@@ -209,7 +209,7 @@ namespace TSKT
             }
 
             var startNodeBatch = nodeBatchMap[startNode];
-            var linkedBatches = new HashSet<T>();
+            var linkedBatches = new List<T>();
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
@@ -235,7 +235,7 @@ namespace TSKT
             }
             foreach (var it in sortedUnlinkcedBatches)
             {
-                it.distanceMap.Solve(linkedBatches);
+                it.distanceMap.Solve(linkedBatches.ToArray());
                 var linked = false;
                 foreach (var linkedBatch in linkedBatches)
                 {
@@ -257,7 +257,7 @@ namespace TSKT
             if (heuristicFunction == null)
             {
                 aStar = default;
-                var roots = new HashSet<T>(batchGraph.StartingNodes.Select(_ => _.Root));
+                var roots = batchGraph.StartingNodes.Select(_ => _.Root).ToArray();
                 var startToBatch = new DistanceMap<T>(graph, start, roots);
 
                 T? firstRoot = default;

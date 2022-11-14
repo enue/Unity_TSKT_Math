@@ -13,7 +13,7 @@ namespace TSKT
         readonly System.Func<T, T, double> heuristicFunction;
         public readonly DistanceMap<T> memo;
         public readonly T Start => memo.Start;
-        readonly HashSet<T> tasksToResume;
+        readonly List<T> tasksToResume;
 
         public AStarSearch(IGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction)
         {
@@ -23,10 +23,9 @@ namespace TSKT
             memo = new DistanceMap<T>(
                 start,
                 new Dictionary<T, double>(),
-                new Dictionary<T, HashSet<T>>());
+                new Dictionary<T, List<T>>());
             memo.Distances.Add(start, 0.0);
-            tasksToResume = new HashSet<T>();
-            tasksToResume.Add(start);
+            tasksToResume = new List<T>() { start };
         }
 
         public readonly T[] SearchPath(T goal, double maxDistance = double.PositiveInfinity)
@@ -152,7 +151,10 @@ namespace TSKT
                     var startToNextNodeDistance = edgeWeight + startToCurrentNodeDistance;
                     if (startToNextNodeDistance > maxDistance)
                     {
-                        tasksToResume.Add(currentNode);
+                        if (!tasksToResume.Contains(currentNode))
+                        {
+                            tasksToResume.Add(currentNode);
+                        }
                         continue;
                     }
 
@@ -165,7 +167,10 @@ namespace TSKT
                             {
                                 nearNodes.Clear();
                             }
-                            nearNodes.Add(currentNode);
+                            if (!nearNodes.Contains(currentNode))
+                            {
+                                nearNodes.Add(currentNode);
+                            }
                         }
 
                         if (oldDistance <= startToNextNodeDistance)
@@ -175,9 +180,8 @@ namespace TSKT
                     }
                     else
                     {
-                        var nearNodes = new HashSet<T>();
+                        var nearNodes = new List<T>() { currentNode };
                         memo.ReversedEdges.Add(next, nearNodes);
-                        nearNodes.Add(currentNode);
                     }
 
                     memo.Distances[next] = startToNextNodeDistance;
@@ -193,7 +197,11 @@ namespace TSKT
             }
             while (tasks.Count > 0)
             {
-                tasksToResume.Add(tasks.Dequeue().node);
+                var n = tasks.Dequeue().node;
+                if (!tasksToResume.Contains(n))
+                {
+                    tasksToResume.Add(n);
+                }
             }
 
             var nearestGoalDistance = double.PositiveInfinity;

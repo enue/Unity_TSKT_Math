@@ -10,14 +10,14 @@ namespace TSKT
     {
         readonly public T Start { get; }
         readonly public Dictionary<T, double> Distances { get; }
-        readonly public Dictionary<T, HashSet<T>> ReversedEdges { get; }
+        readonly public Dictionary<T, List<T>> ReversedEdges { get; }
 
         readonly Graphs.PriorityQueue<T>? tasks;
         readonly IGraph<T>? graph;
 
         readonly public bool Finished => (tasks == null || tasks.Count == 0);
 
-        public DistanceMap(in T start, Dictionary<T, double> distances, Dictionary<T, HashSet<T>> reversedEdges)
+        public DistanceMap(in T start, Dictionary<T, double> distances, Dictionary<T, List<T>> reversedEdges)
         {
             Start = start;
             Distances = distances;
@@ -33,16 +33,16 @@ namespace TSKT
         }
 
         public DistanceMap(IGraph<T> graph, in T start, in T goal, double maxDistance = double.PositiveInfinity)
-            : this(graph, start, new HashSet<T>() { goal }, maxDistance)
+            : this(graph, start, new[] { goal }, maxDistance)
         {
         }
 
-        public DistanceMap(IGraph<T> graph, in T start, HashSet<T>? goals, double maxDistance = double.PositiveInfinity)
+        public DistanceMap(IGraph<T> graph, in T start, T[]? goals, double maxDistance = double.PositiveInfinity)
         {
             this.graph = graph;
             Start = start;
             Distances = new Dictionary<T, double>();
-            ReversedEdges = new Dictionary<T, HashSet<T>>();
+            ReversedEdges = new Dictionary<T, List<T>>();
             tasks = new Graphs.PriorityQueue<T>();
             tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), Start);
             Distances.Add(Start, 0.0);
@@ -50,7 +50,7 @@ namespace TSKT
             Solve(goals, maxDistance);
         }
 
-        readonly public void Solve(HashSet<T>? goals, double maxDistance = double.PositiveInfinity)
+        readonly public void Solve(T[]? goals, double maxDistance = double.PositiveInfinity)
         {
             if (tasks == null)
             {
@@ -77,7 +77,7 @@ namespace TSKT
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;
-                if (goals != null && goals.Contains(currentNode))
+                if (goals != null && Array.IndexOf(goals, currentNode) >= 0)
                 {
                     break;
                 }
@@ -105,7 +105,10 @@ namespace TSKT
                                 {
                                     nearNodes.Clear();
                                 }
-                                nearNodes.Add(currentNode);
+                                if (!nearNodes.Contains(currentNode))
+                                {
+                                    nearNodes.Add(currentNode);
+                                }
                             }
                             if (oldDistance <= startToNextNodeDistance)
                             {
@@ -114,9 +117,8 @@ namespace TSKT
                         }
                         else
                         {
-                            var nearNodes = new HashSet<T>();
+                            var nearNodes = new List<T>() { currentNode };
                             ReversedEdges.Add(nextNode, nearNodes);
-                            nearNodes.Add(currentNode);
                         }
 
                         Distances[nextNode] = startToNextNodeDistance;

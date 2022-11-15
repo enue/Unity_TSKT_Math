@@ -35,10 +35,19 @@ namespace TSKT
 
         public readonly T[] SearchPathToNearestGoal(params T[] goals)
         {
-            return SearchPathToNearestGoal(double.PositiveInfinity, goals);
+            return SearchPathToNearestGoal(goals.AsSpan());
         }
 
+        public readonly T[] SearchPathToNearestGoal(ReadOnlySpan<T> goals)
+        {
+            return SearchPathToNearestGoal(double.PositiveInfinity, goals);
+        }
         public readonly T[] SearchPathToNearestGoal(double maxDistance, params T[] goals)
+        {
+            return SearchPathToNearestGoal(maxDistance, goals.AsSpan());
+        }
+
+        public readonly T[] SearchPathToNearestGoal(double maxDistance, ReadOnlySpan<T> goals)
         {
             var containsAllGoals = true;
             var minDistance = double.PositiveInfinity;
@@ -79,12 +88,12 @@ namespace TSKT
             SearchAllPathsToNearestGoal(maxDistance, new[] { goal }, destination, out writtenCount);
         }
 
-        public readonly void SearchAllPathsToNearestGoal(T[] goals, Span<T[]> destination, out int writtenCount)
+        public readonly void SearchAllPathsToNearestGoal(ReadOnlySpan<T> goals, Span<T[]> destination, out int writtenCount)
         {
             SearchAllPathsToNearestGoal(double.PositiveInfinity, goals, destination, out writtenCount);
         }
 
-        public readonly void SearchAllPathsToNearestGoal(double maxDistance, T[] goals, Span<T[]> destination, out int writtenCount)
+        public readonly void SearchAllPathsToNearestGoal(double maxDistance, ReadOnlySpan<T> goals, Span<T[]> destination, out int writtenCount)
         {
             if (SolvePath(goals, searchAllPaths: true, maxDistance: maxDistance, out var nearestGoal))
             {
@@ -96,14 +105,22 @@ namespace TSKT
             }
         }
 
-        readonly bool SolvePath(T[] goals, bool searchAllPaths, double maxDistance, out T nearestGoal)
+        readonly bool SolvePath(ReadOnlySpan<T> goals, bool searchAllPaths, double maxDistance, out T nearestGoal)
         {
             var tasks = new Graphs.DoublePriorityQueue<(T node, double expectedDistance)>();
             foreach (var it in tasksToResume)
             {
                 memo.Distances.TryGetValue(it, out var startToItDistance);
-                var h = heuristicFunction;
-                var expectedDistance = startToItDistance + goals.Min(_ => h(it, _));
+
+                double expectedDistance = double.PositiveInfinity;
+                foreach (var goal in goals)
+                {
+                    var h = startToItDistance + heuristicFunction(it, goal);
+                    if (expectedDistance > h)
+                    {
+                        expectedDistance = h;
+                    }
+                }
                 tasks.Enqueue(expectedDistance, -startToItDistance, (it, expectedDistance));
             }
             tasksToResume.Clear();
@@ -187,9 +204,15 @@ namespace TSKT
                     memo.Distances[next] = startToNextNodeDistance;
                     memoModified = true;
 
-                    var h = heuristicFunction;
-                    var start = Start;
-                    var nextExpectedDistance = goals.Min(_ => h(next, _)) + startToNextNodeDistance;
+                    double nextExpectedDistance = double.PositiveInfinity;
+                    foreach (var goal in goals)
+                    {
+                        var h = heuristicFunction(next, goal) + startToNextNodeDistance;
+                        if (nextExpectedDistance > h)
+                        {
+                            nextExpectedDistance = h;
+                        }
+                    }
 
                     // nextExpectedDistanceは昇順、startToNextNodeDistanceは降順で処理する
                     tasks.Enqueue(nextExpectedDistance, -startToNextNodeDistance, (next, nextExpectedDistance));

@@ -1,8 +1,8 @@
-﻿using System;
+#nullable enable
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
-#nullable enable
 
 namespace TSKT
 {
@@ -37,7 +37,7 @@ namespace TSKT
         {
         }
 
-        public DistanceMap(IGraph<T> graph, in T start, T[]? goals, double maxDistance = double.PositiveInfinity)
+        public DistanceMap(IGraph<T> graph, in T start, ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
         {
             this.graph = graph;
             Start = start;
@@ -49,8 +49,19 @@ namespace TSKT
 
             Solve(goals, maxDistance);
         }
+        public readonly void Solve(T[]? goals, double maxDistance = double.PositiveInfinity)
+        {
+            if (goals == null)
+            {
+                Solve(Span<T>.Empty, maxDistance);
+            }
+            else
+            {
+                Solve(goals.AsSpan(), maxDistance);
+            }
+        }
 
-        readonly public void Solve(T[]? goals, double maxDistance = double.PositiveInfinity)
+        public readonly void Solve(ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
         {
             if (tasks == null)
             {
@@ -61,25 +72,34 @@ namespace TSKT
                 throw new System.NullReferenceException();
             }
 
-            if (goals != null)
+            foreach (var it in goals)
             {
-                foreach (var it in goals)
+                if (Distances.ContainsKey(it))
                 {
-                    if (Distances.ContainsKey(it))
-                    {
-                        return;
-                    }
+                    return;
                 }
             }
 
             var continueNodes = new Dictionary<T, double>();
 
+            var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;
-                if (goals != null && Array.IndexOf(goals, currentNode) >= 0)
                 {
-                    break;
+                    var shouldBreak = false;
+                    foreach (var goal in goals)
+                    {
+                        if (comparer.Equals(goal, currentNode))
+                        {
+                            shouldBreak = true;
+                            break;
+                        }
+                    }
+                    if (shouldBreak)
+                    {
+                        break;
+                    }
                 }
 
                 tasks.Dequeue();

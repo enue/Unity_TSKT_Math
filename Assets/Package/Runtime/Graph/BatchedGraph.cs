@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Buffers;
+using System;
 #nullable enable
 
 namespace TSKT
@@ -25,7 +27,7 @@ namespace TSKT
             public readonly List<T> combinedPath = new();
             int fixedCount = 0;
 
-            public void Append(T[] path)
+            public void Append(ReadOnlySpan<T> path)
             {
                 var nextFixedCount = combinedPath.Count;
                 foreach (var it in path)
@@ -87,7 +89,7 @@ namespace TSKT
                     return System.Array.Empty<T>();
                 }
 
-                var firstRoot = startToFirstRoot[startToFirstRoot.Length - 1];
+                var firstRoot = startToFirstRoot[^1];
                 owner.nodeBatchMap.TryGetValue(firstRoot, out var firstBatch);
                 var pathCombine = new PathCombine();
                 pathCombine.Append(startToFirstRoot);
@@ -209,7 +211,7 @@ namespace TSKT
             }
 
             var startNodeBatch = nodeBatchMap[startNode];
-            var linkedBatches = new List<T>();
+            using var linkedBatches = new MemoryBuilder<T>(batches.Count);
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
@@ -223,21 +225,17 @@ namespace TSKT
                     unlinkedBatches.Add(it);
                 }
             }
-            IEnumerable<Batch> sortedUnlinkcedBatches;
-            if (heuristicFunction == null)
-            {
-                sortedUnlinkcedBatches = unlinkedBatches;
-            }
-            else
+            if (heuristicFunction != null)
             {
                 var _startNode = startNode;
-                sortedUnlinkcedBatches = unlinkedBatches.OrderBy(_ => heuristicFunction(_startNode, _.Root));
+                unlinkedBatches.Sort((x, y) =>
+                    heuristicFunction(_startNode, x.Root).CompareTo(heuristicFunction(_startNode, y.Root)));
             }
-            foreach (var it in sortedUnlinkcedBatches)
+            foreach (var it in unlinkedBatches)
             {
-                it.distanceMap.Solve(linkedBatches.ToArray());
+                it.distanceMap.Solve(linkedBatches.Memory.Span);
                 var linked = false;
-                foreach (var linkedBatch in linkedBatches)
+                foreach (var linkedBatch in linkedBatches.Memory.Span)
                 {
                     if (it.distanceMap.Distances.TryGetValue(linkedBatch, out var distance))
                     {
@@ -254,10 +252,19 @@ namespace TSKT
 
         T[] SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
         {
+            using var rootsBuilder = new MemoryBuilder<T>(batchGraph.StartingNodes.Count);
+            ReadOnlySpan<T> roots;
+            {
+                foreach (var it in batchGraph.StartingNodes)
+                {
+                    rootsBuilder.Add(it.Root);
+                }
+                roots = rootsBuilder.Memory.Span;
+            }
+
             if (heuristicFunction == null)
             {
                 aStar = default;
-                var roots = batchGraph.StartingNodes.Select(_ => _.Root).ToArray();
                 var startToBatch = new DistanceMap<T>(graph, start, roots);
 
                 T? firstRoot = default;
@@ -280,7 +287,6 @@ namespace TSKT
             }
             else
             {
-                var roots = batchGraph.StartingNodes.Select(_ => _.Root).ToArray();
                 aStar = new AStarSearch<T>(graph, start, heuristicFunction);
                 return aStar.SearchPathToNearestGoal(roots);
             }

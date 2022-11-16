@@ -211,7 +211,8 @@ namespace TSKT
             }
 
             var startNodeBatch = nodeBatchMap[startNode];
-            using var linkedBatches = new MemoryBuilder<T>(batches.Count);
+            using var buffer = MemoryPool<T>.Shared.Rent(batches.Count);
+            var linkedBatches = new MemoryBuilder<T>(buffer.Memory);
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
@@ -252,7 +253,8 @@ namespace TSKT
 
         T[] SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
         {
-            using var rootsBuilder = new MemoryBuilder<T>(batchGraph.StartingNodes.Count);
+            using var buffer = MemoryPool<T>.Shared.Rent(batchGraph.StartingNodes.Count);
+            var rootsBuilder = new MemoryBuilder<T>(buffer.Memory);
             ReadOnlySpan<T> roots;
             {
                 foreach (var it in batchGraph.StartingNodes)

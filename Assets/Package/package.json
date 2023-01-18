@@ -7,7 +7,6 @@
     "keywords": [],
     "category": "",
     "dependencies": {
-        "com.github.enue.tskt_container": "0.5.3",
         "com.unity.mathematics": "1.1.0"
     }
 }

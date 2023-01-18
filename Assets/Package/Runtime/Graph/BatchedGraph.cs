@@ -110,7 +110,7 @@ namespace TSKT
             this.heuristicFunction = heuristicFunction;
 
             var batches = new List<Batch>();
-            var referenceCountMap = new IntDictionary<T>();
+            var referenceCountMap = new Dictionary<T, int>();
             var taskFinishedNodes = new HashSet<T>();
 
             var tasks = new Graphs.DoublePriorityQueue<T>();
@@ -147,7 +147,10 @@ namespace TSKT
                 foreach (var it in newBatch.distanceMap.Distances)
                 {
                     var node = it.Key;
-                    ++referenceCountMap[node];
+                    {
+                        referenceCountMap.TryGetValue(node, out var value);
+                        referenceCountMap[node] = value + 1;
+                    }
                     if (nodeBatchMap.TryGetValue(node, out var currentBatch))
                     {
                         if (currentBatch == newBatch)
@@ -170,11 +173,13 @@ namespace TSKT
                         {
                             if (heuristicFunction == null)
                             {
-                                tasks.Enqueue(-referenceCountMap[node], -it.Value, node);
+                                referenceCountMap.TryGetValue(node, out var value);
+                                tasks.Enqueue(-value, -it.Value, node);
                             }
                             else
                             {
-                                tasks.Enqueue(-referenceCountMap[node], -heuristicFunction(root, node), node);
+                                referenceCountMap.TryGetValue(node, out var value);
+                                tasks.Enqueue(-value, -heuristicFunction(root, node), node);
                             }
                         }
                     }
@@ -212,7 +217,7 @@ namespace TSKT
 
             var startNodeBatch = nodeBatchMap[startNode];
             using var buffer = MemoryPool<T>.Shared.Rent(batches.Count);
-            var linkedBatches = new MemoryBuilder<T>(buffer.Memory);
+            var linkedBatches = new Math.MemoryBuilder<T>(buffer.Memory);
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
@@ -254,7 +259,7 @@ namespace TSKT
         T[] SearchRootToNearestRoot(in T start, out AStarSearch<T> aStar)
         {
             using var buffer = MemoryPool<T>.Shared.Rent(batchGraph.StartingNodes.Count);
-            var rootsBuilder = new MemoryBuilder<T>(buffer.Memory);
+            var rootsBuilder = new Math.MemoryBuilder<T>(buffer.Memory);
             ReadOnlySpan<T> roots;
             {
                 foreach (var it in batchGraph.StartingNodes)

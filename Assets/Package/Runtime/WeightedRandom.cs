@@ -7,8 +7,8 @@ namespace TSKT
 {
     public class WeightedRandom<T>
     {
-        readonly List<T> values = new List<T>();
-        readonly List<float> weights = new List<float>();
+        readonly List<T> values = new();
+        readonly List<float> weights = new();
         float[]? selectKeys;
 
         public float TotalWeight
@@ -23,7 +23,7 @@ namespace TSKT
                 {
                     return 0f;
                 }
-                return selectKeys[selectKeys.Length - 1];
+                return selectKeys[^1];
             }
         }
         public int Count => values.Count;
@@ -117,7 +117,7 @@ namespace TSKT
                     Refresh();
                 }
 
-                return weights[i] / selectKeys![selectKeys.Length - 1];
+                return weights[i] / selectKeys![^1];
             }
         }
     }

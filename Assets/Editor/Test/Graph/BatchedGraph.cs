@@ -99,7 +99,7 @@ namespace TSKT.Tests
                 for (int j = startY; j < startY + yCount; ++j)
                 {
                     var start = new Vector2Int(i, j);
-                    var s = batchedGraph.GetStartintPoint(start);
+                    var s = batchedGraph.GetStartingPoint(start);
                     for (int p = startX; p < startX + xCount; ++p)
                     {
                         for (int q = startY; q < startY + yCount; ++q)

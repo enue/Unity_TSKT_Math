@@ -23,7 +23,7 @@ namespace TSKT.Graphs
             keys.Insert(index, ~key);
         }
 
-        public T Peek => items[items.Count - 1];
+        public T Peek => items[^1];
 
         public T Dequeue()
         {
@@ -37,8 +37,8 @@ namespace TSKT.Graphs
 
     public class DoublePriorityQueue<T>
     {
-        readonly List<T> items = new List<T>();
-        readonly List<OrderKey2> keys = new List<OrderKey2>();
+        readonly List<T> items = new();
+        readonly List<OrderKey2> keys = new();
         public int Count => keys.Count;
         public T Peek => items[^1];
 

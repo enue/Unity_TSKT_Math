@@ -47,14 +47,14 @@ namespace TSKT
             }
         }
 
-        public readonly struct StartintPoint
+        public readonly struct StartingPoint
         {
             readonly BatchedGraph<T> owner;
             readonly T[] startToFirstRoot;
             public readonly T start;
             readonly AStarSearch<T> aStar;
 
-            public StartintPoint(BatchedGraph<T> owner, in T start)
+            public StartingPoint(BatchedGraph<T> owner, in T start)
             {
                 this.start = start;
                 this.owner = owner;
@@ -335,14 +335,14 @@ namespace TSKT
             }
         }
 
-        public StartintPoint GetStartintPoint(in T start)
+        public StartingPoint GetStartingPoint(in T start)
         {
-            return new StartintPoint(this, start);
+            return new StartingPoint(this, start);
         }
 
         public T[] GetPath(in T start, in T goal)
         {
-            return GetStartintPoint(start).GetPath(goal);
+            return GetStartingPoint(start).GetPath(goal);
         }
     }
 }

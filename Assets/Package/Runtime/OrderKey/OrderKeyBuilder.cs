@@ -7,8 +7,8 @@ namespace TSKT
 {
     public class OrderKeyBuilder
     {
-        OrderKeyCombine combine = new OrderKeyCombine();
-        readonly List<ulong> keys = new List<ulong>();
+        OrderKeyCombine combine = new();
+        readonly List<ulong> keys = new();
 
         public void AppendUint64(ulong key)
         {

@@ -28,7 +28,7 @@ namespace TSKT
 
         public static float GetSnappedAngle(float x, float y, int devide, out int index)
         {
-            // var unitAngle = Mathf.PI * 2f / devide;
+            // var unitAngle = Mathf.PI * 2f / divide;
 
             var angle = Mathf.Atan2(y, x);
 

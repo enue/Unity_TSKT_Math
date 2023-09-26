@@ -7,7 +7,7 @@ namespace TSKT
 {
     public class Graph<T> : IGraph<T>
     {
-        readonly Dictionary<T, Dictionary<T, double>> edges = new Dictionary<T, Dictionary<T, double>>();
+        readonly Dictionary<T, Dictionary<T, double>> edges = new();
         public Dictionary<T, Dictionary<T, double>>.KeyCollection StartingNodes => edges.Keys;
 
         public Graph()

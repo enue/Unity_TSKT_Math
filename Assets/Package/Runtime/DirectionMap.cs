@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace TSKT
 {
-    public class DirectionMap<T> : IEnumerable<KeyValuePair<Vector2Int, T>>
+    public class DirectionMap<T> : IEnumerable<(Vector2Int Key, T Value)>
     {
         public T Right { get; set; }
         public T Left { get; set; }
@@ -27,30 +27,14 @@ namespace TSKT
         {
             get
             {
-                if (y == 0)
+                return (x, y) switch
                 {
-                    if (x == -1)
-                    {
-                        return Left;
-                    }
-                    if (x == 1)
-                    {
-                        return Right;
-                    }
-                }
-                else if (x == 0)
-                {
-                    if (y == -1)
-                    {
-                        return Down;
-                    }
-                    if (y == 1)
-                    {
-                        return Up;
-                    }
-                }
-
-                return default;
+                    (-1, 0) => Left,
+                    (1, 0) => Right,
+                    (0, -1) => Down,
+                    (0, 1) => Up,
+                    _ => default
+                };
             }
             set
             {
@@ -85,12 +69,12 @@ namespace TSKT
             }
         }
 
-        public IEnumerator<KeyValuePair<Vector2Int, T>> GetEnumerator()
+        public IEnumerator<(Vector2Int Key, T Value)> GetEnumerator()
         {
-            yield return new KeyValuePair<Vector2Int, T>(Vector2Int.right, Right);
-            yield return new KeyValuePair<Vector2Int, T>(Vector2Int.left, Left);
-            yield return new KeyValuePair<Vector2Int, T>(Vector2Int.up, Up);
-            yield return new KeyValuePair<Vector2Int, T>(Vector2Int.down, Down);
+            yield return (Vector2Int.right, Right);
+            yield return (Vector2Int.left, Left);
+            yield return (Vector2Int.up, Up);
+            yield return (Vector2Int.down, Down);
         }
 
         IEnumerator IEnumerable.GetEnumerator()

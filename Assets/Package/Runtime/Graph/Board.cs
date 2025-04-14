@@ -8,26 +8,27 @@ namespace TSKT
 {
     public class Board : IGraph<Vector2Int>
     {
-        public readonly double?[,] costs;
-        public int Width => costs.GetLength(0);
-        public int Height => costs.GetLength(1);
+        readonly double?[] costs;
+        public int Width => costs.Length / Height;
+        public int Height { get; }
         public DirectionMap<double>? DirectionCostMap { get; set; }
 
         public Board(int w, int h)
         {
-            costs = new double?[w, h];
-            for (int i = 0; i < costs.GetLength(0); ++i)
+            Height = h;
+            costs = new double?[w * h];
+            for (int i = 0; i < w; ++i)
             {
-                for (int j = 0; j < costs.GetLength(1); ++j)
+                for (int j = 0; j < h; ++j)
                 {
-                    costs[i, j] = 1;
+                    costs[i * Height + j] = 1;
                 }
             }
         }
 
         public bool TryGetCost(int i, int j, out double value)
         {
-            var cost = costs[i, j];
+            var cost = costs[i * Height + j];
             if (cost.HasValue)
             {
                 value = cost.Value;
@@ -39,12 +40,12 @@ namespace TSKT
 
         public void SetCost(int i, int j, double cost)
         {
-            costs[i, j] = cost;
+            costs[i * Height + j] = cost;
         }
 
         public void Disable(int i, int j)
         {
-            costs[i, j] = null;
+            costs[i * Height + j] = null;
         }
 
         public bool Contains(int i, int j)
@@ -64,7 +65,7 @@ namespace TSKT
                 var next = it + node;
                 if (Contains(next.x, next.y))
                 {
-                    var cost = costs[next.x, next.y];
+                    var cost = costs[next.x * Height + next.y];
                     if (cost.HasValue)
                     {
                         if (DirectionCostMap != null)

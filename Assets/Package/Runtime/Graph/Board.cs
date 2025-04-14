@@ -85,18 +85,6 @@ namespace TSKT
 
         public AStarSearch<Vector2Int> CreateAStarSearch(in Vector2Int start)
         {
-            var minCost = double.PositiveInfinity;
-            foreach (var it in costs)
-            {
-                if (it.HasValue)
-                {
-                    if (minCost > it.Value)
-                    {
-                        minCost = it.Value;
-                    }
-                }
-            }
-            minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0.0;
             return new AStarSearch<Vector2Int>(this, start, GetHeuristicFunctionForAStarSearch());
         }
 

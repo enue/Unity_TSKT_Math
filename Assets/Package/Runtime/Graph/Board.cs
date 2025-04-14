@@ -78,12 +78,12 @@ namespace TSKT
             }
         }
 
-        public DistanceMap<Vector2Int> ComputeDistancesFrom(in Vector2Int node, double maxDistance = double.PositiveInfinity)
+        public DistanceMapU<Vector2Int> ComputeDistancesFrom(in Vector2Int node, double maxDistance = double.PositiveInfinity)
         {
-            return new DistanceMap<Vector2Int>(this, node, maxDistance);
+            return new DistanceMapU<Vector2Int>(this, node, maxDistance);
         }
 
-        public AStarSearch<Vector2Int> CreateAStarSearch(in Vector2Int start)
+        public AStarSearchU<Vector2Int> CreateAStarSearch(in Vector2Int start)
         {
             var minCost = double.PositiveInfinity;
             foreach (var it in costs)
@@ -97,7 +97,7 @@ namespace TSKT
                 }
             }
             minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0.0;
-            return new AStarSearch<Vector2Int>(this, start, GetHeuristicFunctionForAStarSearch());
+            return new AStarSearchU<Vector2Int>(this, start, GetHeuristicFunctionForAStarSearch());
         }
 
         public System.Func<Vector2Int, Vector2Int, double> GetHeuristicFunctionForAStarSearch()

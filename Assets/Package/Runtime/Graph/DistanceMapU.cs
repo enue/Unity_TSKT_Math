@@ -14,7 +14,7 @@ namespace TSKT
         public readonly Dictionary<T, T[]> ReversedEdges { get; }
 
         readonly Graphs.PriorityQueue<T>? tasks;
-        readonly IGraph<T>? graph;
+        readonly IGraphU<T>? graph;
 
         readonly public bool Finished => (tasks == null || tasks.Count == 0);
 
@@ -28,17 +28,17 @@ namespace TSKT
             tasks = null;
         }
 
-        public DistanceMapU(IGraph<T> graph, in T start, double maxDistance = double.PositiveInfinity)
+        public DistanceMapU(IGraphU<T> graph, in T start, double maxDistance = double.PositiveInfinity)
             : this(graph, start, null, maxDistance)
         {
         }
 
-        public DistanceMapU(IGraph<T> graph, in T start, in T goal, double maxDistance = double.PositiveInfinity)
+        public DistanceMapU(IGraphU<T> graph, in T start, in T goal, double maxDistance = double.PositiveInfinity)
             : this(graph, start, new[] { goal }, maxDistance)
         {
         }
 
-        public DistanceMapU(IGraph<T> graph, in T start, ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
+        public DistanceMapU(IGraphU<T> graph, in T start, ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
         {
             this.graph = graph;
             Start = start;
@@ -83,6 +83,7 @@ namespace TSKT
 
             var continueNodes = new NativeHashMap<T, double>(32, Allocator.Temp);
 
+            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCount];
             var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
             {
@@ -106,7 +107,8 @@ namespace TSKT
                 tasks.Dequeue();
 
                 var startToCurrentNodeDistance = Distances[currentNode];
-                foreach (var (nextNode, edgeWeight) in graph.GetEdgesFrom(currentNode))
+                graph.GetEdgesFrom(currentNode, buffer, out var writtenCount);
+                foreach (var (nextNode, edgeWeight) in buffer[..writtenCount])
                 {
                     UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
 

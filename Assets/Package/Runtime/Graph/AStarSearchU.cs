@@ -9,13 +9,13 @@ namespace TSKT
 {
     public readonly struct AStarSearchU<T> where T : unmanaged, IEquatable<T>
     {
-        public readonly IGraph<T> graph;
+        public readonly IGraphU<T> graph;
         readonly System.Func<T, T, double> heuristicFunction;
         public readonly DistanceMapU<T> memo;
         public readonly T Start => memo.Start;
         readonly List<T> tasksToResume;
 
-        public AStarSearchU(IGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction)
+        public AStarSearchU(IGraphU<T> graph, in T start, System.Func<T, T, double> heuristicFunction)
         {
             this.heuristicFunction = heuristicFunction;
             this.graph = graph;
@@ -127,6 +127,7 @@ namespace TSKT
             tasksToResume.Clear();
             bool memoModified = true;
 
+            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCount];
             while (tasks.Count > 0)
             {
                 var (currentNode, expectedDistance) = tasks.Peek;
@@ -164,7 +165,8 @@ namespace TSKT
                 tasks.Dequeue();
                 var startToCurrentNodeDistance = memo.Distances[currentNode];
 
-                foreach (var (next, edgeWeight) in graph.GetEdgesFrom(currentNode))
+                graph.GetEdgesFrom(currentNode, buffer, out var writtenCount);
+                foreach (var (next, edgeWeight) in buffer[..writtenCount])
                 {
                     var startToNextNodeDistance = edgeWeight + startToCurrentNodeDistance;
                     if (startToNextNodeDistance > maxDistance)
@@ -258,12 +260,12 @@ namespace TSKT
             return nodes.ToDictionary(_ => _, _ => distances[_]);
         }
 
-        public static T[] SearchPath(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
+        public static T[] SearchPath(IGraphU<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction)
         {
             var search = new AStarSearchU<T>(graph, start, heuristicFunction);
             return search.SearchPath(goal);
         }
-        public static void SearchAllPaths(IGraph<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction, Span<T[]> destination, out int writtenCount)
+        public static void SearchAllPaths(IGraphU<T> graph, in T start, in T goal, System.Func<T, T, double> heuristicFunction, Span<T[]> destination, out int writtenCount)
         {
             var search = new AStarSearchU<T>(graph, start, heuristicFunction);
             search.SearchAllPaths(goal, double.PositiveInfinity, destination, out writtenCount);

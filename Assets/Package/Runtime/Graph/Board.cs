@@ -2,11 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 #nullable enable
 
 namespace TSKT
 {
-    public class Board : IGraph<Vector2Int>, IGraph<int>
+    public class Board : IGraphU<Vector2Int>, IGraphU<int>, IGraph<Vector2Int>, IGraph<int>
     {
         readonly double?[] costs;
         public int Width => costs.Length / Height;
@@ -63,7 +64,6 @@ namespace TSKT
             {
                 yield break;
             }
-
             foreach (var it in Vector2IntUtil.Directions)
             {
                 var next = it + node;
@@ -87,6 +87,43 @@ namespace TSKT
             foreach (var (endNode, weight) in GetEdgesFrom(IndexToCell(begin)))
             {
                 yield return (CellToIndex(endNode), weight);
+            }
+        }
+
+        public void GetEdgesFrom(Vector2Int node, Span<(Vector2Int endNode, double weight)> dest, out int writtenCount)
+        {
+            writtenCount = 0;
+            if (!Contains(node.x, node.y))
+            {
+                return;
+            }
+
+            foreach (var it in Vector2IntUtil.Directions)
+            {
+                var next = it + node;
+                if (Contains(next.x, next.y))
+                {
+                    var cost = costs[next.x * Height + next.y];
+                    if (cost.HasValue)
+                    {
+                        if (DirectionCostMap != null)
+                        {
+                            cost += DirectionCostMap[it];
+                        }
+                        dest[writtenCount] = (next, cost.Value);
+                        ++writtenCount;
+                    }
+                }
+            }
+        }
+
+        public void GetEdgesFrom(int begin, Span<(int endNode, double weight)> dest, out int writtenCount)
+        {
+            Span<(Vector2Int endNode, double weight)> t = stackalloc (Vector2Int endNode, double weight)[MaxEdgeCount];
+            GetEdgesFrom(IndexToCell(begin), t, out writtenCount);
+            for (int i = 0; i < writtenCount; ++i)
+            {
+                dest[i] = (CellToIndex(t[i].endNode), t[i].weight);
             }
         }
 
@@ -145,5 +182,8 @@ namespace TSKT
 
             return cost;
         }
+
+        public int MaxEdgeCount => 4;
+
     }
 }

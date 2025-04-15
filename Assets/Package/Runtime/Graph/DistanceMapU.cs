@@ -11,14 +11,14 @@ namespace TSKT
     {
         public readonly T Start { get; }
         public readonly Dictionary<T, double> Distances { get; }
-        public readonly Dictionary<T, List<T>> ReversedEdges { get; }
+        public readonly Dictionary<T, T[]> ReversedEdges { get; }
 
         readonly Graphs.PriorityQueue<T>? tasks;
         readonly IGraph<T>? graph;
 
         readonly public bool Finished => (tasks == null || tasks.Count == 0);
 
-        public DistanceMapU(in T start, Dictionary<T, double> distances, Dictionary<T, List<T>> reversedEdges)
+        public DistanceMapU(in T start, Dictionary<T, double> distances, Dictionary<T, T[]> reversedEdges)
         {
             Start = start;
             Distances = distances;
@@ -43,7 +43,7 @@ namespace TSKT
             this.graph = graph;
             Start = start;
             Distances = new Dictionary<T, double>();
-            ReversedEdges = new Dictionary<T, List<T>>();
+            ReversedEdges = new Dictionary<T, T[]>();
             tasks = new Graphs.PriorityQueue<T>();
             tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), Start);
             Distances.Add(Start, 0.0);
@@ -122,13 +122,18 @@ namespace TSKT
                             if (oldDistance >= startToNextNodeDistance)
                             {
                                 var nearNodes = ReversedEdges[nextNode];
+                                T[] newNearNodes = nearNodes;
                                 if (oldDistance > startToNextNodeDistance)
                                 {
-                                    nearNodes.Clear();
+                                    newNearNodes = new T[] { currentNode };
                                 }
-                                if (!nearNodes.Contains(currentNode))
+                                else if (Array.IndexOf(newNearNodes, currentNode) == -1)
                                 {
-                                    nearNodes.Add(currentNode);
+                                    newNearNodes = newNearNodes.Append(currentNode).ToArray();
+                                }
+                                if (newNearNodes != nearNodes)
+                                {
+                                    ReversedEdges[nextNode] = nearNodes;
                                 }
                             }
                             if (oldDistance <= startToNextNodeDistance)
@@ -138,7 +143,7 @@ namespace TSKT
                         }
                         else
                         {
-                            var nearNodes = new List<T>() { currentNode };
+                            var nearNodes = new T[] { currentNode };
                             ReversedEdges.Add(nextNode, nearNodes);
                         }
 

@@ -23,7 +23,7 @@ namespace TSKT
             memo = new DistanceMapU<T>(
                 start,
                 new Dictionary<T, double>(),
-                new Dictionary<T, List<T>>());
+                new Dictionary<T, T[]>());
             memo.Distances.Add(start, 0.0);
             tasksToResume = new List<T>() { start };
         }
@@ -85,7 +85,8 @@ namespace TSKT
         }
         public readonly void SearchAllPaths(T goal, double maxDistance, Span<T[]> destination, out int writtenCount)
         {
-            SearchAllPathsToNearestGoal(maxDistance, new[] { goal }, destination, out writtenCount);
+            Span<T> goals = stackalloc T[1] { goal };
+            SearchAllPathsToNearestGoal(maxDistance, goals, destination, out writtenCount);
         }
 
         public readonly void SearchAllPathsToNearestGoal(ReadOnlySpan<T> goals, Span<T[]> destination, out int writtenCount)
@@ -105,7 +106,7 @@ namespace TSKT
             }
         }
 
-        readonly bool SolvePath(ReadOnlySpan<T> goals, bool searchAllPaths, double maxDistance, out T nearestGoal)
+        readonly bool SolvePath(in ReadOnlySpan<T> goals, bool searchAllPaths, double maxDistance, out T nearestGoal)
         {
             using var tasks = new Graphs.DoublePriorityQueueU<(T node, double expectedDistance)>();
             foreach (var it in tasksToResume)
@@ -180,13 +181,18 @@ namespace TSKT
                         if (oldDistance >= startToNextNodeDistance)
                         {
                             var nearNodes = memo.ReversedEdges[next];
+                            T[] newNearNodes = nearNodes;
                             if (oldDistance > startToNextNodeDistance)
                             {
-                                nearNodes.Clear();
+                                newNearNodes = new T[] { currentNode };
                             }
-                            if (!nearNodes.Contains(currentNode))
+                            else if (Array.IndexOf(newNearNodes, currentNode) == -1)
                             {
-                                nearNodes.Add(currentNode);
+                                newNearNodes = newNearNodes.Append(currentNode).ToArray();
+                            }
+                            if (newNearNodes != nearNodes)
+                            {
+                                memo.ReversedEdges[next] = nearNodes;
                             }
                         }
 
@@ -197,7 +203,7 @@ namespace TSKT
                     }
                     else
                     {
-                        var nearNodes = new List<T>() { currentNode };
+                        var nearNodes = new T[] { currentNode };
                         memo.ReversedEdges.Add(next, nearNodes);
                     }
 

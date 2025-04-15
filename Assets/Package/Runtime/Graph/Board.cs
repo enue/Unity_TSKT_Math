@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace TSKT
 {
-    public class Board : IGraph<Vector2Int>
+    public class Board : IGraph<Vector2Int>, IGraph<int>
     {
         readonly double?[] costs;
         public int Width => costs.Length / Height;
@@ -25,6 +25,10 @@ namespace TSKT
                 }
             }
         }
+
+        public Vector2Int IndexToCell(int index) => new(index / Height, index % Height);
+
+        public int CellToIndex(in Vector2Int cell) => cell.x * Height + cell.y;
 
         public bool TryGetCost(int i, int j, out double value)
         {
@@ -53,7 +57,7 @@ namespace TSKT
             return i >= 0 && j >= 0 && i < Width && j < Height;
         }
 
-        public IEnumerable<(Vector2Int, double)> GetEdgesFrom(Vector2Int node)
+        public IEnumerable<(Vector2Int endNode, double weight)> GetEdgesFrom(Vector2Int node)
         {
             if (!Contains(node.x, node.y))
             {
@@ -78,17 +82,44 @@ namespace TSKT
             }
         }
 
+        public IEnumerable<(int endNode, double weight)> GetEdgesFrom(int begin)
+        {
+            foreach (var (endNode, weight) in GetEdgesFrom(IndexToCell(begin)))
+            {
+                yield return (CellToIndex(endNode), weight);
+            }
+        }
+
         public DistanceMapU<Vector2Int> ComputeDistancesFrom(in Vector2Int node, double maxDistance = double.PositiveInfinity)
         {
             return new DistanceMapU<Vector2Int>(this, node, maxDistance);
+        }
+        public DistanceMapU<int> ComputeDistancesFrom(int node, double maxDistance = double.PositiveInfinity)
+        {
+            return new DistanceMapU<int>(this, node, maxDistance);
         }
 
         public AStarSearchU<Vector2Int> CreateAStarSearch(in Vector2Int start)
         {
             return new AStarSearchU<Vector2Int>(this, start, GetHeuristicFunctionForAStarSearch());
         }
+        public AStarSearchU<int> CreateAStarSearch(int start)
+        {
+            return new AStarSearchU<int>(this, start, GetHeuristicFunctionForAStarSearchInCellIndex());
+        }
 
         public System.Func<Vector2Int, Vector2Int, double> GetHeuristicFunctionForAStarSearch()
+        {
+            var c = ComputeHeuristicCoefficient();
+            return (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * c;
+        }
+        public System.Func<int, int, double> GetHeuristicFunctionForAStarSearchInCellIndex()
+        {
+            var c = ComputeHeuristicCoefficient();
+            return (a, b) => Vector2IntUtil.GetManhattanDistance(IndexToCell(a), IndexToCell(b)) * c;
+        }
+
+        double ComputeHeuristicCoefficient()
         {
             var minCost = double.PositiveInfinity;
             foreach (var it in costs)
@@ -112,7 +143,7 @@ namespace TSKT
                 cost = 0.0;
             }
 
-            return (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * cost;
+            return cost;
         }
     }
 }

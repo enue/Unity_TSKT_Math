@@ -159,6 +159,7 @@ namespace TSKT.Tests
 
             long batchedScore;
             long aStarScore;
+            long aStar2Score;
             long dijkstraScore;
 
             {
@@ -174,19 +175,29 @@ namespace TSKT.Tests
             }
             {
                 var sw = new System.Diagnostics.Stopwatch();
-                sw.Restart();
+                sw.Start();
                 foreach (var (start, goal) in problems)
                 {
                     var aStar = board.CreateAStarSearch(start);
-                    var path = aStar.SearchPath(goal).ToArray();
+                    var path = aStar.SearchPath(goal);
                 }
                 sw.Stop();
                 aStarScore = sw.ElapsedMilliseconds;
             }
-
             {
                 var sw = new System.Diagnostics.Stopwatch();
-                sw.Restart();
+                sw.Start();
+                foreach (var (start, goal) in problems)
+                {
+                    var aStar = board.CreateAStarSearch(board.CellToIndex(start));
+                    var path = aStar.SearchPath(board.CellToIndex(goal));
+                }
+                sw.Stop();
+                aStar2Score = sw.ElapsedMilliseconds;
+            }
+            {
+                var sw = new System.Diagnostics.Stopwatch();
+                sw.Start();
                 foreach (var (start, goal) in problems)
                 {
                     var distanceMap = board.ComputeDistancesFrom(start);
@@ -199,6 +210,7 @@ namespace TSKT.Tests
 
             Debug.Log("Batched : " + batchedScore + "ms");
             Debug.Log("aStar : " + aStarScore + "ms");
+            Debug.Log("aStar2 : " + aStar2Score + "ms");
             Debug.Log("dijkstra : " + dijkstraScore + "ms");
         }
     }

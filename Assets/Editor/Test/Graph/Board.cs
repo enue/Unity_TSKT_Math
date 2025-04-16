@@ -25,7 +25,7 @@ namespace TSKT.Tests
             var f = board.GetHeuristicFunctionForAStarSearch();
 
             var start = Vector2Int.zero;
-            var distanceMap = board.ComputeDistancesFrom(start);
+            var distanceMap = board.CreateDistanceMapFrom(start);
             foreach (var it in distanceMap.Distances)
             {
                 var goal = it.Key;
@@ -50,7 +50,7 @@ namespace TSKT.Tests
             var f = board.GetHeuristicFunctionForAStarSearch();
 
             var start = Vector2Int.zero;
-            var distanceMap = board.ComputeDistancesFrom(start);
+            var distanceMap = board.CreateDistanceMapFrom(start);
             foreach (var it in distanceMap.Distances)
             {
                 var goal = it.Key;

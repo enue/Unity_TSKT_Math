@@ -7,72 +7,39 @@ using Unity.Collections;
 
 namespace TSKT
 {
-    public readonly struct DistanceMapU<T> where T : unmanaged, IEquatable<T>
+    public class DistanceMapU<T> where T : unmanaged, IEquatable<T>
     {
-        public readonly T Start { get; }
-        public readonly Dictionary<T, double> Distances { get; }
-        public readonly Dictionary<T, T[]> ReversedEdges { get; }
+        readonly DistanceMapUCore<T> core;
+        public T Start => core.Start;
+        public IReadOnlyDictionary<T, double> Distances => core.Distances;
+        public IReadOnlyDictionary<T, T[]> ReversedEdges => core.ReversedEdges;
 
-        readonly Graphs.PriorityQueue<T>? tasks;
-        readonly IGraphU<T>? graph;
+        readonly Graphs.PriorityQueue<T> tasks;
+        readonly IGraphU<T> graph;
 
-        readonly public bool Finished => (tasks == null || tasks.Count == 0);
+        public bool Completed => tasks.Count == 0;
 
-        public DistanceMapU(in T start, Dictionary<T, double> distances, Dictionary<T, T[]> reversedEdges)
+
+        public DistanceMapU(IGraphU<T> graph, in T start)
         {
-            Start = start;
-            Distances = distances;
-            ReversedEdges = reversedEdges;
-
-            graph = null;
-            tasks = null;
-        }
-
-        public DistanceMapU(IGraphU<T> graph, in T start, double maxDistance = double.PositiveInfinity)
-            : this(graph, start, null, maxDistance)
-        {
-        }
-
-        public DistanceMapU(IGraphU<T> graph, in T start, in T goal, double maxDistance = double.PositiveInfinity)
-            : this(graph, start, new[] { goal }, maxDistance)
-        {
-        }
-
-        public DistanceMapU(IGraphU<T> graph, in T start, ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
-        {
+            core = new DistanceMapUCore<T>(start,
+                new Dictionary<T, double>
+            {
+                { start, 0.0 }
+            },new Dictionary<T, T[]>());
             this.graph = graph;
-            Start = start;
-            Distances = new Dictionary<T, double>();
-            ReversedEdges = new Dictionary<T, T[]>();
+
             tasks = new Graphs.PriorityQueue<T>();
-            tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), Start);
-            Distances.Add(Start, 0.0);
-
-            Solve(goals, maxDistance);
-        }
-        public readonly void Solve(T[]? goals, double maxDistance = double.PositiveInfinity)
-        {
-            if (goals == null)
-            {
-                Solve(Span<T>.Empty, maxDistance);
-            }
-            else
-            {
-                Solve(goals.AsSpan(), maxDistance);
-            }
+            tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), start);
         }
 
-        public readonly void Solve(ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
+        public void SolveWithin(double maxDistance)
         {
-            if (tasks == null)
-            {
-                throw new System.NullReferenceException();
-            }
-            if (graph == null)
-            {
-                throw new System.NullReferenceException();
-            }
+            SolveAny(Span<T>.Empty, maxDistance);
+        }
 
+        public void SolveAny(ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
+        {
             foreach (var it in goals)
             {
                 if (Distances.ContainsKey(it))
@@ -135,7 +102,7 @@ namespace TSKT
                                 }
                                 if (newNearNodes != nearNodes)
                                 {
-                                    ReversedEdges[nextNode] = newNearNodes;
+                                    core.ReversedEdges[nextNode] = newNearNodes;
                                 }
                             }
                             if (oldDistance <= startToNextNodeDistance)
@@ -146,10 +113,10 @@ namespace TSKT
                         else
                         {
                             var nearNodes = new T[] { currentNode };
-                            ReversedEdges.Add(nextNode, nearNodes);
+                            core.ReversedEdges.Add(nextNode, nearNodes);
                         }
 
-                        Distances[nextNode] = startToNextNodeDistance;
+                        core.Distances[nextNode] = startToNextNodeDistance;
                         tasks.Enqueue(OrderKeyConvert.ToUint64(startToNextNodeDistance), nextNode);
                     }
                 }
@@ -162,6 +129,43 @@ namespace TSKT
             continueNodes.Dispose();
         }
 
+        void Solve(T goal)
+        {
+            Span<T> goals = stackalloc T[] { goal };
+            SolveAny(goals);
+        }
+        public void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
+        {
+            Solve(goal);
+            core.SearchPaths(goal, destination, out writtenCount);
+        }
+
+        public T[] SearchPath(in T goal)
+        {
+            Solve(goal);
+            return core.SearchPath(goal);
+        }
+
+        public void SearchPath(in T goal, ref List<T> result)
+        {
+            Solve(goal);
+            core.SearchPath(goal, ref result);
+        }
+    }
+
+
+    public readonly struct DistanceMapUCore<T> where T : unmanaged, IEquatable<T>
+    {
+        public T Start { get; }
+        public Dictionary<T, double> Distances { get; }
+        public Dictionary<T, T[]> ReversedEdges { get; }
+
+        public DistanceMapUCore(in T start, Dictionary<T, double> distances, Dictionary<T, T[]> reversedEdges)
+        {
+            Start = start;
+            Distances = distances;
+            ReversedEdges = reversedEdges;
+        }
         public readonly void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
         {
             if (!Distances.ContainsKey(goal))

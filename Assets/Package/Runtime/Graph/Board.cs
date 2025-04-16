@@ -135,14 +135,8 @@ namespace TSKT
             }
         }
 
-        public DistanceMapU<Vector2Int> ComputeDistancesFrom(in Vector2Int node, double maxDistance = double.PositiveInfinity)
-        {
-            return new DistanceMapU<Vector2Int>(this, node, maxDistance);
-        }
-        public DistanceMapU<int> ComputeDistancesFrom(int node, double maxDistance = double.PositiveInfinity)
-        {
-            return new DistanceMapU<int>(this, node, maxDistance);
-        }
+        public DistanceMapU<Vector2Int> CreateDistanceMapFrom(in Vector2Int node) => new(this, node);
+        public DistanceMapU<int> CreateDistanceMapFrom(int node) => new(this, node);
 
         public AStarSearchU<Vector2Int> CreateAStarSearch(in Vector2Int start)
         {

@@ -15,8 +15,10 @@ namespace TSKT.Tests
         public void Test()
         {
             var board = new Board(10, 10);
-            var distanceMap = board.ComputeDistancesFrom(new Vector2Int(5, 5));
-            Assert.AreEqual(7.0, distanceMap.Distances[new Vector2Int(9, 8)]);
+            var distanceMap = board.CreateDistanceMapFrom(new Vector2Int(5, 5));
+            Assert.AreEqual(8, distanceMap.SearchPath(new Vector2Int(9, 8)).Length);
+            distanceMap.Distances.TryGetValue(new Vector2Int(9, 8), out var value);
+            Assert.AreEqual(7.0, value);
 
             var paths = new Vector2Int[10][];
             distanceMap.SearchPaths(new Vector2Int(7, 7), paths, out var writtenCount);
@@ -27,13 +29,10 @@ namespace TSKT.Tests
         public void LimitedDistances()
         {
             var board = new Board(10, 10);
-            var distanceMap = board.ComputeDistancesFrom(new Vector2Int(5, 5), 4.0);
-            var edgesToPivot = distanceMap.ReversedEdges;
-            var paths = new Vector2Int[10][];
-            distanceMap.SearchPaths(new Vector2Int(3, 3), paths, out var writtenCount);
-            Assert.AreEqual(6, writtenCount);
-            distanceMap.SearchPaths(new Vector2Int(7, 8), paths, out writtenCount);
-            Assert.AreEqual(0, writtenCount);
+            var distanceMap = board.CreateDistanceMapFrom(new Vector2Int(5, 5));
+            distanceMap.SolveWithin(4.0);
+            Assert.IsTrue(distanceMap.Distances.ContainsKey(new Vector2Int(3, 3)));
+            Assert.IsFalse(distanceMap.Distances.ContainsKey(new Vector2Int(7, 8)));
         }
 
         [Test]
@@ -86,7 +85,7 @@ namespace TSKT.Tests
                     board.SetCost(i, j, UnityEngine.Random.Range(1f, 2f));
                 }
             }
-            var distance = board.ComputeDistancesFrom(new Vector2Int(0, 0));
+            var distance = board.CreateDistanceMapFrom(new Vector2Int(0, 0));
             var paths = new Vector2Int[10][];
             distance.SearchPaths(new Vector2Int(9, 9), paths, out var writtenCount);
 

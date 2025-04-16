@@ -212,7 +212,7 @@ namespace TSKT.Tests
                 sw.Start();
                 foreach (var (start, goal) in problems)
                 {
-                    var distanceMap = board.ComputeDistancesFrom(start);
+                    var distanceMap = board.CreateDistanceMapFrom(start);
                     var buffer = new Vector2Int[1][];
                     distanceMap.SearchPaths(goal, buffer, out _);
                 }

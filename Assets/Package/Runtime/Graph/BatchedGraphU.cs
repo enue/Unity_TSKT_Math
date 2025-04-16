@@ -14,7 +14,7 @@ namespace TSKT
         public class Batch
         {
             public T Root => distanceMap.Start;
-            readonly public DistanceMapU<T> distanceMap;
+            public readonly DistanceMapU<T> distanceMap;
             public AStarSearch<Batch>? BatchSearch { get; set; }
 
             public Batch(DistanceMapU<T> distanceMap)
@@ -86,7 +86,8 @@ namespace TSKT
                     if (owner.heuristicFunction == null)
                     {
                         Span<T> goals = stackalloc T[] { goal };
-                        var distanceMap = new DistanceMapU<T>(owner.graph, start, goals);
+                        var distanceMap = new DistanceMapU<T>(owner.graph, start);
+                        distanceMap.SolveAny(goals);
                         var path = distanceMap.SearchPath(goal);
                         return path;
                     }
@@ -161,8 +162,8 @@ namespace TSKT
                     continue;
                 }
 
-                var newBatch = new Batch(new DistanceMapU<T>(graph, root, batchRadius));
-
+                var newBatch = new Batch(new DistanceMapU<T>(graph, root));
+                newBatch.distanceMap.SolveWithin(batchRadius);
                 batches.Add(newBatch);
                 nodeBatchMap[root] = newBatch;
 
@@ -180,7 +181,7 @@ namespace TSKT
                             continue;
                         }
 
-                        var currentDistance = currentBatch.distanceMap.Distances[node];
+                        currentBatch.distanceMap.Distances.TryGetValue(node, out var currentDistance);
 
                         if (currentDistance > it.Value)
                         {
@@ -208,7 +209,7 @@ namespace TSKT
                 }
                 if (batchEdgeLength > batchRadius)
                 {
-                    newBatch.distanceMap.Solve(null, batchEdgeLength);
+                    newBatch.distanceMap.SolveWithin(batchEdgeLength);
                 }
             }
 
@@ -262,7 +263,7 @@ namespace TSKT
             }
             foreach (var it in unlinkedBatches)
             {
-                it.distanceMap.Solve(linkedBatches[..linkedBatchesWrittenCount]);
+                it.distanceMap.SolveAny(linkedBatches[..linkedBatchesWrittenCount]);
                 var linked = false;
                 foreach (var linkedBatch in linkedBatches[..linkedBatchesWrittenCount])
                 {
@@ -293,13 +294,14 @@ namespace TSKT
             if (heuristicFunction == null)
             {
                 aStar = default;
-                var startToBatch = new DistanceMapU<T>(graph, start, roots);
+                var startToBatch = new DistanceMapU<T>(graph, start);
+                startToBatch.SolveAny(roots);
 
                 T firstRoot = default;
                 var foundStartToFirstRootPath = false;
                 foreach (var it in roots)
                 {
-                    if (startToBatch.Distances.ContainsKey(it))
+                    if (startToBatch.Distances.TryGetValue(it, out _))
                     {
                         firstRoot = it;
                         foundStartToFirstRootPath = true;
@@ -341,7 +343,7 @@ namespace TSKT
             {
                 var fromBatch = path[i];
 
-                if (fromBatch.distanceMap.Distances.ContainsKey(goal))
+                if (fromBatch.distanceMap.Distances.TryGetValue(goal, out _))
                 {
                     var nodePath = fromBatch.distanceMap.SearchPath(goal);
                     pathCombine.Append(nodePath);

@@ -98,7 +98,15 @@ namespace TSKT
                 return;
             }
 
-            foreach (var it in Vector2IntUtil.Directions)
+            Span<Vector2Int> directions = stackalloc Vector2Int[4]
+            {
+                Vector2Int.right,
+                Vector2Int.up,
+                Vector2Int.left,
+                Vector2Int.down
+            };
+
+            foreach (var it in directions)
             {
                 var next = it + node;
                 if (Contains(next.x, next.y))

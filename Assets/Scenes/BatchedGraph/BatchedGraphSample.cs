@@ -36,7 +36,7 @@ namespace TSKT
                 board.TryGetCost(it.Value.Root.x, it.Value.Root.y, out var endCost);
                 var end = (float)endCost / 10f;
 
-                CreateLine(it.Key, it.Value.Root, new Color(begin, begin, begin), new Color(end, end, end), 0.02f, 0f);
+                CreateLine(it.Key, it.Value.Root, new Color(begin, begin, begin), new Color(end, end, end), 0.01f, 0f);
             }
             foreach (var it in batchedGraph.batchGraph.StartingNodes)
             {
@@ -44,7 +44,7 @@ namespace TSKT
                 {
                     foreach (var end in ends)
                     {
-                        CreateLine(it.Root, end.Key.Root, Color.red, Color.red, 0.05f, -0.1f);
+                        CreateLine(it.Root, end.Key.Root, Color.red, Color.red, 0.005f, -0.1f);
                     }
                 }
             }
@@ -53,10 +53,10 @@ namespace TSKT
             var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
             var path = batchedGraph.GetPath(start, goal);
 
-            CreatePath(path, Color.green);
+            CreatePath(path, new Color(0f, 1f, 0f, 0.5f), 0.02f);
 
             var aStarPath = board.CreateAStarSearch(start).SearchPath(goal);
-            CreatePath(aStarPath, Color.magenta);
+            CreatePath(aStarPath, new Color(1f, 0f, 1f, 0.5f), 0.03f);
 
             double totalWeight = 0.0;
             for (int i = 1; i < path.Length; ++i)
@@ -75,13 +75,13 @@ namespace TSKT
             Debug.Log("distance : " + totalWeight + " / " + aStarTotalWeight + " ( " + (totalWeight / aStarTotalWeight) + ")");
         }
 
-        void CreatePath(Vector2Int[] path, Color color)
+        void CreatePath(Vector2Int[] path, Color color, float width)
         {
             for (int i = 1; i < path.Length; ++i)
             {
                 var begin = path[i - 1];
                 var end = path[i];
-                CreateLine(begin, end, color, color, 0.1f, -0.2f);
+                CreateLine(begin, end, color, color, width, -0.2f);
             }
 
         }

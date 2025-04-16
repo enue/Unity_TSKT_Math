@@ -23,28 +23,44 @@ namespace TSKT
             }
         }
 
-        class PathCombine
+        class PathCombine : IDisposable
         {
-            public readonly List<T> combinedPath = new();
+            NativeList<T> combinedPath = new(Allocator.Temp);
             int fixedCount = 0;
+            int writtenCount;
 
-            public void Append(ReadOnlySpan<T> path)
+            public T[] ToArray()
             {
-                var nextFixedCount = combinedPath.Count;
+                return combinedPath.AsReadOnly().AsReadOnlySpan()[..writtenCount].ToArray();
+            }
+            public void Append(in ReadOnlySpan<T> path)
+            {
+                var nextFixedCount = combinedPath.Length;
                 foreach (var it in path)
                 {
-                    var index = combinedPath.IndexOf(it, fixedCount);
+                    var index = combinedPath.AsReadOnly().AsReadOnlySpan()[fixedCount..].IndexOf(it);
                     if (index >= 0)
                     {
-                        combinedPath.RemoveRange(index + 1, combinedPath.Count - index - 1);
-                        nextFixedCount = Mathf.Min(nextFixedCount, index + 1);
+                        writtenCount = index + 1 + fixedCount;
+                        nextFixedCount = Mathf.Min(nextFixedCount, writtenCount);
+                    }
+                    else if (writtenCount == combinedPath.Length)
+                    {
+                        combinedPath.Add(it);
+                        ++writtenCount;
                     }
                     else
                     {
-                        combinedPath.Add(it);
+                        combinedPath[writtenCount] = it;
+                        ++writtenCount;
                     }
                 }
                 fixedCount = nextFixedCount;
+            }
+
+            public void Dispose()
+            {
+                combinedPath.Dispose();
             }
         }
 
@@ -69,7 +85,8 @@ namespace TSKT
                 {
                     if (owner.heuristicFunction == null)
                     {
-                        var distanceMap = new DistanceMapU<T>(owner.graph, start, new T[] { goal });
+                        Span<T> goals = stackalloc T[] { goal };
+                        var distanceMap = new DistanceMapU<T>(owner.graph, start, goals);
                         var path = distanceMap.SearchPath(goal);
                         return path;
                     }
@@ -96,7 +113,9 @@ namespace TSKT
                 pathCombine.Append(startToFirstRoot);
                 owner.GetBatchToGoalPath(firstBatch, lastBatch, goal, ref pathCombine);
 
-                return pathCombine.combinedPath.ToArray();
+                var result = pathCombine.ToArray();
+                pathCombine.Dispose();
+                return result;
             }
         }
 

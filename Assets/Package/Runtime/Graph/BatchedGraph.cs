@@ -24,10 +24,17 @@ namespace TSKT
 
         class PathCombine
         {
-            public readonly List<T> combinedPath = new();
+            readonly List<T> combinedPath = new();
             int fixedCount = 0;
+            int writtenCount;
 
-            public void Append(ReadOnlySpan<T> path)
+            public T[] ToArray()
+            {
+                var result = new T[writtenCount];
+                combinedPath.CopyTo(0, result, 0, writtenCount);
+                return result;
+            }
+            public void Append(in ReadOnlySpan<T> path)
             {
                 var nextFixedCount = combinedPath.Count;
                 foreach (var it in path)
@@ -35,12 +42,18 @@ namespace TSKT
                     var index = combinedPath.IndexOf(it, fixedCount);
                     if (index >= 0)
                     {
-                        combinedPath.RemoveRange(index + 1, combinedPath.Count - index - 1);
+                        writtenCount = index + 1;
                         nextFixedCount = Mathf.Min(nextFixedCount, index + 1);
+                    }
+                    else if (writtenCount == combinedPath.Count)
+                    {
+                        combinedPath.Add(it);
+                        ++writtenCount;
                     }
                     else
                     {
-                        combinedPath.Add(it);
+                        combinedPath[writtenCount] = it;
+                        ++writtenCount;
                     }
                 }
                 fixedCount = nextFixedCount;
@@ -95,7 +108,7 @@ namespace TSKT
                 pathCombine.Append(startToFirstRoot);
                 owner.GetBatchToGoalPath(firstBatch, lastBatch, goal, ref pathCombine);
 
-                return pathCombine.combinedPath.ToArray();
+                return pathCombine.ToArray();
             }
         }
 

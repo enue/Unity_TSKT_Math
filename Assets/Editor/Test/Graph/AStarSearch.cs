@@ -68,7 +68,7 @@ namespace TSKT.Tests
                     }
                 }
 
-                var path = AStarSearch<Vector2Int>.SearchPath(board, start, goal, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
+                var path = board.CreateAStarSearch(start).SearchPath(goal);
                 if (aStarPath.Length > 0)
                 {
                     Assert.AreEqual(aStarPath.Last(), path.Last());

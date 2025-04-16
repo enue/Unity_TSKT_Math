@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 #nullable enable
 
 namespace TSKT
@@ -148,5 +149,9 @@ namespace TSKT
             return false;
         }
         public DistanceMap<T> CreateDistanceMapFrom(T node) => new(this, node);
+        public AStarSearch<T> CreateAStarSearch(T start, Func<T, T, double> heuristicFunction)
+        {
+            return new AStarSearch<T>(this, start, heuristicFunction);
+        }
     }
 }

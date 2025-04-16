@@ -16,13 +16,13 @@ namespace TSKT.Tests
         {
             var board = new Board(100, 100);
 
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0);
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0, board.GetHeuristicFunctionForAStarSearch());
 
             for (int i = 0; i < 100; ++i)
             {
                 var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
-                var path = graph.GetPath(start, goal);
+                var path = graph.From(start).To(goal);
             }
         }
 
@@ -31,7 +31,7 @@ namespace TSKT.Tests
         {
             var size = 10;
             var board = new Board(size, size);
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 3.0, 3.0);
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 3.0, 3.0, board.GetHeuristicFunctionForAStarSearch());
 
             for (int i = 0; i < size; ++i)
             {
@@ -43,7 +43,7 @@ namespace TSKT.Tests
                         for (int y = 0; y < size; ++y)
                         {
                             var goal = new Vector2Int(x, y);
-                            var path = graph.GetPath(start, goal);
+                            var path = graph.From(start).To(goal);
                         }
                     }
                 }
@@ -99,13 +99,13 @@ namespace TSKT.Tests
                 for (int j = startY; j < startY + yCount; ++j)
                 {
                     var start = new Vector2Int(i, j);
-                    var s = batchedGraph.GetStartingPoint(start);
+                    var s = batchedGraph.From(start);
                     for (int p = startX; p < startX + xCount; ++p)
                     {
                         for (int q = startY; q < startY + yCount; ++q)
                         {
                             var goal = new Vector2Int(p, q);
-                            s.GetPath(goal).ToArray();
+                            s.To(goal).ToArray();
                         }
                     }
                 }
@@ -118,13 +118,13 @@ namespace TSKT.Tests
         public void Performance()
         {
             var board = new Board(100, 100);
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0);
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0, board.GetHeuristicFunctionForAStarSearch());
  
             Measure.Method(() =>
             {
                 var start = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
-                var path = graph.GetPath(start, goal);
+                var path = graph.From(start).To(goal);
 
                 var completeMap = new DistanceMap<Vector2Int>(board, start);
                 var paths = new Vector2Int[99][];
@@ -169,7 +169,7 @@ namespace TSKT.Tests
                 var graph = new BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0, board.GetHeuristicFunctionForAStarSearch());
                 foreach (var (start, goal) in problems)
                 {
-                    var path = graph.GetPath(start, goal);
+                    var path = graph.From(start).To(goal);
                 }
                 sw.Stop();
                 batchedScore = sw.ElapsedMilliseconds;
@@ -180,7 +180,7 @@ namespace TSKT.Tests
                 var graph = new BatchedGraphU<int>(board, board.CellToIndex(Vector2Int.zero), 10.0, 10.0, board.GetHeuristicFunctionForAStarSearchInCellIndex());
                 foreach (var (start, goal) in problems)
                 {
-                    var path = graph.GetPath(board.CellToIndex(start), board.CellToIndex(goal));
+                    var path = graph.From(board.CellToIndex(start)).To(board.CellToIndex(goal));
                 }
                 sw.Stop();
                 batched2Score = sw.ElapsedMilliseconds;

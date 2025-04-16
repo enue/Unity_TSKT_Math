@@ -135,7 +135,7 @@ namespace TSKT
                                 }
                                 if (newNearNodes != nearNodes)
                                 {
-                                    ReversedEdges[nextNode] = nearNodes;
+                                    ReversedEdges[nextNode] = newNearNodes;
                                 }
                             }
                             if (oldDistance <= startToNextNodeDistance)

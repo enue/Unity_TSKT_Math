@@ -194,7 +194,7 @@ namespace TSKT
                             }
                             if (newNearNodes != nearNodes)
                             {
-                                memo.ReversedEdges[next] = nearNodes;
+                                memo.ReversedEdges[next] = newNearNodes;
                             }
                         }
 

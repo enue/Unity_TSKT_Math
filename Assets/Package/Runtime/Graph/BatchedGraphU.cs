@@ -87,7 +87,7 @@ namespace TSKT
                     {
                         Span<T> goals = stackalloc T[] { goal };
                         var distanceMap = new DistanceMapU<T>(owner.graph, start);
-                        distanceMap.SolveAny(goals);
+                        distanceMap.TrySolveAny(goals, out _);
                         var path = distanceMap.SearchPath(goal);
                         return path;
                     }
@@ -132,8 +132,8 @@ namespace TSKT
 
             Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCount];
             var batches = new List<Batch>();
-            var referenceCountMap = new Dictionary<T, int>();
-            var taskFinishedNodes = new HashSet<T>();
+            var referenceCountMap = new NativeHashMap<T, int>(32, Allocator.Temp);
+            using var taskFinishedNodes = new NativeHashSet<T>(32, Allocator.Temp);
 
             using var tasks = new Graphs.DoublePriorityQueueU<T>();
             tasks.Enqueue(0.0, 0.0, startNode);
@@ -212,6 +212,7 @@ namespace TSKT
                     newBatch.distanceMap.SolveWithin(batchEdgeLength);
                 }
             }
+            referenceCountMap.Dispose();
 
             foreach (var start in batches)
             {
@@ -244,9 +245,8 @@ namespace TSKT
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
-                var map = new DistanceMap<Batch>(batchGraph, it);
-                map.SolveAny(new[] { startNodeBatch });
-                if (map.Distances.ContainsKey(startNodeBatch))
+                var map = batchGraph.CreateDistanceMapFrom(it);
+                if (map.TrySolveAny(new[] { startNodeBatch }, out _))
                 {
                     linkedBatches[linkedBatchesWrittenCount] = it.Root;
                     ++linkedBatchesWrittenCount;
@@ -264,7 +264,7 @@ namespace TSKT
             }
             foreach (var it in unlinkedBatches)
             {
-                it.distanceMap.SolveAny(linkedBatches[..linkedBatchesWrittenCount]);
+                it.distanceMap.TrySolveAny(linkedBatches[..linkedBatchesWrittenCount], out _);
                 var linked = false;
                 foreach (var linkedBatch in linkedBatches[..linkedBatchesWrittenCount])
                 {
@@ -296,25 +296,11 @@ namespace TSKT
             {
                 aStar = default;
                 var startToBatch = new DistanceMapU<T>(graph, start);
-                startToBatch.SolveAny(roots);
-
-                T firstRoot = default;
-                var foundStartToFirstRootPath = false;
-                foreach (var it in roots)
+                if (startToBatch.TrySolveAny(roots, out var firstRoot))
                 {
-                    if (startToBatch.Distances.TryGetValue(it, out _))
-                    {
-                        firstRoot = it;
-                        foundStartToFirstRootPath = true;
-                        break;
-                    }
+                    return startToBatch.SearchPath(firstRoot);
                 }
-                if (!foundStartToFirstRootPath)
-                {
-                    return System.Array.Empty<T>();
-                }
-                
-                return startToBatch.SearchPath(firstRoot!);
+                return System.Array.Empty<T>();
             }
             else
             {
@@ -328,7 +314,7 @@ namespace TSKT
             Batch[] path;
             if (heuristicFunction == null)
             {
-                var batchDistance = new DistanceMap<Batch>(batchGraph, startBatch);
+                var batchDistance = batchGraph.CreateDistanceMapFrom(startBatch);
                 path = batchDistance.SearchPath(lastBatch);
             }
             else

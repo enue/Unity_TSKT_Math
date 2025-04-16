@@ -29,19 +29,22 @@ namespace TSKT
         }
         public readonly void SolveWithin(double maxDistance)
         {
-            SolveAny(Span<T>.Empty, maxDistance);
+            TrySolveAny(Span<T>.Empty, out _, maxDistance);
         }
 
-        public readonly void SolveAny(ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
+        public readonly bool TrySolveAny(ReadOnlySpan<T> goals, out T result, double maxDistance = double.PositiveInfinity)
         {
             foreach (var it in goals)
             {
                 if (Distances.ContainsKey(it))
                 {
-                    return;
+                    result = it;
+                    return true;
                 }
             }
 
+            var found = false;
+            result = default;
             var continueNodes = new Dictionary<T, double>();
 
             var comparer = EqualityComparer<T>.Default;
@@ -54,6 +57,8 @@ namespace TSKT
                     {
                         if (comparer.Equals(goal, currentNode))
                         {
+                            found = true;
+                            result = goal;
                             shouldBreak = true;
                             break;
                         }
@@ -113,10 +118,11 @@ namespace TSKT
             {
                 tasks.Enqueue(OrderKeyConvert.ToUint64(distance), node);
             }
+            return found;
         }
         readonly void Solve(T goal)
         {
-            SolveAny(new[] { goal });
+            TrySolveAny(new[] { goal }, out _);
         }
         public readonly void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
         {

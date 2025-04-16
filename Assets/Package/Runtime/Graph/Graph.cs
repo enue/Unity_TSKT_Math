@@ -147,12 +147,6 @@ namespace TSKT
             result = default;
             return false;
         }
-
-        public DistanceMap<T> ComputeDistancesFrom(T node, double maxDistance = double.PositiveInfinity)
-        {
-            var result = new DistanceMap<T>(this, node);
-            result.SolveWithin(maxDistance);
-            return result;
-        }
+        public DistanceMap<T> CreateDistanceMapFrom(T node) => new(this, node);
     }
 }

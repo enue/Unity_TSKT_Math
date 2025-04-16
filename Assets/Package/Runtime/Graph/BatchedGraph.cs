@@ -235,9 +235,8 @@ namespace TSKT
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
-                var map = new DistanceMap<Batch>(batchGraph, it);
-                map.SolveAny(new[] { startNodeBatch });
-                if (map.Distances.ContainsKey(startNodeBatch))
+                var map = batchGraph.CreateDistanceMapFrom(it);
+                if (map.TrySolveAny(new[] { startNodeBatch }, out _))
                 {
                     linkedBatches.Add(it.Root);
                 }
@@ -254,7 +253,7 @@ namespace TSKT
             }
             foreach (var it in unlinkedBatches)
             {
-                it.distanceMap.SolveAny(linkedBatches.Memory.Span);
+                it.distanceMap.TrySolveAny(linkedBatches.Memory.Span, out _);
                 var linked = false;
                 foreach (var linkedBatch in linkedBatches.Memory.Span)
                 {
@@ -288,25 +287,11 @@ namespace TSKT
             {
                 aStar = default;
                 var startToBatch = new DistanceMap<T>(graph, start);
-                startToBatch.SolveAny(roots);
-
-                T? firstRoot = default;
-                var foundStartToFirstRootPath = false;
-                foreach (var it in roots)
+                if (startToBatch.TrySolveAny(roots, out var firstRoot))
                 {
-                    if (startToBatch.Distances.ContainsKey(it))
-                    {
-                        firstRoot = it;
-                        foundStartToFirstRootPath = true;
-                        break;
-                    }
+                    return startToBatch.SearchPath(firstRoot);
                 }
-                if (!foundStartToFirstRootPath)
-                {
-                    return System.Array.Empty<T>();
-                }
-                
-                return startToBatch.SearchPath(firstRoot!);
+                return System.Array.Empty<T>();
             }
             else
             {
@@ -320,7 +305,7 @@ namespace TSKT
             Batch[] path;
             if (heuristicFunction == null)
             {
-                var batchDistance = new DistanceMap<Batch>(batchGraph, startBatch);
+                var batchDistance = batchGraph.CreateDistanceMapFrom(startBatch);
                 path = batchDistance.SearchPath(lastBatch);
             }
             else

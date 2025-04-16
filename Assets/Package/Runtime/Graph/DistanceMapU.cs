@@ -200,7 +200,7 @@ namespace TSKT
                     {
                         var next = new NativeArray<T>(path.Length + 1, Allocator.Temp);
                         next[0] = nearNode;
-                        path.CopyTo(next.GetSubArray(1, next.Length - 1));
+                        next.GetSubArray(1, next.Length - 1).CopyFrom(path);
                         tasks.Push(next);
                     }
                 }

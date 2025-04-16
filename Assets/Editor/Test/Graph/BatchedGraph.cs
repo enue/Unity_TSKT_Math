@@ -158,6 +158,7 @@ namespace TSKT.Tests
             }
 
             long batchedScore;
+            long batched2Score;
             long aStarScore;
             long aStar2Score;
             long dijkstraScore;
@@ -172,6 +173,17 @@ namespace TSKT.Tests
                 }
                 sw.Stop();
                 batchedScore = sw.ElapsedMilliseconds;
+            }
+            {
+                var sw = new System.Diagnostics.Stopwatch();
+                sw.Start();
+                var graph = new BatchedGraphU<int>(board, board.CellToIndex(Vector2Int.zero), 10.0, 10.0, board.GetHeuristicFunctionForAStarSearchInCellIndex());
+                foreach (var (start, goal) in problems)
+                {
+                    var path = graph.GetPath(board.CellToIndex(start), board.CellToIndex(goal));
+                }
+                sw.Stop();
+                batched2Score = sw.ElapsedMilliseconds;
             }
             {
                 var sw = new System.Diagnostics.Stopwatch();
@@ -209,6 +221,7 @@ namespace TSKT.Tests
             }
 
             Debug.Log("Batched : " + batchedScore + "ms");
+            Debug.Log("Batched2 : " + batched2Score + "ms");
             Debug.Log("aStar : " + aStarScore + "ms");
             Debug.Log("aStar2 : " + aStar2Score + "ms");
             Debug.Log("dijkstra : " + dijkstraScore + "ms");

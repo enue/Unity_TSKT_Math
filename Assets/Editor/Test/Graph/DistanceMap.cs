@@ -39,12 +39,11 @@ namespace TSKT.Tests
         public void LimitedDistances2()
         {
             var board = new Board(10, 10);
-            var distanceMap = new DistanceMap<Vector2Int>(board, new Vector2Int(5, 5), new Vector2Int(9, 6));
+            var distanceMap = new DistanceMap<Vector2Int>(board, new Vector2Int(5, 5));
             var paths = new Vector2Int[10][];
             distanceMap.SearchPaths(new Vector2Int(9, 6), paths, out var writtenCount);
             Assert.AreNotEqual(0, writtenCount);
-            distanceMap.SearchPaths(new Vector2Int(9, 7), paths, out writtenCount);
-            Assert.AreEqual(0, writtenCount);
+            Assert.IsFalse(distanceMap.Distances.ContainsKey(new Vector2Int(9, 7)));
         }
 
         [Test]

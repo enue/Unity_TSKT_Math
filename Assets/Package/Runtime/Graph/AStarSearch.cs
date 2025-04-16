@@ -11,7 +11,7 @@ namespace TSKT
     {
         public readonly IGraph<T> graph;
         readonly System.Func<T, T, double> heuristicFunction;
-        public readonly DistanceMap<T> memo;
+        public readonly DistanceMapCore<T> memo;
         public readonly T Start => memo.Start;
         readonly List<T> tasksToResume;
 
@@ -20,7 +20,7 @@ namespace TSKT
             this.heuristicFunction = heuristicFunction;
             this.graph = graph;
 
-            memo = new DistanceMap<T>(
+            memo = new DistanceMapCore<T>(
                 start,
                 new Dictionary<T, double>(),
                 new Dictionary<T, List<T>>());

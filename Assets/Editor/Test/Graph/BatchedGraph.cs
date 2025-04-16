@@ -126,7 +126,7 @@ namespace TSKT.Tests
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height));
                 var path = graph.GetPath(start, goal);
 
-                var completeMap = new DistanceMap<Vector2Int>(board, start, goal);
+                var completeMap = new DistanceMap<Vector2Int>(board, start);
                 var paths = new Vector2Int[99][];
                 completeMap.SearchPaths(goal, paths, out var writtenCount);
                 var completePath = paths[0];

@@ -244,7 +244,8 @@ namespace TSKT
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
-                var map = new DistanceMap<Batch>(batchGraph, it, startNodeBatch);
+                var map = new DistanceMap<Batch>(batchGraph, it);
+                map.SolveAny(new[] { startNodeBatch });
                 if (map.Distances.ContainsKey(startNodeBatch))
                 {
                     linkedBatches[linkedBatchesWrittenCount] = it.Root;
@@ -327,7 +328,7 @@ namespace TSKT
             Batch[] path;
             if (heuristicFunction == null)
             {
-                var batchDistance = new DistanceMap<Batch>(batchGraph, startBatch, lastBatch);
+                var batchDistance = new DistanceMap<Batch>(batchGraph, startBatch);
                 path = batchDistance.SearchPath(lastBatch);
             }
             else

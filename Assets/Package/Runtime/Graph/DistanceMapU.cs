@@ -7,7 +7,7 @@ using Unity.Collections;
 
 namespace TSKT
 {
-    public class DistanceMapU<T> where T : unmanaged, IEquatable<T>
+    public readonly struct DistanceMapU<T> where T : unmanaged, IEquatable<T>
     {
         readonly DistanceMapUCore<T> core;
         public T Start => core.Start;
@@ -33,12 +33,12 @@ namespace TSKT
             tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), start);
         }
 
-        public void SolveWithin(double maxDistance)
+        public readonly void SolveWithin(double maxDistance)
         {
             SolveAny(Span<T>.Empty, maxDistance);
         }
 
-        public void SolveAny(ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
+        public readonly void SolveAny(ReadOnlySpan<T> goals, double maxDistance = double.PositiveInfinity)
         {
             foreach (var it in goals)
             {
@@ -129,24 +129,24 @@ namespace TSKT
             continueNodes.Dispose();
         }
 
-        void Solve(T goal)
+        readonly void Solve(T goal)
         {
             Span<T> goals = stackalloc T[] { goal };
             SolveAny(goals);
         }
-        public void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
+        public readonly void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
         {
             Solve(goal);
             core.SearchPaths(goal, destination, out writtenCount);
         }
 
-        public T[] SearchPath(in T goal)
+        public readonly T[] SearchPath(in T goal)
         {
             Solve(goal);
             return core.SearchPath(goal);
         }
 
-        public void SearchPath(in T goal, ref List<T> result)
+        public readonly void SearchPath(in T goal, ref List<T> result)
         {
             Solve(goal);
             core.SearchPath(goal, ref result);

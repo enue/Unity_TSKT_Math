@@ -20,7 +20,7 @@ namespace TSKT
             {
                 DistanceMap = new DistanceMap<T>(owner.graph, root);
                 DistanceMap.SolveWithin(radius);
-                BatchSearch = owner.batchGraph.CreateAStarSearch(this, (x, y) => owner.heuristicFunction(x.Root, y.Root));
+                BatchSearch = owner.CreateAStarForBatch(this);
             }
         }
 
@@ -107,7 +107,6 @@ namespace TSKT
         }
 
         public readonly Graph<Batch> batchGraph = new();
-        public readonly T[] batchRoots;
         public readonly Dictionary<T, Batch> nodeBatchMap = new();
         public readonly IGraph<T> graph;
         public readonly System.Func<T, T, double> heuristicFunction;
@@ -249,13 +248,15 @@ namespace TSKT
                     linkedBatches.Add(it.Root);
                 }
             }
-
-            batchRoots = batchGraph.StartingNodes.Select(_ => _.Root).ToArray();
         }
 
         AStarSearch<T> CreateAStar(in T start)
         {
             return new AStarSearch<T>(graph, start, heuristicFunction);
+        }
+        AStarSearch<Batch> CreateAStarForBatch(Batch start)
+        {
+            return batchGraph.CreateAStarSearch(start, (x, y) => heuristicFunction(x.Root, y.Root));
         }
 
         void GetBatchToGoalPath(Batch startBatch, Batch lastBatch, T goal, ref PathCombine pathCombine)
@@ -280,9 +281,6 @@ namespace TSKT
             }
         }
 
-        public StartingPoint From(in T start)
-        {
-            return new StartingPoint(this, start);
-        }
+        public StartingPoint From(in T start) => new(this, start);
     }
 }

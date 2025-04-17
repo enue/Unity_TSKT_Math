@@ -7,20 +7,20 @@ using System;
 
 namespace TSKT
 {
-    public readonly struct AStarSearchU<T> where T : unmanaged, IEquatable<T>
+    public readonly struct UnmanagedAStarSearch<T> where T : unmanaged, IEquatable<T>
     {
-        public readonly IGraphU<T> graph;
+        public readonly IUnmanagedGraph<T> graph;
         readonly System.Func<T, T, double> heuristicFunction;
-        public readonly DistanceMapUCore<T> memo;
+        public readonly UnmanagedDistanceMapCore<T> memo;
         public readonly T Start => memo.Start;
         readonly List<T> tasksToResume;
 
-        public AStarSearchU(IGraphU<T> graph, in T start, System.Func<T, T, double> heuristicFunction)
+        public UnmanagedAStarSearch(IUnmanagedGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction)
         {
             this.heuristicFunction = heuristicFunction;
             this.graph = graph;
 
-            memo = new DistanceMapUCore<T>(
+            memo = new UnmanagedDistanceMapCore<T>(
                 start,
                 new Dictionary<T, double>
                 {
@@ -114,7 +114,7 @@ namespace TSKT
 
         public readonly bool TrySolveAny(in ReadOnlySpan<T> goals, bool searchAllPaths, double maxDistance, out T nearestGoal)
         {
-            using var tasks = new Graphs.DoublePriorityQueueU<(T node, double expectedDistance)>();
+            using var tasks = new Graphs.UnmanagedDoublePriorityQueue<(T node, double expectedDistance)>();
             foreach (var it in tasksToResume)
             {
                 memo.Distances.TryGetValue(it, out var startToItDistance);

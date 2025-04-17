@@ -9,17 +9,17 @@ using Unity.Collections;
 
 namespace TSKT
 {
-    public class BatchedGraphU<T> where T : unmanaged, IEquatable<T>
+    public class UnmanagedBatchedGraph<T> where T : unmanaged, IEquatable<T>
     {
         public class Batch
         {
             public T Root => DistanceMap.Start;
-            public DistanceMapU<T> DistanceMap { get; }
+            public UnmanagedDistanceMap<T> DistanceMap { get; }
             public AStarSearch<Batch> BatchSearch { get;}
 
-            public Batch(BatchedGraphU<T> owner, T root, double radius)
+            public Batch(UnmanagedBatchedGraph<T> owner, T root, double radius)
             {
-                DistanceMap = new DistanceMapU<T>(owner.graph, root);
+                DistanceMap = new UnmanagedDistanceMap<T>(owner.graph, root);
                 DistanceMap.SolveWithin(radius);
                 BatchSearch = owner.CreateAStarForBatch(this);
             }
@@ -68,12 +68,12 @@ namespace TSKT
 
         public readonly struct StartingPoint
         {
-            readonly BatchedGraphU<T> owner;
+            readonly UnmanagedBatchedGraph<T> owner;
             readonly T[] startToFirstRoot;
             readonly Batch? firstBatch;
-            readonly AStarSearchU<T> aStar;
+            readonly UnmanagedAStarSearch<T> aStar;
 
-            public StartingPoint(BatchedGraphU<T> owner, in T start)
+            public StartingPoint(UnmanagedBatchedGraph<T> owner, in T start)
             {
                 this.owner = owner;
                 aStar = owner.CreateAStar(start);
@@ -115,10 +115,10 @@ namespace TSKT
 
         public readonly Graph<Batch> batchGraph = new();
         public readonly Dictionary<T, Batch> nodeBatchMap = new();
-        public readonly IGraphU<T> graph;
+        public readonly IUnmanagedGraph<T> graph;
         readonly System.Func<T, T, double> heuristicFunction;
 
-        public BatchedGraphU(IGraphU<T> graph, in T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction)
+        public UnmanagedBatchedGraph(IUnmanagedGraph<T> graph, in T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction)
         {
             this.graph = graph;
             this.heuristicFunction = heuristicFunction;
@@ -128,7 +128,7 @@ namespace TSKT
             var referenceCountMap = new NativeHashMap<T, int>(32, Allocator.Temp);
             using var taskFinishedNodes = new NativeHashSet<T>(32, Allocator.Temp);
 
-            using var tasks = new Graphs.DoublePriorityQueueU<T>();
+            using var tasks = new Graphs.UnmanagedDoublePriorityQueue<T>();
             tasks.Enqueue(0.0, 0.0, startNode);
             while (tasks.Count > 0)
             {
@@ -262,9 +262,9 @@ namespace TSKT
             }
         }
 
-        AStarSearchU<T> CreateAStar(in T start)
+        UnmanagedAStarSearch<T> CreateAStar(in T start)
         {
-            return new AStarSearchU<T>(graph, start, heuristicFunction);
+            return new UnmanagedAStarSearch<T>(graph, start, heuristicFunction);
         }
         AStarSearch<Batch> CreateAStarForBatch(Batch start)
         {

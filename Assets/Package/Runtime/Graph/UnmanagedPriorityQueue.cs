@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace TSKT.Graphs
 {
-    public class PriorityQueueU<T>
+    public class UnmanagedPriorityQueue<T>
     {
         readonly List<T> items = new();
         readonly List<ulong> keys = new();
@@ -37,7 +37,7 @@ namespace TSKT.Graphs
         }
     }
 
-    public class DoublePriorityQueueU<T> : IDisposable where T : unmanaged
+    public class UnmanagedDoublePriorityQueue<T> : IDisposable where T : unmanaged
     {
         NativeList<T> items = new(Allocator.Temp);
         NativeList<OrderKey2> keys = new(Allocator.Temp);

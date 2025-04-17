@@ -7,7 +7,7 @@ using System;
 
 namespace TSKT
 {
-    public class Board : IGraphU<Vector2Int>, IGraphU<int>, IGraph<Vector2Int>, IGraph<int>
+    public class Board : IUnmanagedGraph<Vector2Int>, IUnmanagedGraph<int>, IGraph<Vector2Int>, IGraph<int>
     {
         readonly double?[] costs;
         public int Width => costs.Length / Height;
@@ -135,16 +135,16 @@ namespace TSKT
             }
         }
 
-        public DistanceMapU<Vector2Int> CreateDistanceMapFrom(in Vector2Int node) => new(this, node);
-        public DistanceMapU<int> CreateDistanceMapFrom(int node) => new(this, node);
+        public UnmanagedDistanceMap<Vector2Int> CreateDistanceMapFrom(in Vector2Int node) => new(this, node);
+        public UnmanagedDistanceMap<int> CreateDistanceMapFrom(int node) => new(this, node);
 
-        public AStarSearchU<Vector2Int> CreateAStarSearch(in Vector2Int start)
+        public UnmanagedAStarSearch<Vector2Int> CreateAStarSearch(in Vector2Int start)
         {
-            return new AStarSearchU<Vector2Int>(this, start, GetHeuristicFunctionForAStarSearch());
+            return new UnmanagedAStarSearch<Vector2Int>(this, start, GetHeuristicFunctionForAStarSearch());
         }
-        public AStarSearchU<int> CreateAStarSearch(int start)
+        public UnmanagedAStarSearch<int> CreateAStarSearch(int start)
         {
-            return new AStarSearchU<int>(this, start, GetHeuristicFunctionForAStarSearchInCellIndex());
+            return new UnmanagedAStarSearch<int>(this, start, GetHeuristicFunctionForAStarSearchInCellIndex());
         }
 
         public System.Func<Vector2Int, Vector2Int, double> GetHeuristicFunctionForAStarSearch()

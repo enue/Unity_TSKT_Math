@@ -7,22 +7,22 @@ using Unity.Collections;
 
 namespace TSKT
 {
-    public readonly struct DistanceMapU<T> where T : unmanaged, IEquatable<T>
+    public readonly struct UnmanagedDistanceMap<T> where T : unmanaged, IEquatable<T>
     {
-        readonly DistanceMapUCore<T> core;
+        readonly UnmanagedDistanceMapCore<T> core;
         public T Start => core.Start;
         public IReadOnlyDictionary<T, double> Distances => core.Distances;
         public IReadOnlyDictionary<T, T[]> ReversedEdges => core.ReversedEdges;
 
         readonly Graphs.PriorityQueue<T> tasks;
-        readonly IGraphU<T> graph;
+        readonly IUnmanagedGraph<T> graph;
 
         public bool Completed => tasks.Count == 0;
 
 
-        public DistanceMapU(IGraphU<T> graph, in T start)
+        public UnmanagedDistanceMap(IUnmanagedGraph<T> graph, in T start)
         {
-            core = new DistanceMapUCore<T>(start,
+            core = new UnmanagedDistanceMapCore<T>(start,
                 new Dictionary<T, double>
             {
                 { start, 0.0 }
@@ -161,13 +161,13 @@ namespace TSKT
     }
 
 
-    public readonly struct DistanceMapUCore<T> where T : unmanaged, IEquatable<T>
+    public readonly struct UnmanagedDistanceMapCore<T> where T : unmanaged, IEquatable<T>
     {
         public T Start { get; }
         public Dictionary<T, double> Distances { get; }
         public Dictionary<T, T[]> ReversedEdges { get; }
 
-        public DistanceMapUCore(in T start, Dictionary<T, double> distances, Dictionary<T, T[]> reversedEdges)
+        public UnmanagedDistanceMapCore(in T start, Dictionary<T, double> distances, Dictionary<T, T[]> reversedEdges)
         {
             Start = start;
             Distances = distances;

@@ -32,7 +32,7 @@ namespace TSKT.Tests
             }
 
             var distanceMap = board.CreateDistanceMapFrom(start);
-            var aStarSearch = new AStarSearchU<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
+            var aStarSearch = new UnmanagedAStarSearch<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
 
             for (int i = 0; i < 10; ++i)
             {
@@ -93,7 +93,7 @@ namespace TSKT.Tests
                 }
             }
 
-            var aStarSearch = new AStarSearchU<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
+            var aStarSearch = new UnmanagedAStarSearch<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
 
             for (int i = 0; i < iterate; ++i)
             {

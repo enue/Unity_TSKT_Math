@@ -177,7 +177,7 @@ namespace TSKT.Tests
             {
                 var sw = new System.Diagnostics.Stopwatch();
                 sw.Start();
-                var graph = new BatchedGraphU<int>(board, board.CellToIndex(Vector2Int.zero), 10.0, 10.0, board.GetHeuristicFunctionForAStarSearchInCellIndex());
+                var graph = new UnmanagedBatchedGraph<int>(board, board.CellToIndex(Vector2Int.zero), 10.0, 10.0, board.GetHeuristicFunctionForAStarSearchInCellIndex());
                 foreach (var (start, goal) in problems)
                 {
                     var path = graph.From(board.CellToIndex(start)).To(board.CellToIndex(goal));

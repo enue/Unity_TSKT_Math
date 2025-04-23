@@ -53,7 +53,7 @@ namespace TSKT
             result = default;
             var continueNodes = new NativeHashMap<T, double>(32, Allocator.Temp);
 
-            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCount];
+            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCountFromOneNode];
             var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
             {

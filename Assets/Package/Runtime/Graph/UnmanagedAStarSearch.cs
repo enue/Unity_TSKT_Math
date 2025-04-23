@@ -141,7 +141,7 @@ namespace TSKT
             tasksToResume.Clear();
             bool memoModified = true;
 
-            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCount];
+            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCountFromOneNode];
             while (tasks.Count > 0)
             {
                 var (currentNode, expectedDistance) = tasks.Peek;

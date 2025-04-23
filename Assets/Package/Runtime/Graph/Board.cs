@@ -127,7 +127,7 @@ namespace TSKT
 
         public void GetEdgesFrom(int begin, Span<(int endNode, double weight)> dest, out int writtenCount)
         {
-            Span<(Vector2Int endNode, double weight)> t = stackalloc (Vector2Int endNode, double weight)[MaxEdgeCount];
+            Span<(Vector2Int endNode, double weight)> t = stackalloc (Vector2Int endNode, double weight)[MaxEdgeCountFromOneNode];
             GetEdgesFrom(IndexToCell(begin), t, out writtenCount);
             for (int i = 0; i < writtenCount; ++i)
             {
@@ -185,7 +185,7 @@ namespace TSKT
             return cost;
         }
 
-        public int MaxEdgeCount => 4;
+        public int MaxEdgeCountFromOneNode => 4;
 
     }
 }

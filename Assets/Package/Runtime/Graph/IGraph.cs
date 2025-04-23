@@ -12,7 +12,7 @@ namespace TSKT
     }
     public interface IUnmanagedGraph<T> where T : unmanaged
     {
-        int MaxEdgeCount { get; }
+        int MaxEdgeCountFromOneNode { get; }
         void GetEdgesFrom(T begin, Span<(T endNode, double weight)> dest, out int writtenCount);
     }
 }

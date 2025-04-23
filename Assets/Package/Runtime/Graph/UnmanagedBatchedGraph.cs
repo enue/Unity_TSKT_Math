@@ -123,7 +123,7 @@ namespace TSKT
             this.graph = graph;
             this.heuristicFunction = heuristicFunction;
 
-            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCount];
+            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCountFromOneNode];
             var batches = new List<Batch>();
             var referenceCountMap = new NativeHashMap<T, int>(32, Allocator.Temp);
             using var taskFinishedNodes = new NativeHashSet<T>(32, Allocator.Temp);

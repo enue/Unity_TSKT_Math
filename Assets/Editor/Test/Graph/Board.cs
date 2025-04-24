@@ -19,7 +19,7 @@ namespace TSKT.Tests
             {
                 for (int j = 0; j < board.Height; ++j)
                 {
-                    board.SetCost(i, j, 1.0 / 3.0);
+                    board.SetCost(i, j, 1f / 3f);
                 }
             }
             var f = board.GetHeuristicFunctionForAStarSearch();
@@ -38,7 +38,7 @@ namespace TSKT.Tests
         [Test]
         public void GetHeuristicFunctionForAStarSearchAtRandomTest()
         {
-            var cost = TSKT.Random.Range(1.0, 3.0);
+            var cost = TSKT.Random.Range(1f, 3f);
             var board = new Board(100, 100);
             for (int i = 0; i < board.Width; ++i)
             {

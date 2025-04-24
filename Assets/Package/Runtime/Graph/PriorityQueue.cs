@@ -11,6 +11,11 @@ namespace TSKT.Graphs
         readonly List<ulong> keys = new();
         public int Count => keys.Count;
 
+        public void Enqueue(float primaryKey, float secondaryKey, T item)
+        {
+            Enqueue(OrderKeyConvert.Combine(primaryKey, secondaryKey), item);
+        }
+
         public void Enqueue(ulong key, T item)
         {
             // Dequeueの時に末尾からとりたいのでキーを補数にしておく

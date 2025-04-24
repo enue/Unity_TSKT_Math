@@ -9,15 +9,15 @@ namespace TSKT
 {
     public class Board : IUnmanagedGraph<Vector2Int>, IUnmanagedGraph<int>, IGraph<Vector2Int>, IGraph<int>
     {
-        readonly double?[] costs;
+        readonly float?[] costs;
         public int Width => costs.Length / Height;
         public int Height { get; }
-        public DirectionMap<double>? DirectionCostMap { get; set; }
+        public DirectionMap<float>? DirectionCostMap { get; set; }
 
         public Board(int w, int h)
         {
             Height = h;
-            costs = new double?[w * h];
+            costs = new float?[w * h];
             for (int i = 0; i < w; ++i)
             {
                 for (int j = 0; j < h; ++j)
@@ -31,7 +31,7 @@ namespace TSKT
 
         public int CellToIndex(in Vector2Int cell) => cell.x * Height + cell.y;
 
-        public bool TryGetCost(int i, int j, out double value)
+        public bool TryGetCost(int i, int j, out float value)
         {
             var cost = costs[i * Height + j];
             if (cost.HasValue)
@@ -43,7 +43,7 @@ namespace TSKT
             return false;
         }
 
-        public void SetCost(int i, int j, double cost)
+        public void SetCost(int i, int j, float cost)
         {
             costs[i * Height + j] = cost;
         }
@@ -58,7 +58,7 @@ namespace TSKT
             return i >= 0 && j >= 0 && i < Width && j < Height;
         }
 
-        public IEnumerable<(Vector2Int endNode, double weight)> GetEdgesFrom(Vector2Int node)
+        public IEnumerable<(Vector2Int endNode, float weight)> GetEdgesFrom(Vector2Int node)
         {
             if (!Contains(node.x, node.y))
             {
@@ -82,7 +82,7 @@ namespace TSKT
             }
         }
 
-        public IEnumerable<(int endNode, double weight)> GetEdgesFrom(int begin)
+        public IEnumerable<(int endNode, float weight)> GetEdgesFrom(int begin)
         {
             foreach (var (endNode, weight) in GetEdgesFrom(IndexToCell(begin)))
             {
@@ -90,7 +90,7 @@ namespace TSKT
             }
         }
 
-        public void GetEdgesFrom(Vector2Int node, Span<(Vector2Int endNode, double weight)> dest, out int writtenCount)
+        public void GetEdgesFrom(Vector2Int node, Span<(Vector2Int endNode, float weight)> dest, out int writtenCount)
         {
             writtenCount = 0;
             if (!Contains(node.x, node.y))
@@ -125,9 +125,9 @@ namespace TSKT
             }
         }
 
-        public void GetEdgesFrom(int begin, Span<(int endNode, double weight)> dest, out int writtenCount)
+        public void GetEdgesFrom(int begin, Span<(int endNode, float weight)> dest, out int writtenCount)
         {
-            Span<(Vector2Int endNode, double weight)> t = stackalloc (Vector2Int endNode, double weight)[MaxEdgeCountFromOneNode];
+            Span<(Vector2Int endNode, float weight)> t = stackalloc (Vector2Int endNode, float weight)[MaxEdgeCountFromOneNode];
             GetEdgesFrom(IndexToCell(begin), t, out writtenCount);
             for (int i = 0; i < writtenCount; ++i)
             {
@@ -147,20 +147,20 @@ namespace TSKT
             return new UnmanagedAStarSearch<int>(this, start, GetHeuristicFunctionForAStarSearchInCellIndex());
         }
 
-        public System.Func<Vector2Int, Vector2Int, double> GetHeuristicFunctionForAStarSearch()
+        public System.Func<Vector2Int, Vector2Int, float> GetHeuristicFunctionForAStarSearch()
         {
             var c = ComputeHeuristicCoefficient();
             return (a, b) => Vector2IntUtil.GetManhattanDistance(a, b) * c;
         }
-        public System.Func<int, int, double> GetHeuristicFunctionForAStarSearchInCellIndex()
+        public System.Func<int, int, float> GetHeuristicFunctionForAStarSearchInCellIndex()
         {
             var c = ComputeHeuristicCoefficient();
             return (a, b) => Vector2IntUtil.GetManhattanDistance(IndexToCell(a), IndexToCell(b)) * c;
         }
 
-        double ComputeHeuristicCoefficient()
+        float ComputeHeuristicCoefficient()
         {
-            var minCost = double.PositiveInfinity;
+            var minCost = float.PositiveInfinity;
             foreach (var it in costs)
             {
                 if (it.HasValue)
@@ -171,15 +171,14 @@ namespace TSKT
                     }
                 }
             }
-            minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0.0;
+            minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0f;
 
-            UnityEngine.Assertions.Assert.IsTrue(minCost > 0.0);
+            UnityEngine.Assertions.Assert.IsTrue(minCost > 0f);
 
-            var lessEffectiveDigit = minCost * Width * Height * Unity.Mathematics.math.pow(2.0, -54.0);
-            var cost = minCost - lessEffectiveDigit;
-            if (cost < 0.0)
+            var cost = minCost - Mathf.Epsilon;
+            if (cost < 0f)
             {
-                cost = 0.0;
+                cost = 0f;
             }
 
             return cost;

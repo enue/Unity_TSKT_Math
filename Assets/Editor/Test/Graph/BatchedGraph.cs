@@ -16,7 +16,7 @@ namespace TSKT.Tests
         {
             var board = new Board(100, 100);
 
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0, board.GetHeuristicFunctionForAStarSearch());
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10f, 10f, board.GetHeuristicFunctionForAStarSearch());
 
             for (int i = 0; i < 100; ++i)
             {
@@ -31,7 +31,7 @@ namespace TSKT.Tests
         {
             var size = 10;
             var board = new Board(size, size);
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 3.0, 3.0, board.GetHeuristicFunctionForAStarSearch());
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 3f, 3f, board.GetHeuristicFunctionForAStarSearch());
 
             for (int i = 0; i < size; ++i)
             {
@@ -91,7 +91,7 @@ namespace TSKT.Tests
 
             var batchedGraph = new BatchedGraph<Vector2Int>(board,
                 new Vector2Int(UnityEngine.Random.Range(0, board.Width), UnityEngine.Random.Range(0, board.Height)),
-                25.0, 50.0,
+                25f, 50f,
                 board.GetHeuristicFunctionForAStarSearch());
 
             for (int i = startX; i < startX + xCount; ++i)
@@ -118,7 +118,7 @@ namespace TSKT.Tests
         public void Performance()
         {
             var board = new Board(100, 100);
-            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0, board.GetHeuristicFunctionForAStarSearch());
+            var graph = new TSKT.BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10f, 10f, board.GetHeuristicFunctionForAStarSearch());
  
             Measure.Method(() =>
             {
@@ -145,7 +145,7 @@ namespace TSKT.Tests
             {
                 for (int j = 0; j < board.Height; ++j)
                 {
-                    board.SetCost(i, j, TSKT.Random.Range(1.0, 2.0));
+                    board.SetCost(i, j, TSKT.Random.Range(1f, 2f));
                 }
             }
 
@@ -166,7 +166,7 @@ namespace TSKT.Tests
             {
                 var sw = new System.Diagnostics.Stopwatch();
                 sw.Start();
-                var graph = new BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10.0, 10.0, board.GetHeuristicFunctionForAStarSearch());
+                var graph = new BatchedGraph<Vector2Int>(board, Vector2Int.zero, 10f, 10f, board.GetHeuristicFunctionForAStarSearch());
                 foreach (var (start, goal) in problems)
                 {
                     var path = graph.From(start).To(goal);
@@ -177,7 +177,7 @@ namespace TSKT.Tests
             {
                 var sw = new System.Diagnostics.Stopwatch();
                 sw.Start();
-                var graph = new UnmanagedBatchedGraph<int>(board, board.CellToIndex(Vector2Int.zero), 10.0, 10.0, board.GetHeuristicFunctionForAStarSearchInCellIndex());
+                var graph = new UnmanagedBatchedGraph<int>(board, board.CellToIndex(Vector2Int.zero), 10f, 10f, board.GetHeuristicFunctionForAStarSearchInCellIndex());
                 foreach (var (start, goal) in problems)
                 {
                     var path = graph.From(board.CellToIndex(start)).To(board.CellToIndex(goal));

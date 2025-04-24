@@ -11,7 +11,7 @@ namespace TSKT
     {
         readonly UnmanagedDistanceMapCore<T> core;
         public T Start => core.Start;
-        public IReadOnlyDictionary<T, double> Distances => core.Distances;
+        public IReadOnlyDictionary<T, float> Distances => core.Distances;
         public IReadOnlyDictionary<T, T[]> ReversedEdges => core.ReversedEdges;
 
         readonly Graphs.PriorityQueue<T> tasks;
@@ -23,26 +23,26 @@ namespace TSKT
         public UnmanagedDistanceMap(IUnmanagedGraph<T> graph, in T start)
         {
             core = new UnmanagedDistanceMapCore<T>(start,
-                new Dictionary<T, double>
+                new Dictionary<T, float>
             {
-                { start, 0.0 }
+                { start, 0f }
             },new Dictionary<T, T[]>());
             this.graph = graph;
 
             tasks = new Graphs.PriorityQueue<T>();
-            tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), start);
+            tasks.Enqueue(0f, 0f, start);
         }
 
-        public readonly void SolveWithin(double maxDistance)
+        public readonly void SolveWithin(float maxDistance)
         {
             TrySolveAny(Span<T>.Empty, out _, maxDistance);
         }
 
-        public readonly bool TrySolveAny(ReadOnlySpan<T> goals, out T result, double maxDistance = double.PositiveInfinity)
+        public readonly bool TrySolveAny(ReadOnlySpan<T> goals, out T result, float maxDistance = float.PositiveInfinity)
         {
             foreach (var it in goals)
             {
-                if (Distances.ContainsKey(it))
+                if (core.Distances.ContainsKey(it))
                 {
                     result = it;
                     return true;
@@ -51,9 +51,9 @@ namespace TSKT
 
             var found = false;
             result = default;
-            var continueNodes = new NativeHashMap<T, double>(32, Allocator.Temp);
+            var continueNodes = new NativeHashMap<T, float>(32, Allocator.Temp);
 
-            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCountFromOneNode];
+            Span<(T, float)> buffer = stackalloc (T, float)[graph.MaxEdgeCountFromOneNode];
             var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
             {
@@ -78,11 +78,11 @@ namespace TSKT
 
                 tasks.Dequeue();
 
-                var startToCurrentNodeDistance = Distances[currentNode];
+                var startToCurrentNodeDistance = core.Distances[currentNode];
                 graph.GetEdgesFrom(currentNode, buffer, out var writtenCount);
                 foreach (var (nextNode, edgeWeight) in buffer[..writtenCount])
                 {
-                    UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
+                    UnityEngine.Debug.Assert(edgeWeight > 0f, "weight must be greater than 0.0");
 
                     var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
                     if (startToNextNodeDistance > maxDistance)
@@ -91,7 +91,7 @@ namespace TSKT
                     }
                     else
                     {
-                        if (Distances.TryGetValue(nextNode, out var oldDistance))
+                        if (core.Distances.TryGetValue(nextNode, out var oldDistance))
                         {
                             if (oldDistance >= startToNextNodeDistance)
                             {
@@ -122,14 +122,14 @@ namespace TSKT
                         }
 
                         core.Distances[nextNode] = startToNextNodeDistance;
-                        tasks.Enqueue(OrderKeyConvert.ToUint64(startToNextNodeDistance), nextNode);
+                        tasks.Enqueue(startToNextNodeDistance, 0f, nextNode);
                     }
                 }
             }
 
             foreach (var it in continueNodes)
             {
-                tasks.Enqueue(OrderKeyConvert.ToUint64(it.Value), it.Key);
+                tasks.Enqueue(it.Value, 0f, it.Key);
             }
             continueNodes.Dispose();
 
@@ -164,10 +164,10 @@ namespace TSKT
     public readonly struct UnmanagedDistanceMapCore<T> where T : unmanaged, IEquatable<T>
     {
         public T Start { get; }
-        public Dictionary<T, double> Distances { get; }
+        public Dictionary<T, float> Distances { get; }
         public Dictionary<T, T[]> ReversedEdges { get; }
 
-        public UnmanagedDistanceMapCore(in T start, Dictionary<T, double> distances, Dictionary<T, T[]> reversedEdges)
+        public UnmanagedDistanceMapCore(in T start, Dictionary<T, float> distances, Dictionary<T, T[]> reversedEdges)
         {
             Start = start;
             Distances = distances;

@@ -8,8 +8,8 @@ namespace TSKT
 {
     public class Graph<T> : IGraph<T>
     {
-        readonly Dictionary<T, Dictionary<T, double>> edges = new();
-        public Dictionary<T, Dictionary<T, double>>.KeyCollection StartingNodes => edges.Keys;
+        readonly Dictionary<T, Dictionary<T, float>> edges = new();
+        public Dictionary<T, Dictionary<T, float>>.KeyCollection StartingNodes => edges.Keys;
 
         public Graph()
         {
@@ -19,7 +19,7 @@ namespace TSKT
         {
             foreach(var it in source.edges)
             {
-                var endNodes = new Dictionary<T, double>(it.Value);
+                var endNodes = new Dictionary<T, float>(it.Value);
                 edges.Add(it.Key, endNodes);
             }
         }
@@ -33,28 +33,28 @@ namespace TSKT
         {
             if (!edges.ContainsKey(node))
             {
-                edges.Add(node, new Dictionary<T, double>());
+                edges.Add(node, new Dictionary<T, float>());
                 return true;
             }
             return false;
         }
 
-        void CreateNode(T node, out Dictionary<T, double> endNodes)
+        void CreateNode(T node, out Dictionary<T, float> endNodes)
         {
             if (!edges.TryGetValue(node, out endNodes))
             {
-                endNodes = new Dictionary<T, double>();
+                endNodes = new Dictionary<T, float>();
                 edges.Add(node, endNodes);
             }
         }
 
-        public void Link(T first, T second, double weight)
+        public void Link(T first, T second, float weight)
         {
             CreateNode(first, out var edge);
             edge[second] = weight;
         }
 
-        public void DoubleOrderedLink(T first, T second, double weight)
+        public void DoubleOrderedLink(T first, T second, float weight)
         {
             Link(first, second, weight);
             Link(second, first, weight);
@@ -91,16 +91,16 @@ namespace TSKT
             }
         }
 
-        public Dictionary<T, double> NextNodesFrom(T node)
+        public Dictionary<T, float> NextNodesFrom(T node)
         {
             if (TryGetNextNodesFrom(node, out var result))
             {
                 return result;
             }
-            return new Dictionary<T, double>();
+            return new Dictionary<T, float>();
         }
 
-        public bool TryGetNextNodesFrom(T node, out Dictionary<T, double> result)
+        public bool TryGetNextNodesFrom(T node, out Dictionary<T, float> result)
         {
             if (edges.TryGetValue(node, out result))
             {
@@ -123,7 +123,7 @@ namespace TSKT
             return result;
         }
 
-        public IEnumerable<(T endNode, double weight)> GetEdgesFrom(T node)
+        public IEnumerable<(T endNode, float weight)> GetEdgesFrom(T node)
         {
             if (TryGetNextNodesFrom(node, out var nodes))
             {
@@ -139,7 +139,7 @@ namespace TSKT
             return edges[start][end];
         }
 
-        public bool TryGetWeight(T start, T end, out double result)
+        public bool TryGetWeight(T start, T end, out float result)
         {
             if (edges.TryGetValue(start, out var edge))
             {
@@ -149,7 +149,7 @@ namespace TSKT
             return false;
         }
         public DistanceMap<T> CreateDistanceMapFrom(T node) => new(this, node);
-        public AStarSearch<T> CreateAStarSearch(T start, Func<T, T, double> heuristicFunction)
+        public AStarSearch<T> CreateAStarSearch(T start, Func<T, T, float> heuristicFunction)
         {
             return new AStarSearch<T>(this, start, heuristicFunction);
         }

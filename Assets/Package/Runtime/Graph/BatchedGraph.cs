@@ -16,7 +16,7 @@ namespace TSKT
             public DistanceMap<T> DistanceMap { get; }
             public AStarSearch<Batch> BatchSearch { get;}
 
-            public Batch(BatchedGraph<T> owner, T root, double radius)
+            public Batch(BatchedGraph<T> owner, T root, float radius)
             {
                 DistanceMap = new DistanceMap<T>(owner.graph, root);
                 DistanceMap.SolveWithin(radius);
@@ -109,9 +109,9 @@ namespace TSKT
         public readonly Graph<Batch> batchGraph = new();
         public readonly Dictionary<T, Batch> nodeBatchMap = new();
         public readonly IGraph<T> graph;
-        public readonly System.Func<T, T, double> heuristicFunction;
+        public readonly System.Func<T, T, float> heuristicFunction;
 
-        public BatchedGraph(IGraph<T> graph, in T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction)
+        public BatchedGraph(IGraph<T> graph, in T startNode, float batchRadius, float batchEdgeLength, System.Func<T, T, float> heuristicFunction)
         {
             this.graph = graph;
             this.heuristicFunction = heuristicFunction;
@@ -120,8 +120,8 @@ namespace TSKT
             var referenceCountMap = new Dictionary<T, int>();
             var taskFinishedNodes = new HashSet<T>();
 
-            var tasks = new Graphs.DoublePriorityQueue<T>();
-            tasks.Enqueue(0.0, 0.0, startNode);
+            var tasks = new Graphs.PriorityQueue<T>();
+            tasks.Enqueue(0f, 0f, startNode);
             while (tasks.Count > 0)
             {
                 var root = tasks.Dequeue();
@@ -219,7 +219,7 @@ namespace TSKT
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
-                if (it.BatchSearch.TrySolveAny(new[] { startNodeBatch }, false, double.PositiveInfinity, out _))
+                if (it.BatchSearch.TrySolveAny(new[] { startNodeBatch }, false, float.PositiveInfinity, out _))
                 {
                     linkedBatches.Add(it.Root);
                 }

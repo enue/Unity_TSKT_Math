@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
+using Unity.Collections;
 #nullable enable
 
 namespace TSKT
@@ -10,21 +11,21 @@ namespace TSKT
     public readonly struct UnmanagedAStarSearch<T> where T : unmanaged, IEquatable<T>
     {
         public readonly IUnmanagedGraph<T> graph;
-        readonly System.Func<T, T, double> heuristicFunction;
+        readonly System.Func<T, T, float> heuristicFunction;
         public readonly UnmanagedDistanceMapCore<T> memo;
         public readonly T Start => memo.Start;
         readonly List<T> tasksToResume;
 
-        public UnmanagedAStarSearch(IUnmanagedGraph<T> graph, in T start, System.Func<T, T, double> heuristicFunction)
+        public UnmanagedAStarSearch(IUnmanagedGraph<T> graph, in T start, System.Func<T, T, float> heuristicFunction)
         {
             this.heuristicFunction = heuristicFunction;
             this.graph = graph;
 
             memo = new UnmanagedDistanceMapCore<T>(
                 start,
-                new Dictionary<T, double>
+                new Dictionary<T, float>
                 {
-                    { start, 0.0 }
+                    { start, 0f }
                 },
                 new Dictionary<T, T[]>());
             tasksToResume = new List<T>() { start };
@@ -114,26 +115,18 @@ namespace TSKT
 
         public readonly bool TrySolveAny(in ReadOnlySpan<T> goals, bool searchAllPaths, double maxDistance, out T nearestGoal)
         {
-            using var tasks = new Graphs.UnmanagedDoublePriorityQueue<(T node, double expectedDistance)>();
+            using var tasks = new Graphs.UnmanagedPriorityQueue<(T node, double expectedDistance)>(tasksToResume.Count, Allocator.Temp);
             foreach (var it in tasksToResume)
             {
                 memo.Distances.TryGetValue(it, out var startToItDistance);
 
-                double expectedDistance;
-                if (goals.Length == 0)
+                var expectedDistance = float.PositiveInfinity;
+                foreach (var goal in goals)
                 {
-                    expectedDistance = 0.0;
-                }
-                else
-                {
-                    expectedDistance = double.PositiveInfinity;
-                    foreach (var goal in goals)
+                    var h = startToItDistance + heuristicFunction(it, goal);
+                    if (expectedDistance > h)
                     {
-                        var h = startToItDistance + heuristicFunction(it, goal);
-                        if (expectedDistance > h)
-                        {
-                            expectedDistance = h;
-                        }
+                        expectedDistance = h;
                     }
                 }
                 tasks.Enqueue(expectedDistance, -startToItDistance, (it, expectedDistance));
@@ -141,7 +134,7 @@ namespace TSKT
             tasksToResume.Clear();
             bool memoModified = true;
 
-            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCountFromOneNode];
+            Span<(T, float)> buffer = stackalloc (T, float)[graph.MaxEdgeCountFromOneNode];
             while (tasks.Count > 0)
             {
                 var (currentNode, expectedDistance) = tasks.Peek;
@@ -226,7 +219,7 @@ namespace TSKT
                     memo.Distances[next] = startToNextNodeDistance;
                     memoModified = true;
 
-                    double nextExpectedDistance = double.PositiveInfinity;
+                    var nextExpectedDistance = float.PositiveInfinity;
                     foreach (var goal in goals)
                     {
                         var h = heuristicFunction(next, goal) + startToNextNodeDistance;
@@ -268,7 +261,7 @@ namespace TSKT
             return pathExist;
         }
 
-        public readonly Dictionary<T, double> GetDistances(params T[] nodes)
+        public readonly Dictionary<T, float> GetDistances(params T[] nodes)
         {
             var distances = memo.Distances;
             return nodes.ToDictionary(_ => _, _ => distances[_]);

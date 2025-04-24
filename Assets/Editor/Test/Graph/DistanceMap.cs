@@ -30,7 +30,7 @@ namespace TSKT.Tests
         {
             var board = new Board(10, 10);
             var distanceMap = board.CreateDistanceMapFrom(new Vector2Int(5, 5));
-            distanceMap.SolveWithin(4.0);
+            distanceMap.SolveWithin(4f);
             Assert.IsTrue(distanceMap.Distances.ContainsKey(new Vector2Int(3, 3)));
             Assert.IsFalse(distanceMap.Distances.ContainsKey(new Vector2Int(7, 8)));
         }
@@ -56,12 +56,12 @@ namespace TSKT.Tests
             graph.CreateNode('d');
 
             // a-b-d経路
-            graph.DoubleOrderedLink('a', 'b', 1.0 / 3.0);
-            graph.DoubleOrderedLink('b', 'd', 1.0 / 9.0);
+            graph.DoubleOrderedLink('a', 'b', 1f / 3f);
+            graph.DoubleOrderedLink('b', 'd', 1f / 9f);
 
             // a-c-d経路
-            graph.DoubleOrderedLink('a', 'c', 1.0 / 3.0);
-            graph.DoubleOrderedLink('c', 'd', 2.0 / 7.0);
+            graph.DoubleOrderedLink('a', 'c', 1f / 3f);
+            graph.DoubleOrderedLink('c', 'd', 2f / 7f);
 
             var distanceMap = new DistanceMap<char>(graph, 'a');
             var paths = new Span<char[]>(new char[10][]);

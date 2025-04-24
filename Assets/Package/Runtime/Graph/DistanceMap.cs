@@ -10,7 +10,7 @@ namespace TSKT
     {
         readonly DistanceMapCore<T> core;
         public readonly T Start => core.Start; 
-        public readonly IReadOnlyDictionary<T, double> Distances => core.Distances;
+        public readonly IReadOnlyDictionary<T, float> Distances => core.Distances;
         public readonly IReadOnlyDictionary<T, List<T>> ReversedEdges => core.ReversedEdges;
 
         readonly Graphs.PriorityQueue<T> tasks;
@@ -21,13 +21,13 @@ namespace TSKT
 
         public DistanceMap(IGraph<T> graph, in T start)
         {
-            core = new(start, new Dictionary<T, double>(), new Dictionary<T, List<T>>());
+            core = new(start, new Dictionary<T, float>(), new Dictionary<T, List<T>>());
             this.graph = graph;
             tasks = new Graphs.PriorityQueue<T>();
-            tasks.Enqueue(OrderKeyConvert.ToUint64(0.0), start);
-            core.Distances.Add(start, 0.0);
+            tasks.Enqueue(0f, 0f, start);
+            core.Distances.Add(start, 0f);
         }
-        public readonly void SolveWithin(double maxDistance)
+        public readonly void SolveWithin(float maxDistance)
         {
             TrySolveAny(Span<T>.Empty, out _, maxDistance);
         }
@@ -45,7 +45,7 @@ namespace TSKT
 
             var found = false;
             result = default;
-            var continueNodes = new Dictionary<T, double>();
+            var continueNodes = new Dictionary<T, float>();
 
             var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
@@ -109,14 +109,14 @@ namespace TSKT
                         }
 
                         core.Distances[nextNode] = startToNextNodeDistance;
-                        tasks.Enqueue(OrderKeyConvert.ToUint64(startToNextNodeDistance), nextNode);
+                        tasks.Enqueue(startToNextNodeDistance, 0f, nextNode);
                     }
                 }
             }
 
             foreach (var (node, distance) in continueNodes)
             {
-                tasks.Enqueue(OrderKeyConvert.ToUint64(distance), node);
+                tasks.Enqueue(distance, 0f, node);
             }
             return found;
         }
@@ -144,10 +144,10 @@ namespace TSKT
     public readonly struct DistanceMapCore<T>
     {
         public readonly T Start { get; }
-        public readonly Dictionary<T, double> Distances { get; }
+        public readonly Dictionary<T, float> Distances { get; }
         public readonly Dictionary<T, List<T>> ReversedEdges { get; }
 
-        public DistanceMapCore(in T start, Dictionary<T, double> distances, Dictionary<T, List<T>> reversedEdges)
+        public DistanceMapCore(in T start, Dictionary<T, float> distances, Dictionary<T, List<T>> reversedEdges)
         {
             Start = start;
             Distances = distances;

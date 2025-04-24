@@ -7,12 +7,22 @@ using UnityEngine;
 
 namespace TSKT.Graphs
 {
-    public class UnmanagedPriorityQueue<T>
+    public struct UnmanagedPriorityQueue<T> : IDisposable where T : unmanaged
     {
-        readonly List<T> items = new();
-        readonly List<ulong> keys = new();
-        public int Count => keys.Count;
+        NativeList<T> items;
+        NativeList<ulong> keys;
+        public readonly int Count => keys.Length;
 
+        public UnmanagedPriorityQueue(int initialCapacity, Allocator allocator)
+        {
+            items = new(initialCapacity, allocator);
+            keys = new(initialCapacity, allocator);
+        }
+
+        public void Enqueue(float primaryKey, float secondaryKey, T item)
+        {
+            Enqueue(OrderKeyConvert.Combine(primaryKey, secondaryKey), item);
+        }
         public void Enqueue(ulong key, T item)
         {
             // Dequeueの時に末尾からとりたいのでキーを補数にしておく
@@ -21,19 +31,27 @@ namespace TSKT.Graphs
             {
                 index = ~index;
             }
-            items.Insert(index, item);
-            keys.Insert(index, ~key);
+            items.InsertRange(index, 1);
+            items[index] = item;
+
+            keys.InsertRange(index, 1);
+            keys[index] = ~key;
         }
 
-        public T Peek => items[^1];
+        public readonly T Peek => items[^1];
 
         public T Dequeue()
         {
-            var index = items.Count - 1;
+            var index = items.Length - 1;
             var item = items[index];
             items.RemoveAt(index);
             keys.RemoveAt(index);
             return item;
+        }
+        public void Dispose()
+        {
+            items.Dispose();
+            keys.Dispose();
         }
     }
 

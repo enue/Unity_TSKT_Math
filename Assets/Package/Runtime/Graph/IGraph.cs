@@ -8,11 +8,11 @@ namespace TSKT
 {
     public interface IGraph<T>
     {
-        IEnumerable<(T endNode, double weight)> GetEdgesFrom(T begin);
+        IEnumerable<(T endNode, float weight)> GetEdgesFrom(T begin);
     }
     public interface IUnmanagedGraph<T> where T : unmanaged
     {
         int MaxEdgeCountFromOneNode { get; }
-        void GetEdgesFrom(T begin, Span<(T endNode, double weight)> dest, out int writtenCount);
+        void GetEdgesFrom(T begin, Span<(T endNode, float weight)> dest, out int writtenCount);
     }
 }

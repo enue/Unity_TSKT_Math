@@ -17,7 +17,7 @@ namespace TSKT
             public UnmanagedDistanceMap<T> DistanceMap { get; }
             public AStarSearch<Batch> BatchSearch { get;}
 
-            public Batch(UnmanagedBatchedGraph<T> owner, T root, double radius)
+            public Batch(UnmanagedBatchedGraph<T> owner, T root, float radius)
             {
                 DistanceMap = new UnmanagedDistanceMap<T>(owner.graph, root);
                 DistanceMap.SolveWithin(radius);
@@ -116,20 +116,20 @@ namespace TSKT
         public readonly Graph<Batch> batchGraph = new();
         public readonly Dictionary<T, Batch> nodeBatchMap = new();
         public readonly IUnmanagedGraph<T> graph;
-        readonly System.Func<T, T, double> heuristicFunction;
+        readonly System.Func<T, T, float> heuristicFunction;
 
-        public UnmanagedBatchedGraph(IUnmanagedGraph<T> graph, in T startNode, double batchRadius, double batchEdgeLength, System.Func<T, T, double> heuristicFunction)
+        public UnmanagedBatchedGraph(IUnmanagedGraph<T> graph, in T startNode, float batchRadius, float batchEdgeLength, System.Func<T, T, float> heuristicFunction)
         {
             this.graph = graph;
             this.heuristicFunction = heuristicFunction;
 
-            Span<(T, double)> buffer = stackalloc (T, double)[graph.MaxEdgeCountFromOneNode];
+            Span<(T, float)> buffer = stackalloc (T, float)[graph.MaxEdgeCountFromOneNode];
             var batches = new List<Batch>();
             var referenceCountMap = new NativeHashMap<T, int>(32, Allocator.Temp);
             using var taskFinishedNodes = new NativeHashSet<T>(32, Allocator.Temp);
 
-            using var tasks = new Graphs.UnmanagedDoublePriorityQueue<T>();
-            tasks.Enqueue(0.0, 0.0, startNode);
+            using var tasks = new Graphs.UnmanagedPriorityQueue<T>(32, Allocator.Temp);
+            tasks.Enqueue(0f, 0f, startNode);
             while (tasks.Count > 0)
             {
                 var root = tasks.Dequeue();
@@ -229,7 +229,7 @@ namespace TSKT
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
-                if (it.BatchSearch.TrySolveAny(new[] { startNodeBatch }, false, double.PositiveInfinity, out _))
+                if (it.BatchSearch.TrySolveAny(new[] { startNodeBatch }, false, float.PositiveInfinity, out _))
                 {
                     linkedBatches[linkedBatchesWrittenCount] = it.Root;
                     ++linkedBatchesWrittenCount;

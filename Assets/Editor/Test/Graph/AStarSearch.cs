@@ -22,7 +22,7 @@ namespace TSKT.Tests
                 {
                     if (costRandom > 0f)
                     {
-                        board.SetCost(i, j, 1.0 + UnityEngine.Random.Range(0f, costRandom));
+                        board.SetCost(i, j, 1f + UnityEngine.Random.Range(0f, costRandom));
                     }
                     if (UnityEngine.Random.Range(0f, 1f) < 0.1f)
                     {
@@ -88,7 +88,7 @@ namespace TSKT.Tests
                 {
                     if (costRandom > 0f)
                     {
-                        board.SetCost(i, j, 1.0 + UnityEngine.Random.Range(0f, costRandom));
+                        board.SetCost(i, j, 1f + UnityEngine.Random.Range(0f, costRandom));
                     }
                 }
             }
@@ -133,7 +133,7 @@ namespace TSKT.Tests
             var goal2 = new Vector2Int(0, 1);
 
             var i = new Vector2Int[99][];
-            aStarSearch.SearchAllPaths(goal1, double.MaxValue, i, out _);
+            aStarSearch.SearchAllPaths(goal1, float.MaxValue, i, out _);
 
             var paths = aStarSearch.SearchPathToNearestGoal(goal1, goal2);
             Assert.AreEqual(goal2, paths.Last());

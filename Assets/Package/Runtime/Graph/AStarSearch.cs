@@ -161,8 +161,7 @@ namespace TSKT
                     }
                     else
                     {
-                        var nearNodes = new List<T>() { currentNode };
-                        memo.ReversedEdges.Add(next, nearNodes);
+                        memo.ReversedEdges.Add(next, new List<T>() { currentNode });
                     }
 
                     memo.Distances[next] = startToNextNodeDistance;

@@ -95,7 +95,7 @@ namespace TSKT
             using var tasks = new Graphs.UnmanagedPriorityQueue<(T node, float expectedDistance)>(tasksToResume.Count, Allocator.Temp);
             foreach (var it in tasksToResume)
             {
-                memo.Distances.TryGetValue(it, out var startToItDistance);
+                var startToItDistance = memo.Distances[it];
                 var h = heuristicFunction(it, goal);
                 var expectedDistance = startToItDistance + h;
                 tasks.Enqueue(expectedDistance, h, (it, h));
@@ -149,11 +149,12 @@ namespace TSKT
                         if (oldDistance >= startToNextNodeDistance)
                         {
                             var nearNodes = memo.ReversedEdges[next];
-                            T[] newNearNodes = nearNodes;
+                            T[] newNearNodes;
                             if (oldDistance > startToNextNodeDistance)
                             {
-                                if (newNearNodes.Length == 1)
+                                if (nearNodes.Length == 1)
                                 {
+                                    newNearNodes = nearNodes;
                                     newNearNodes[0] = currentNode;
                                 }
                                 else
@@ -161,9 +162,15 @@ namespace TSKT
                                     newNearNodes = new T[] { currentNode };
                                 }
                             }
-                            else if (Array.IndexOf(newNearNodes, currentNode) == -1)
+                            else if (Array.IndexOf(nearNodes, currentNode) == -1)
                             {
-                                newNearNodes = newNearNodes.Append(currentNode).ToArray();
+                                newNearNodes = new T[nearNodes.Length + 1];
+                                nearNodes.CopyTo(newNearNodes, 0);
+                                newNearNodes[^1] = currentNode;
+                            }
+                            else
+                            {
+                                newNearNodes = nearNodes;
                             }
                             if (newNearNodes != nearNodes)
                             {

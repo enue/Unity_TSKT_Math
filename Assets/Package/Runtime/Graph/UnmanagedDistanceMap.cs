@@ -83,11 +83,12 @@ namespace TSKT
                         if (oldDistance >= startToNextNodeDistance)
                         {
                             var nearNodes = ReversedEdges[nextNode];
-                            T[] newNearNodes = nearNodes;
+                            T[] newNearNodes;
                             if (oldDistance > startToNextNodeDistance)
                             {
-                                if (newNearNodes.Length == 1)
+                                if (nearNodes.Length == 1)
                                 {
+                                    newNearNodes = nearNodes;
                                     newNearNodes[0] = currentNode;
                                 }
                                 else
@@ -95,9 +96,15 @@ namespace TSKT
                                     newNearNodes = new T[] { currentNode };
                                 }
                             }
-                            else if (Array.IndexOf(newNearNodes, currentNode) == -1)
+                            else if (Array.IndexOf(nearNodes, currentNode) == -1)
                             {
-                                newNearNodes = newNearNodes.Append(currentNode).ToArray();
+                                newNearNodes = new T[nearNodes.Length + 1];
+                                nearNodes.CopyTo(newNearNodes, 0);
+                                newNearNodes[^1] = currentNode;
+                            }
+                            else
+                            {
+                                newNearNodes = nearNodes;
                             }
                             if (newNearNodes != nearNodes)
                             {
@@ -111,8 +118,7 @@ namespace TSKT
                     }
                     else
                     {
-                        var nearNodes = new T[] { currentNode };
-                        core.ReversedEdges.Add(nextNode, nearNodes);
+                        core.ReversedEdges.Add(nextNode, new T[] { currentNode });
                     }
 
                     core.Distances[nextNode] = startToNextNodeDistance;

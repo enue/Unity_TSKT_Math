@@ -11,12 +11,15 @@ namespace TSKT.Graphs
     {
         NativeList<T> items;
         NativeList<ulong> keys;
-        public readonly int Count => keys.Length;
+        public readonly int Count => keys.Length - position;
+        int position;
+        public readonly T Peek => items[position];
 
         public UnmanagedPriorityQueue(int initialCapacity, Allocator allocator)
         {
             items = new(initialCapacity, allocator);
             keys = new(initialCapacity, allocator);
+            position = 0;
         }
 
         public void Enqueue(float primaryKey, float secondaryKey, T item)
@@ -25,28 +28,36 @@ namespace TSKT.Graphs
         }
         public void Enqueue(ulong key, T item)
         {
-            // Dequeueの時に末尾からとりたいのでキーを補数にしておく
-            var index = keys.BinarySearch(~key);
+            var index = keys.AsArray().GetSubArray(position, keys.Length - position).BinarySearch(key);
             if (index < 0)
             {
                 index = ~index;
             }
-            items.InsertRange(index, 1);
-            items[index] = item;
+            if (index == 0 && position > 0)
+            {
+                --position;
+                keys[position] = key;
+                items[position] = item;
+            }
+            else
+            {
+                items.InsertRange(index + position, 1);
+                items[index + position] = item;
 
-            keys.InsertRange(index, 1);
-            keys[index] = ~key;
+                keys.InsertRange(index + position, 1);
+                keys[index + position] = key;
+            }
         }
-
-        public readonly T Peek => items[^1];
-
         public T Dequeue()
         {
-            var index = items.Length - 1;
-            var item = items[index];
-            items.RemoveAt(index);
-            keys.RemoveAt(index);
-            return item;
+            return DequeueKeyAndValue().value;
+        }
+        public (float key, T value) DequeueKeyAndValue()
+        {
+            var index = position;
+            ++position;
+            var result = (keys[index], items[index]);
+            return result;
         }
         public void Dispose()
         {
@@ -59,8 +70,9 @@ namespace TSKT.Graphs
     {
         NativeList<T> items = new(Allocator.Temp);
         NativeList<OrderKey2> keys = new(Allocator.Temp);
-        public int Count => keys.Length;
-        public T Peek => items[^1];
+        public int Count => keys.Length - position;
+        int position;
+        public T Peek => items[position];
 
         public void Enqueue(double primaryKey, double secondaryKey, T item)
         {
@@ -71,29 +83,36 @@ namespace TSKT.Graphs
         }
         public void Enqueue(ulong primaryKey, ulong secondaryKey, T item)
         {
-            // Dequeueの時に末尾からとりたいのでキーを補数にしておく
             var key = new OrderKey2(
-                ~primaryKey,
-                ~secondaryKey);
-            var index = keys.BinarySearch(key);
+                primaryKey,
+                secondaryKey);
+
+            var index = keys.AsArray().GetSubArray(position, keys.Length - position).BinarySearch(key);
             if (index < 0)
             {
                 index = ~index;
             }
-            items.InsertRange(index, 1);
-            items[index] = item;
+            if (index == 0 && position > 0)
+            {
+                --position;
+                keys[position] = key;
+                items[position] = item;
+            }
+            else
+            {
+                items.InsertRange(index + position, 1);
+                items[index + position] = item;
 
-            keys.InsertRange(index, 1);
-            keys[index] = key;
+                keys.InsertRange(index + position, 1);
+                keys[index + position] = key;
+            }
         }
 
         public T Dequeue()
         {
-            var index = items.Length - 1;
-            var item = items[index];
-            items.RemoveAt(index);
-            keys.RemoveAt(index);
-            return item;
+            var index = position;
+            ++position;
+            return items[index];
         }
 
         public void Dispose()

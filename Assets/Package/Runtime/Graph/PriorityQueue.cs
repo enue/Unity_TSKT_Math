@@ -9,7 +9,9 @@ namespace TSKT.Graphs
     {
         readonly List<T> items = new();
         readonly List<ulong> keys = new();
-        public int Count => keys.Count;
+        public int Count => keys.Count - position;
+        int position;
+        public T Peek => items[position];
 
         public void Enqueue(float primaryKey, float secondaryKey, T item)
         {
@@ -18,25 +20,35 @@ namespace TSKT.Graphs
 
         public void Enqueue(ulong key, T item)
         {
-            // Dequeueの時に末尾からとりたいのでキーを補数にしておく
-            var index = keys.BinarySearch(~key);
+            var index = keys.BinarySearch(position, keys.Count - position, key, null);
             if (index < 0)
             {
                 index = ~index;
             }
-            items.Insert(index, item);
-            keys.Insert(index, ~key);
+            if (index == 0 && position > 0)
+            {
+                --position;
+                items[position] = item;
+                keys[position] = key;
+            }
+            else
+            {
+                items.Insert(index, item);
+                keys.Insert(index, key);
+            }
         }
-
-        public T Peek => items[^1];
 
         public T Dequeue()
         {
-            var index = items.Count - 1;
-            var item = items[index];
-            items.RemoveAt(index);
-            keys.RemoveAt(index);
-            return item;
+            var index = position;
+            ++position;
+            return items[index];
+        }
+        public (float key, T value) DequeueKeyAndValue()
+        {
+            var index = position;
+            ++position;
+            return (keys[index], items[index]);
         }
     }
 
@@ -44,8 +56,9 @@ namespace TSKT.Graphs
     {
         readonly List<T> items = new();
         readonly List<OrderKey2> keys = new();
-        public int Count => keys.Count;
-        public T Peek => items[^1];
+        public int Count => keys.Count - position;
+        int position;
+        public T Peek => items[position];
 
         public void Enqueue(double primaryKey, double secondaryKey, T item)
         {
@@ -56,26 +69,32 @@ namespace TSKT.Graphs
         }
         public void Enqueue(ulong primaryKey, ulong secondaryKey, T item)
         {
-            // Dequeueの時に末尾からとりたいのでキーを補数にしておく
             var key = new OrderKey2(
-                ~primaryKey,
-                ~secondaryKey);
-            var index = keys.BinarySearch(key);
+                primaryKey,
+                secondaryKey);
+            var index = keys.BinarySearch(position, keys.Count - position, key, null);
             if (index < 0)
             {
                 index = ~index;
             }
-            items.Insert(index, item);
-            keys.Insert(index, key);
+            if (index == 0 && position > 0)
+            {
+                --position;
+                items[position] = item;
+                keys[position] = key;
+            }
+            else
+            {
+                items.Insert(index, item);
+                keys.Insert(index, key);
+            }
         }
 
         public T Dequeue()
         {
-            var index = items.Count - 1;
-            var item = items[index];
-            items.RemoveAt(index);
-            keys.RemoveAt(index);
-            return item;
+            var index = position;
+            ++position;
+            return items[index];
         }
     }
 }

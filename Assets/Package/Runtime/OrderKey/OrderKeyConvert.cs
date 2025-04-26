@@ -58,7 +58,10 @@ namespace TSKT
 
         public static ulong Combine(uint primary, uint secondary)
         {
-            return primary * (ulong)0x100000000 + secondary;
+            checked
+            {
+                return primary * (ulong)0x100000000 + secondary;
+            }
         }
 
         public static ulong Combine(float primary, float secondary)

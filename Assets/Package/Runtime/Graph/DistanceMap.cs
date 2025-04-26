@@ -32,18 +32,9 @@ namespace TSKT
             TrySolve(default, maxDistance);
         }
 
-        public readonly bool TrySolveAny(in ReadOnlySpan<T> goals, out T result, float maxDistance = float.PositiveInfinity)
+        public readonly bool AnyPath(in T goal, float maxDistance = float.PositiveInfinity)
         {
-            foreach (var goal in goals)
-            {
-                if (TrySolve(goal, maxDistance))
-                {
-                    result = goal;
-                    return true;
-                }
-            }
-            result = default;
-            return false;
+            return TrySolve(goal, maxDistance);
         }
         readonly bool TrySolve(T? goal, float maxDistance = float.PositiveInfinity)
         {

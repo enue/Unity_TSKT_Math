@@ -244,11 +244,15 @@ namespace TSKT
                 heuristicFunction(_startNode, x.Root).CompareTo(heuristicFunction(_startNode, y.Root)));
             foreach (var it in unlinkedBatches)
             {
-                if (it.DistanceMap.TrySolveAny(linkedBatches[..linkedBatchesWrittenCount], out var linkedBatch))
+                foreach (var linkedBatch in linkedBatches)
                 {
-                    batchGraph.Link(it, nodeBatchMap[linkedBatch], it.DistanceMap.Distances[linkedBatch]);
-                    linkedBatches[linkedBatchesWrittenCount] = it.Root;
-                    ++linkedBatchesWrittenCount;
+                    if (it.DistanceMap.AnyPath(linkedBatch))
+                    {
+                        batchGraph.Link(it, nodeBatchMap[linkedBatch], it.DistanceMap.Distances[linkedBatch]);
+                        linkedBatches[linkedBatchesWrittenCount] = it.Root;
+                        ++linkedBatchesWrittenCount;
+                        break;
+                    }
                 }
             }
         }

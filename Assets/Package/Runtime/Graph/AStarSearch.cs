@@ -85,14 +85,11 @@ namespace TSKT
         }
         public readonly bool TrySolveAny(in ReadOnlySpan<T> goals, bool searchAllPaths, float maxDistance, out T nearestGoal)
         {
-            var sortedGoals = new Graphs.PriorityQueue<T>();
+            var sortedGoals = new Graphs.FloatPriorityQueue<T>();
             foreach (var it in goals)
             {
-                if (!memo.Distances.TryGetValue(it, out var expectedDistance))
-                {
-                    expectedDistance = heuristicFunction(Start, it);
-                }
-                sortedGoals.Enqueue(expectedDistance, 0f, it);
+                var expectedDistance = heuristicFunction(Start, it);
+                sortedGoals.Enqueue(expectedDistance, it);
             }
 
             nearestGoal = default;

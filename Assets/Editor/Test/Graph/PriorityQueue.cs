@@ -53,5 +53,15 @@ namespace TSKT.Tests
                 Assert.AreEqual(e, queue.Dequeue());
             }
         }
+        [Test]
+        public void Hoge()
+        {
+            using var queue = new UnmanagedPriorityQueue<float>(1000, Allocator.Temp);
+            queue.Enqueue(1f, 0f, 1f);
+            queue.Enqueue(0f, 0f, 0f);
+            Assert.AreEqual(0f, queue.Dequeue());
+            Assert.AreEqual(1f, queue.Dequeue());
+
+        }
     }
 }

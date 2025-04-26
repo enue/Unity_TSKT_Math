@@ -50,6 +50,57 @@ namespace TSKT.Graphs
         }
         public T Dequeue()
         {
+            var index = position;
+            ++position;
+            return items[index];
+        }
+        public void Dispose()
+        {
+            items.Dispose();
+            keys.Dispose();
+        }
+    }
+
+
+    public struct UnmanagedFloatPriorityQueue<T> : IDisposable where T : unmanaged
+    {
+        NativeList<T> items;
+        NativeList<float> keys;
+        public readonly int Count => keys.Length - position;
+        int position;
+        public readonly T Peek => items[position];
+
+        public UnmanagedFloatPriorityQueue(int initialCapacity, Allocator allocator)
+        {
+            items = new(initialCapacity, allocator);
+            keys = new(initialCapacity, allocator);
+            position = 0;
+        }
+
+        public void Enqueue(float key, T item)
+        {
+            var index = keys.AsArray().GetSubArray(position, keys.Length - position).BinarySearch(key);
+            if (index < 0)
+            {
+                index = ~index;
+            }
+            if (index == 0 && position > 0)
+            {
+                --position;
+                keys[position] = key;
+                items[position] = item;
+            }
+            else
+            {
+                items.InsertRange(index + position, 1);
+                items[index + position] = item;
+
+                keys.InsertRange(index + position, 1);
+                keys[index + position] = key;
+            }
+        }
+        public T Dequeue()
+        {
             return DequeueKeyAndValue().value;
         }
         public (float key, T value) DequeueKeyAndValue()
@@ -65,7 +116,6 @@ namespace TSKT.Graphs
             keys.Dispose();
         }
     }
-
     public class UnmanagedDoublePriorityQueue<T> : IDisposable where T : unmanaged
     {
         NativeList<T> items = new(Allocator.Temp);

@@ -83,16 +83,16 @@ namespace TSKT.Tests
             var start = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
             var board = new Board(width, height);
 
-            var aStarSearch = new UnmanagedAStarSearch<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
+            var aStarSearch = board.CreateAStarSearch(start);
 
             for (int i = 0; i < iteration; ++i)
             {
                 var goal = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
 
-                aStarSearch.SearchPath(goal);
+                var path = aStarSearch.SearchPath(goal);
                 var distanceMap = board.CreateDistanceMapFrom(start);
                 distanceMap.SolveWithin(float.PositiveInfinity);
-                Assert.AreEqual(distanceMap.Distances[goal], aStarSearch.memo.Distances[goal], (start, goal).ToString());
+                Assert.AreEqual(distanceMap.Distances[goal], aStarSearch.memo.Distances[goal], string.Join(", ", path));
             }
         }
         [Test]

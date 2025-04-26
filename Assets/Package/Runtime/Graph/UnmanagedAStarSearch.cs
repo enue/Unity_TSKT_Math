@@ -195,7 +195,14 @@ namespace TSKT
                             T[] newNearNodes = nearNodes;
                             if (oldDistance > startToNextNodeDistance)
                             {
-                                newNearNodes = new T[] { currentNode };
+                                if (newNearNodes.Length == 1)
+                                {
+                                    newNearNodes[0] = currentNode;
+                                }
+                                else
+                                {
+                                    newNearNodes = new T[] { currentNode };
+                                }
                             }
                             else if (Array.IndexOf(newNearNodes, currentNode) == -1)
                             {

@@ -53,13 +53,13 @@ namespace TSKT.Tests
                     // 経路が多くてwrittenCountが溢れた場合にはaStarとダイクストラで結果が一致しないことがある
                     if (dijkstraWrittenCount < dijkstraRoutes.Length)
                     {
-                        Assert.IsTrue(dijkstraRoutes.Slice(0, dijkstraWrittenCount).ToArray().Any(_ => _.SequenceEqual(aStarPath)));
+                        Assert.IsTrue(dijkstraRoutes.Slice(0, dijkstraWrittenCount).ToArray().Any(_ => _.SequenceEqual(aStarPath)), string.Join(", ", aStarPath));
                     }
                 }
 
                 Span<Vector2Int[]> aStarPaths = new Vector2Int[150][];
                 aStarSearch.SearchAllPaths(goal, double.PositiveInfinity, aStarPaths, out var aStarWrittenCount);
-                Assert.AreEqual(dijkstraWrittenCount, aStarWrittenCount);
+                Assert.AreEqual(dijkstraWrittenCount, aStarWrittenCount, (start, goal).ToString());
                 if (dijkstraWrittenCount < dijkstraRoutes.Length)
                 {
                     foreach (var it in aStarPaths.Slice(0, aStarWrittenCount))

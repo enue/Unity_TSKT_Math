@@ -13,7 +13,7 @@ namespace TSKT
         public readonly IReadOnlyDictionary<T, float> Distances => core.Distances;
         public readonly IReadOnlyDictionary<T, List<T>> ReversedEdges => core.ReversedEdges;
 
-        readonly Graphs.PriorityQueue<T> tasks;
+        readonly Graphs.FloatPriorityQueue<T> tasks;
         readonly IGraph<T> graph;
 
         public readonly bool Completed => tasks.Count == 0;
@@ -23,120 +23,107 @@ namespace TSKT
         {
             core = new(start, new Dictionary<T, float>(), new Dictionary<T, List<T>>());
             this.graph = graph;
-            tasks = new Graphs.PriorityQueue<T>();
-            tasks.Enqueue(0f, 0f, start);
+            tasks = new Graphs.FloatPriorityQueue<T>();
+            tasks.Enqueue(0f, start);
             core.Distances.Add(start, 0f);
         }
         public readonly void SolveWithin(float maxDistance)
         {
-            TrySolveAny(Span<T>.Empty, out _, maxDistance);
+            TrySolve(default, maxDistance);
         }
 
-        public readonly bool TrySolveAny(ReadOnlySpan<T> goals, out T result, double maxDistance = double.PositiveInfinity)
+        public readonly bool TrySolveAny(in ReadOnlySpan<T> goals, out T result, float maxDistance = float.PositiveInfinity)
         {
-            foreach (var it in goals)
+            foreach (var goal in goals)
             {
-                if (Distances.ContainsKey(it))
+                if (TrySolve(goal, maxDistance))
                 {
-                    result = it;
+                    result = goal;
                     return true;
                 }
             }
-
-            var found = false;
             result = default;
-            var continueNodes = new Dictionary<T, float>();
+            return false;
+        }
+        readonly bool TrySolve(T? goal, float maxDistance = float.PositiveInfinity)
+        {
+            var found = goal != null && core.Distances.ContainsKey(goal);
 
             var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;
+                var startToCurrentNodeDistance = Distances[currentNode];
+                if (goal != null)
                 {
-                    var shouldBreak = false;
-                    foreach (var goal in goals)
+                    if (comparer.Equals(goal, currentNode))
                     {
-                        if (comparer.Equals(goal, currentNode))
+                        found = true;
+                    }
+                    else if (found)
+                    {
+                        if (core.Distances[goal] < startToCurrentNodeDistance)
                         {
-                            found = true;
-                            result = goal;
-                            shouldBreak = true;
                             break;
                         }
                     }
-                    if (shouldBreak)
-                    {
-                        break;
-                    }
+                }
+                if (startToCurrentNodeDistance > maxDistance)
+                {
+                    break;
                 }
 
                 tasks.Dequeue();
 
-                var startToCurrentNodeDistance = Distances[currentNode];
                 foreach (var (nextNode, edgeWeight) in graph.GetEdgesFrom(currentNode))
                 {
                     UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
 
                     var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
-                    if (startToNextNodeDistance > maxDistance)
+                    if (Distances.TryGetValue(nextNode, out var oldDistance))
                     {
-                        continueNodes[currentNode] = startToCurrentNodeDistance;
+                        if (oldDistance >= startToNextNodeDistance)
+                        {
+                            var nearNodes = ReversedEdges[nextNode];
+                            if (oldDistance > startToNextNodeDistance)
+                            {
+                                nearNodes.Clear();
+                            }
+                            if (!nearNodes.Contains(currentNode))
+                            {
+                                nearNodes.Add(currentNode);
+                            }
+                        }
+                        if (oldDistance <= startToNextNodeDistance)
+                        {
+                            continue;
+                        }
                     }
                     else
                     {
-                        if (Distances.TryGetValue(nextNode, out var oldDistance))
-                        {
-                            if (oldDistance >= startToNextNodeDistance)
-                            {
-                                var nearNodes = ReversedEdges[nextNode];
-                                if (oldDistance > startToNextNodeDistance)
-                                {
-                                    nearNodes.Clear();
-                                }
-                                if (!nearNodes.Contains(currentNode))
-                                {
-                                    nearNodes.Add(currentNode);
-                                }
-                            }
-                            if (oldDistance <= startToNextNodeDistance)
-                            {
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            var nearNodes = new List<T>() { currentNode };
-                            core.ReversedEdges.Add(nextNode, nearNodes);
-                        }
-
-                        core.Distances[nextNode] = startToNextNodeDistance;
-                        tasks.Enqueue(startToNextNodeDistance, 0f, nextNode);
+                        var nearNodes = new List<T>() { currentNode };
+                        core.ReversedEdges.Add(nextNode, nearNodes);
                     }
-                }
-            }
 
-            foreach (var (node, distance) in continueNodes)
-            {
-                tasks.Enqueue(distance, 0f, node);
+                    core.Distances[nextNode] = startToNextNodeDistance;
+                    tasks.Enqueue(startToNextNodeDistance, nextNode);
+                }
             }
             return found;
         }
-        readonly void Solve(T goal)
-        {
-            TrySolveAny(new[] { goal }, out _);
-        }
         public readonly void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
         {
-            Solve(goal);
+            TrySolve(goal);
             core.SearchPaths(goal, destination, out writtenCount);
         }
         public readonly T[] SearchPath(in T goal)
         {
-            Solve(goal);
+            TrySolve(goal);
             return core.SearchPath(goal);
         }
         public readonly void SearchPath(in T goal, ref List<T> result)
         {
-            Solve(goal);
+            TrySolve(goal);
             core.SearchPath(goal, ref result);
         }
     }

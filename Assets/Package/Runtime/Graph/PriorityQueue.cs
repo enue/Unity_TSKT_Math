@@ -53,6 +53,7 @@ namespace TSKT.Graphs
         public int Count => keys.Count - position;
         int position;
         public T Peek => items[position];
+        public (float key, T value) PeekKeyAndValue => (keys[position], items[position]);
 
 
         public void Enqueue(float key, T item)

@@ -14,7 +14,7 @@ namespace TSKT
         public IReadOnlyDictionary<T, float> Distances => core.Distances;
         public IReadOnlyDictionary<T, T[]> ReversedEdges => core.ReversedEdges;
 
-        readonly Graphs.PriorityQueue<T> tasks;
+        readonly Graphs.FloatPriorityQueue<T> tasks;
         readonly IUnmanagedGraph<T> graph;
 
         public bool Completed => tasks.Count == 0;
@@ -29,133 +29,124 @@ namespace TSKT
             },new Dictionary<T, T[]>());
             this.graph = graph;
 
-            tasks = new Graphs.PriorityQueue<T>();
-            tasks.Enqueue(0f, 0f, start);
+            tasks = new Graphs.FloatPriorityQueue<T>();
+            tasks.Enqueue(0f, start);
         }
 
         public readonly void SolveWithin(float maxDistance)
         {
-            TrySolveAny(Span<T>.Empty, out _, maxDistance);
+            TrySolve(null, maxDistance);
         }
 
-        public readonly bool TrySolveAny(ReadOnlySpan<T> goals, out T result, float maxDistance = float.PositiveInfinity)
+        public readonly bool TrySolveAny(in ReadOnlySpan<T> goals, out T result, float maxDistance = float.PositiveInfinity)
         {
-            foreach (var it in goals)
+            foreach (var goal in goals)
             {
-                if (core.Distances.ContainsKey(it))
+                if (TrySolve(goal, maxDistance))
                 {
-                    result = it;
+                    result = goal;
                     return true;
                 }
             }
-
-            var found = false;
             result = default;
-            var continueNodes = new NativeHashMap<T, float>(32, Allocator.Temp);
+            return false;
+        }
+        readonly bool TrySolve(in T? goal, float maxDistance = float.PositiveInfinity)
+        {
+            var found = goal != null && core.Distances.ContainsKey(goal.Value);
 
             Span<(T, float)> buffer = stackalloc (T, float)[graph.MaxEdgeCountFromOneNode];
-            var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;
+                var startToCurrentNodeDistance = core.Distances[currentNode];
+                if (goal.HasValue)
                 {
-                    var shouldBreak = false;
-                    foreach (var goal in goals)
+                    if (goal.Value.Equals(currentNode))
                     {
-                        if (comparer.Equals(goal, currentNode))
+                        found = true;
+                    }
+                    else if (found)
+                    {
+                        if (core.Distances[goal.Value] < startToCurrentNodeDistance)
                         {
-                            found = true;
-                            result = goal;
-                            shouldBreak = true;
                             break;
                         }
                     }
-                    if (shouldBreak)
-                    {
-                        break;
-                    }
+                }
+                if (startToCurrentNodeDistance > maxDistance)
+                {
+                    break;
                 }
 
                 tasks.Dequeue();
 
-                var startToCurrentNodeDistance = core.Distances[currentNode];
                 graph.GetEdgesFrom(currentNode, buffer, out var writtenCount);
                 foreach (var (nextNode, edgeWeight) in buffer[..writtenCount])
                 {
                     UnityEngine.Debug.Assert(edgeWeight > 0f, "weight must be greater than 0.0");
 
                     var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
-                    if (startToNextNodeDistance > maxDistance)
+                    if (core.Distances.TryGetValue(nextNode, out var oldDistance))
                     {
-                        continueNodes[currentNode] = startToCurrentNodeDistance;
-                    }
-                    else
-                    {
-                        if (core.Distances.TryGetValue(nextNode, out var oldDistance))
+                        if (oldDistance >= startToNextNodeDistance)
                         {
-                            if (oldDistance >= startToNextNodeDistance)
+                            var nearNodes = ReversedEdges[nextNode];
+                            T[] newNearNodes = nearNodes;
+                            if (oldDistance > startToNextNodeDistance)
                             {
-                                var nearNodes = ReversedEdges[nextNode];
-                                T[] newNearNodes = nearNodes;
-                                if (oldDistance > startToNextNodeDistance)
+                                if (newNearNodes.Length == 1)
+                                {
+                                    newNearNodes[0] = currentNode;
+                                }
+                                else
                                 {
                                     newNearNodes = new T[] { currentNode };
                                 }
-                                else if (Array.IndexOf(newNearNodes, currentNode) == -1)
-                                {
-                                    newNearNodes = newNearNodes.Append(currentNode).ToArray();
-                                }
-                                if (newNearNodes != nearNodes)
-                                {
-                                    core.ReversedEdges[nextNode] = newNearNodes;
-                                }
                             }
-                            if (oldDistance <= startToNextNodeDistance)
+                            else if (Array.IndexOf(newNearNodes, currentNode) == -1)
                             {
-                                continue;
+                                newNearNodes = newNearNodes.Append(currentNode).ToArray();
+                            }
+                            if (newNearNodes != nearNodes)
+                            {
+                                core.ReversedEdges[nextNode] = newNearNodes;
                             }
                         }
-                        else
+                        if (oldDistance <= startToNextNodeDistance)
                         {
-                            var nearNodes = new T[] { currentNode };
-                            core.ReversedEdges.Add(nextNode, nearNodes);
+                            continue;
                         }
-
-                        core.Distances[nextNode] = startToNextNodeDistance;
-                        tasks.Enqueue(startToNextNodeDistance, 0f, nextNode);
                     }
+                    else
+                    {
+                        var nearNodes = new T[] { currentNode };
+                        core.ReversedEdges.Add(nextNode, nearNodes);
+                    }
+
+                    core.Distances[nextNode] = startToNextNodeDistance;
+                    tasks.Enqueue(startToNextNodeDistance, nextNode);
                 }
             }
-
-            foreach (var it in continueNodes)
-            {
-                tasks.Enqueue(it.Value, 0f, it.Key);
-            }
-            continueNodes.Dispose();
 
             return found;
         }
 
-        readonly void Solve(T goal)
-        {
-            Span<T> goals = stackalloc T[] { goal };
-            TrySolveAny(goals, out _);
-        }
         public readonly void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
         {
-            Solve(goal);
+            TrySolve(goal);
             core.SearchPaths(goal, destination, out writtenCount);
         }
 
         public readonly T[] SearchPath(in T goal)
         {
-            Solve(goal);
+            TrySolve(goal);
             return core.SearchPath(goal);
         }
 
         public readonly void SearchPath(in T goal, ref List<T> result)
         {
-            Solve(goal);
+            TrySolve(goal);
             core.SearchPath(goal, ref result);
         }
     }

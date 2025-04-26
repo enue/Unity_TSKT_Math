@@ -32,7 +32,7 @@ namespace TSKT.Tests
             var distanceMap = board.CreateDistanceMapFrom(new Vector2Int(5, 5));
             distanceMap.SolveWithin(4f);
             Assert.IsTrue(distanceMap.Distances.ContainsKey(new Vector2Int(3, 3)));
-            Assert.IsFalse(distanceMap.Distances.ContainsKey(new Vector2Int(7, 8)));
+            Assert.IsFalse(distanceMap.Distances.ContainsKey(new Vector2Int(7, 9)));
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace TSKT.Tests
             var paths = new Vector2Int[10][];
             distanceMap.SearchPaths(new Vector2Int(9, 6), paths, out var writtenCount);
             Assert.AreNotEqual(0, writtenCount);
-            Assert.IsFalse(distanceMap.Distances.ContainsKey(new Vector2Int(9, 7)));
+            Assert.IsFalse(distanceMap.Distances.ContainsKey(new Vector2Int(9, 8)));
         }
 
         [Test]

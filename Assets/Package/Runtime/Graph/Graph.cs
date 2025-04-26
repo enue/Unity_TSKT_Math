@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 #nullable enable
 
 namespace TSKT
@@ -9,6 +10,7 @@ namespace TSKT
     public class Graph<T> : IGraph<T>
     {
         readonly Dictionary<T, Dictionary<T, float>> edges = new();
+        public IReadOnlyDictionary<T, Dictionary<T, float>> Edges => edges;
         public Dictionary<T, Dictionary<T, float>>.KeyCollection StartingNodes => edges.Keys;
 
         public Graph()
@@ -152,6 +154,29 @@ namespace TSKT
         public AStarSearch<T> CreateAStarSearch(T start, Func<T, T, float> heuristicFunction)
         {
             return new AStarSearch<T>(this, start, heuristicFunction);
+        }
+    }
+
+    public class UnmanagedGraph<T> : Graph<T>, IUnmanagedGraph<T> where T : unmanaged, IEquatable<T>
+    {
+        public int MaxEdgeCountFromOneNode => Edges.Max(_ => _.Value.Count);
+
+        public void GetEdgesFrom(T begin, Span<(T endNode, float weight)> dest, out int writtenCount)
+        {
+            writtenCount = 0;
+            if (Edges.TryGetValue(begin, out var edges))
+            {
+                foreach (var it in edges)
+                {
+                    dest[writtenCount] = (it.Key, it.Value);
+                    ++writtenCount;
+                }
+            }
+        }
+        public UnmanagedDistanceMap<T> CreateUnmanagedDistanceMapFrom(T node) => new(this, node);
+        public UnmanagedAStarSearch<T> CreateUnmanagedAStarSearch(T start, Func<T, T, float> heuristicFunction)
+        {
+            return new UnmanagedAStarSearch<T>(this, start, heuristicFunction);
         }
     }
 }

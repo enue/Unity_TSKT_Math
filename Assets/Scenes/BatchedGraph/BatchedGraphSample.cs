@@ -44,7 +44,7 @@ namespace TSKT
                 {
                     foreach (var end in ends)
                     {
-                        CreateLine(it.Root, end.Key.Root, Color.red, Color.red, 0.005f, -0.1f);
+                        CreateLine(batchedGraph.batches[it].Root, batchedGraph.batches[end.Key].Root, Color.red, Color.red, 0.005f, -0.1f);
                     }
                 }
             }

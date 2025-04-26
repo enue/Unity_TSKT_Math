@@ -107,8 +107,7 @@ namespace TSKT.Graphs
         {
             var index = position;
             ++position;
-            var result = (keys[index], items[index]);
-            return result;
+            return (keys[index], items[index]);
         }
         public void Dispose()
         {

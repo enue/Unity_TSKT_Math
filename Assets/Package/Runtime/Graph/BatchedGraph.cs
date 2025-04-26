@@ -10,17 +10,19 @@ namespace TSKT
 {
     public class BatchedGraph<T>
     {
-        public class Batch
+        public readonly struct Batch
         {
+            public int Index { get; }
             public T Root => DistanceMap.Start;
             public DistanceMap<T> DistanceMap { get; }
-            public AStarSearch<Batch> BatchSearch { get;}
+            public UnmanagedAStarSearch<int> BatchSearch { get;}
 
-            public Batch(BatchedGraph<T> owner, T root, float radius)
+            public Batch(BatchedGraph<T> owner, int index, T root, float radius)
             {
+                Index = index;
                 DistanceMap = new DistanceMap<T>(owner.graph, root);
                 DistanceMap.SolveWithin(radius);
-                BatchSearch = owner.CreateAStarForBatch(this);
+                BatchSearch = owner.CreateAStarForBatch(index);
             }
         }
 
@@ -73,12 +75,14 @@ namespace TSKT
                 this.owner = owner;
                 aStar = owner.CreateAStar(start);
 
-                if (owner.nodeBatchMap.TryGetValue(start, out firstBatch))
+                if (owner.nodeBatchMap.TryGetValue(start, out var firstBatch))
                 {
+                    this.firstBatch = firstBatch;
                     startToFirstRoot = aStar.SearchPath(firstBatch.Root);
                 }
                 else
                 {
+                    this.firstBatch = null;
                     startToFirstRoot = System.Array.Empty<T>();
                 }
             }
@@ -89,7 +93,7 @@ namespace TSKT
                 {
                     return aStar.SearchPath(goal);
                 }
-                if (firstBatch == null)
+                if (!firstBatch.HasValue)
                 {
                     return aStar.SearchPath(goal);
                 }
@@ -100,13 +104,14 @@ namespace TSKT
 
                 var pathCombine = new PathCombine();
                 pathCombine.Append(startToFirstRoot);
-                owner.GetBatchToGoalPath(firstBatch, lastBatch, goal, ref pathCombine);
+                owner.GetBatchToGoalPath(firstBatch.Value, lastBatch, goal, ref pathCombine);
 
                 return pathCombine.ToArray();
             }
         }
 
-        public readonly Graph<Batch> batchGraph = new();
+        public readonly Batch[] batches;
+        public readonly UnmanagedGraph<int> batchGraph = new();
         public readonly Dictionary<T, Batch> nodeBatchMap = new();
         public readonly IGraph<T> graph;
         public readonly System.Func<T, T, float> heuristicFunction;
@@ -116,78 +121,79 @@ namespace TSKT
             this.graph = graph;
             this.heuristicFunction = heuristicFunction;
 
-            var batches = new List<Batch>();
-            var referenceCountMap = new Dictionary<T, int>();
-            var taskFinishedNodes = new HashSet<T>();
-
-            var tasks = new Graphs.PriorityQueue<T>();
-            tasks.Enqueue(0f, 0f, startNode);
-            while (tasks.Count > 0)
             {
-                var root = tasks.Dequeue();
-
-                if (taskFinishedNodes.Contains(root))
+                var referenceCountMap = new Dictionary<T, int>();
+                var taskFinishedNodes = new HashSet<T>();
+                var batchList = new List<Batch>();
+                var tasks = new Graphs.PriorityQueue<T>();
+                tasks.Enqueue(0f, 0f, startNode);
+                while (tasks.Count > 0)
                 {
-                    continue;
-                }
-                taskFinishedNodes.Add(root);
+                    var root = tasks.Dequeue();
 
-                var foundUnknownEdge = false;
-                foreach (var (endNode, _) in graph.GetEdgesFrom(root))
-                {
-                    if (!nodeBatchMap.ContainsKey(endNode))
+                    if (taskFinishedNodes.Contains(root))
                     {
-                        foundUnknownEdge = true;
-                        break;
+                        continue;
                     }
-                }
-                if (!foundUnknownEdge)
-                {
-                    continue;
-                }
+                    taskFinishedNodes.Add(root);
 
-                var newBatch = new Batch(this, root, batchRadius);
-                batches.Add(newBatch);
-                nodeBatchMap[root] = newBatch;
-
-                foreach (var it in newBatch.DistanceMap.Distances)
-                {
-                    var node = it.Key;
+                    var foundUnknownEdge = false;
+                    foreach (var (endNode, _) in graph.GetEdgesFrom(root))
                     {
-                        referenceCountMap.TryGetValue(node, out var value);
-                        referenceCountMap[node] = value + 1;
-                    }
-                    if (nodeBatchMap.TryGetValue(node, out var currentBatch))
-                    {
-                        if (currentBatch == newBatch)
+                        if (!nodeBatchMap.ContainsKey(endNode))
                         {
-                            continue;
-                        }
-
-                        var currentDistance = currentBatch.DistanceMap.Distances[node];
-
-                        if (currentDistance > it.Value)
-                        {
-                            nodeBatchMap[node] = newBatch;
+                            foundUnknownEdge = true;
+                            break;
                         }
                     }
-                    else
+                    if (!foundUnknownEdge)
                     {
-                        nodeBatchMap.Add(node, newBatch);
+                        continue;
+                    }
 
-                        if (!taskFinishedNodes.Contains(node))
+                    var newBatch = new Batch(this, batchList.Count, root, batchRadius);
+                    batchList.Add(newBatch);
+                    nodeBatchMap[root] = newBatch;
+
+                    foreach (var it in newBatch.DistanceMap.Distances)
+                    {
+                        var node = it.Key;
                         {
                             referenceCountMap.TryGetValue(node, out var value);
-                            tasks.Enqueue(-value, -heuristicFunction(root, node), node);
+                            referenceCountMap[node] = value + 1;
+                        }
+                        if (nodeBatchMap.TryGetValue(node, out var currentBatch))
+                        {
+                            if (currentBatch.Index == newBatch.Index)
+                            {
+                                continue;
+                            }
+
+                            var currentDistance = currentBatch.DistanceMap.Distances[node];
+
+                            if (currentDistance > it.Value)
+                            {
+                                nodeBatchMap[node] = newBatch;
+                            }
+                        }
+                        else
+                        {
+                            nodeBatchMap.Add(node, newBatch);
+
+                            if (!taskFinishedNodes.Contains(node))
+                            {
+                                referenceCountMap.TryGetValue(node, out var value);
+                                tasks.Enqueue(-value, -heuristicFunction(root, node), node);
+                            }
                         }
                     }
+                    if (batchEdgeLength > batchRadius)
+                    {
+                        newBatch.DistanceMap.SolveWithin(batchEdgeLength);
+                    }
                 }
-                if (batchEdgeLength > batchRadius)
-                {
-                    newBatch.DistanceMap.SolveWithin(batchEdgeLength);
-                }
+                batches = batchList.ToArray();
             }
-
             foreach (var start in batches)
             {
                 foreach (var end in batches)
@@ -198,28 +204,28 @@ namespace TSKT
                         {
                             continue;
                         }
-                        if (batchGraph.TryGetWeight(start, end, out var currentDistance))
+                        if (batchGraph.TryGetWeight(start.Index, end.Index, out var currentDistance))
                         {
                             if (currentDistance > newDistance)
                             {
-                                batchGraph.Link(start, end, newDistance);
+                                batchGraph.Link(start.Index, end.Index, newDistance);
                             }
                         }
                         else
                         {
-                            batchGraph.Link(start, end, newDistance);
+                            batchGraph.Link(start.Index, end.Index, newDistance);
                         }
                     }
                 }
             }
 
             var startNodeBatch = nodeBatchMap[startNode];
-            using var buffer = MemoryPool<T>.Shared.Rent(batches.Count);
+            using var buffer = MemoryPool<T>.Shared.Rent(batches.Length);
             var linkedBatches = new Math.MemoryBuilder<T>(buffer.Memory);
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
-                if (it.BatchSearch.AnyPath(startNodeBatch))
+                if (it.BatchSearch.AnyPath(startNodeBatch.Index))
                 {
                     linkedBatches.Add(it.Root);
                 }
@@ -237,7 +243,7 @@ namespace TSKT
                 {
                     if (it.DistanceMap.AnyPath(linkedBatch))
                     {
-                        batchGraph.Link(it, nodeBatchMap[linkedBatch], it.DistanceMap.Distances[linkedBatch]);
+                        batchGraph.Link(it.Index, nodeBatchMap[linkedBatch].Index, it.DistanceMap.Distances[linkedBatch]);
                         linkedBatches.Add(it.Root);
                         break;
                     }
@@ -249,18 +255,18 @@ namespace TSKT
         {
             return new AStarSearch<T>(graph, start, heuristicFunction);
         }
-        AStarSearch<Batch> CreateAStarForBatch(Batch start)
+        UnmanagedAStarSearch<int> CreateAStarForBatch(int startBatchIndex)
         {
-            return batchGraph.CreateAStarSearch(start, (x, y) => heuristicFunction(x.Root, y.Root));
+            return batchGraph.CreateUnmanagedAStarSearch(startBatchIndex, (x, y) => heuristicFunction(batches[x].Root, batches[y].Root));
         }
 
-        void GetBatchToGoalPath(Batch startBatch, Batch lastBatch, T goal, ref PathCombine pathCombine)
+        void GetBatchToGoalPath(in Batch startBatch, in Batch lastBatch, T goal, ref PathCombine pathCombine)
         {
-            var path = startBatch.BatchSearch.SearchPath(lastBatch);
+            var path = startBatch.BatchSearch.SearchPath(lastBatch.Index);
 
             for (int i = 0; i < path.Length; ++i)
             {
-                var fromBatch = path[i];
+                var fromBatch = batches[path[i]];
                 if (fromBatch.DistanceMap.Distances.ContainsKey(goal))
                 {
                     var nodePath = fromBatch.DistanceMap.SearchPath(goal);
@@ -269,7 +275,7 @@ namespace TSKT
                 }
                 else
                 {
-                    var toBatch = path[i + 1];
+                    var toBatch = batches[path[i + 1]];
                     var nodePath = fromBatch.DistanceMap.SearchPath(toBatch.Root);
                     pathCombine.Append(nodePath);
                 }

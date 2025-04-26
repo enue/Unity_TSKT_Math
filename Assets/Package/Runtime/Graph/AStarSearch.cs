@@ -94,7 +94,7 @@ namespace TSKT
                 memo.Distances.TryGetValue(it, out var startToItDistance);
 
                 var h = heuristicFunction(it, goal);
-                var expectedDistance = startToItDistance +h;
+                var expectedDistance = startToItDistance + h;
                 tasks.Enqueue(expectedDistance, h, (it, expectedDistance));
             }
             tasksToResume.Clear();

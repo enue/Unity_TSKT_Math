@@ -40,7 +40,6 @@ namespace TSKT
             if (TrySolve(goal, searchAllPaths: false, maxDistance))
             {
                 return memo.SearchPath(goal);
-
             }
             return System.Array.Empty<T>();
         }

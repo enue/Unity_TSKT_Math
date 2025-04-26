@@ -237,7 +237,7 @@ namespace TSKT
                 {
                     break;
                 }
-                result.Add(nearNodes.First());
+                result.Add(nearNodes[0]);
             }
 
             result.Reverse();

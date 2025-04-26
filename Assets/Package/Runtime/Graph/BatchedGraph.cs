@@ -219,7 +219,7 @@ namespace TSKT
             var unlinkedBatches = new List<Batch>();
             foreach (var it in batches)
             {
-                if (it.BatchSearch.TrySolveAny(new[] { startNodeBatch }, false, float.PositiveInfinity, out _))
+                if (it.BatchSearch.AnyPath(startNodeBatch, float.PositiveInfinity))
                 {
                     linkedBatches.Add(it.Root);
                 }

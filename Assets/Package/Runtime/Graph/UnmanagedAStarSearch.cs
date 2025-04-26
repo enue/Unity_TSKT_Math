@@ -31,7 +31,11 @@ namespace TSKT
             tasksToResume = new List<T>() { start };
         }
 
-        public readonly T[] SearchPath(T goal, double maxDistance = double.PositiveInfinity)
+        public readonly bool AnyPath(in T goal, float maxDistance = float.PositiveInfinity)
+        {
+            return TrySolve(goal, searchAllPaths: false, maxDistance);
+        }
+        public readonly T[] SearchPath(in T goal, double maxDistance = double.PositiveInfinity)
         {
             if (TrySolve(goal, searchAllPaths: false, maxDistance))
             {
@@ -40,7 +44,7 @@ namespace TSKT
             }
             return System.Array.Empty<T>();
         }
-        public readonly void SearchAllPaths(T goal, double maxDistance, Span<T[]> destination, out int writtenCount)
+        public readonly void SearchAllPaths(in T goal, double maxDistance, Span<T[]> destination, out int writtenCount)
         {
             if (TrySolve(goal, searchAllPaths: true, maxDistance: maxDistance))
             {
@@ -51,47 +55,8 @@ namespace TSKT
                 writtenCount = 0;
             }
         }
-        public readonly T[] SearchPathToNearestGoal(params T[] goals)
-        {
-            return SearchPathToNearestGoal(goals.AsSpan());
-        }
 
-        public readonly T[] SearchPathToNearestGoal(in ReadOnlySpan<T> goals)
-        {
-            return SearchPathToNearestGoal(double.PositiveInfinity, goals);
-        }
-        public readonly T[] SearchPathToNearestGoal(double maxDistance, params T[] goals)
-        {
-            return SearchPathToNearestGoal(maxDistance, goals.AsSpan());
-        }
-
-        public readonly T[] SearchPathToNearestGoal(double maxDistance, in ReadOnlySpan<T> goals)
-        {
-            if (TrySolveAny(goals, searchAllPaths: false, maxDistance: maxDistance, out var nearestGoal))
-            {
-                return memo.SearchPath(nearestGoal);
-            }
-            return System.Array.Empty<T>();
-        }
-
-        public readonly void SearchAllPathsToNearestGoal(in ReadOnlySpan<T> goals, Span<T[]> destination, out int writtenCount)
-        {
-            SearchAllPathsToNearestGoal(double.PositiveInfinity, goals, destination, out writtenCount);
-        }
-
-        public readonly void SearchAllPathsToNearestGoal(double maxDistance, in ReadOnlySpan<T> goals, Span<T[]> destination, out int writtenCount)
-        {
-            if (TrySolveAny(goals, searchAllPaths: true, maxDistance: maxDistance, out var nearestGoal))
-            {
-                memo.SearchPaths(nearestGoal, destination, out writtenCount);
-            }
-            else
-            {
-                writtenCount = 0;
-            }
-        }
-
-        public readonly bool TrySolveAny(in ReadOnlySpan<T> goals, bool searchAllPaths, double maxDistance, out T nearestGoal)
+        public readonly bool SearchNearestNode(in ReadOnlySpan<T> goals, double maxDistance, out T result)
         {
             using var sortedGoals = new Graphs.UnmanagedFloatPriorityQueue<T>(tasksToResume.Count, Allocator.Temp);
             foreach (var it in goals)
@@ -100,9 +65,9 @@ namespace TSKT
                 sortedGoals.Enqueue(expectedDistance, it);
             }
 
-            nearestGoal = default;
+            result = default;
             float nearestGoalDistance = float.PositiveInfinity;
-            bool foundNearestGoal = false;
+            bool found = false;
             while (sortedGoals.Count > 0)
             {
                 var (expectedDistance, goal) = sortedGoals.DequeueKeyAndValue();
@@ -116,24 +81,16 @@ namespace TSKT
                     if (distance < nearestGoalDistance)
                     {
                         nearestGoalDistance = distance;
-                        nearestGoal = goal;
-                        foundNearestGoal = true;
+                        result = goal;
+                        found = true;
                     }
                 }
             }
 
-            if (foundNearestGoal)
-            {
-                if (searchAllPaths)
-                {
-                    TrySolve(nearestGoal, searchAllPaths: true, maxDistance);
-                }
-                return true;
-            }
-            return false;
+            return found;
         }
 
-        public readonly bool TrySolve(in T goal, bool searchAllPaths, double maxDistance)
+        readonly bool TrySolve(in T goal, bool searchAllPaths, double maxDistance)
         {
             using var tasks = new Graphs.UnmanagedPriorityQueue<(T node, float expectedDistance)>(tasksToResume.Count, Allocator.Temp);
             foreach (var it in tasksToResume)
@@ -243,12 +200,6 @@ namespace TSKT
             }
 
             return memo.Distances.ContainsKey(goal);
-        }
-
-        public readonly Dictionary<T, float> GetDistances(params T[] nodes)
-        {
-            var distances = memo.Distances;
-            return nodes.ToDictionary(_ => _, _ => distances[_]);
         }
     }
 }

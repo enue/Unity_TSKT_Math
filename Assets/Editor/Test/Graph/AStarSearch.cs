@@ -120,7 +120,8 @@ namespace TSKT.Tests
                 var goal1 = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
                 var goal2 = new Vector2Int(UnityEngine.Random.Range(0, width), UnityEngine.Random.Range(0, height));
 
-                var aStarPath = aStarSearch.SearchPathToNearestGoal(goal1, goal2);
+                aStarSearch.SearchNearestNode(new[] { goal1, goal2 }, float.PositiveInfinity, out var node);
+                var aStarPath = aStarSearch.SearchPath(node);
 
                 var distanceMap = board.CreateDistanceMapFrom(start);
                 distanceMap.SearchPath(goal1);
@@ -160,7 +161,9 @@ namespace TSKT.Tests
             var i = new Vector2Int[99][];
             aStarSearch.SearchAllPaths(goal1, float.MaxValue, i, out _);
 
-            var paths = aStarSearch.SearchPathToNearestGoal(goal1, goal2);
+            var found =  aStarSearch.SearchNearestNode(new[] { goal1, goal2 }, float.PositiveInfinity, out var nearest);
+            Assert.IsTrue(found);
+            var paths = aStarSearch.SearchPath(nearest);
             Assert.AreEqual(goal2, paths.Last());
         }
     }

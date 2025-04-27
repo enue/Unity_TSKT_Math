@@ -40,12 +40,9 @@ namespace TSKT
             }
             foreach (var it in batchedGraph.batchGraph.StartingNodes)
             {
-                if (batchedGraph.batchGraph.TryGetNextNodesFrom(it, out var ends))
+                foreach (var (endNode, weight) in batchedGraph.batchGraph.GetEdgesFrom(it))
                 {
-                    foreach (var end in ends)
-                    {
-                        CreateLine(batchedGraph.batches[it].Root, batchedGraph.batches[end.Key].Root, Color.red, Color.red, 0.005f, -0.1f);
-                    }
+                    CreateLine(batchedGraph.batches[it].Root, batchedGraph.batches[endNode].Root, Color.red, Color.red, 0.005f, -0.1f);
                 }
             }
 

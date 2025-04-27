@@ -12,6 +12,7 @@ namespace TSKT
         readonly Dictionary<T, Dictionary<T, float>> edges = new();
         public IReadOnlyDictionary<T, Dictionary<T, float>> Edges => edges;
         public Dictionary<T, Dictionary<T, float>>.KeyCollection StartingNodes => edges.Keys;
+        public int MaxEdgeCountFromOneNode { get; private set; } = 0;
 
         public Graph()
         {
@@ -24,11 +25,13 @@ namespace TSKT
                 var endNodes = new Dictionary<T, float>(it.Value);
                 edges.Add(it.Key, endNodes);
             }
+            MaxEdgeCountFromOneNode = source.MaxEdgeCountFromOneNode;
         }
 
         public void Clear()
         {
             edges.Clear();
+            MaxEdgeCountFromOneNode = 0;
         }
 
         public bool CreateNode(T node)
@@ -54,6 +57,7 @@ namespace TSKT
         {
             CreateNode(first, out var edge);
             edge[second] = weight;
+            MaxEdgeCountFromOneNode = Mathf.Max(MaxEdgeCountFromOneNode, edge.Count);
         }
 
         public void DoubleOrderedLink(T first, T second, float weight)
@@ -93,27 +97,6 @@ namespace TSKT
             }
         }
 
-        public Dictionary<T, float> NextNodesFrom(T node)
-        {
-            if (TryGetNextNodesFrom(node, out var result))
-            {
-                return result;
-            }
-            return new Dictionary<T, float>();
-        }
-
-        public bool TryGetNextNodesFrom(T node, out Dictionary<T, float> result)
-        {
-            if (edges.TryGetValue(node, out result))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
         public HashSet<T> ComputeAllNodes()
         {
             var result = new HashSet<T>();
@@ -127,7 +110,7 @@ namespace TSKT
 
         public IEnumerable<(T endNode, float weight)> GetEdgesFrom(T node)
         {
-            if (TryGetNextNodesFrom(node, out var nodes))
+            if (edges.TryGetValue(node, out var nodes))
             {
                 foreach (var it in nodes)
                 {
@@ -154,29 +137,6 @@ namespace TSKT
         public AStarSearch<T> CreateAStarSearch(T start, Func<T, T, float> heuristicFunction)
         {
             return new AStarSearch<T>(this, start, heuristicFunction);
-        }
-    }
-
-    public class UnmanagedGraph<T> : Graph<T>, IUnmanagedGraph<T> where T : unmanaged, IEquatable<T>
-    {
-        public int MaxEdgeCountFromOneNode => Edges.Max(_ => _.Value.Count);
-
-        public void GetEdgesFrom(T begin, Span<(T endNode, float weight)> dest, out int writtenCount)
-        {
-            writtenCount = 0;
-            if (Edges.TryGetValue(begin, out var edges))
-            {
-                foreach (var it in edges)
-                {
-                    dest[writtenCount] = (it.Key, it.Value);
-                    ++writtenCount;
-                }
-            }
-        }
-        public UnmanagedDistanceMap<T> CreateUnmanagedDistanceMapFrom(T node) => new(this, node);
-        public UnmanagedAStarSearch<T> CreateUnmanagedAStarSearch(T start, Func<T, T, float> heuristicFunction)
-        {
-            return new UnmanagedAStarSearch<T>(this, start, heuristicFunction);
         }
     }
 }

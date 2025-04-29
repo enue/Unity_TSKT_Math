@@ -57,7 +57,7 @@ namespace TSKT
 
         public readonly bool SearchNearestNode(in ReadOnlySpan<T> goals, float maxDistance, out T result)
         {
-            using var sortedGoals = new Graphs.UnmanagedFloatPriorityQueue<T>(tasksToResume.Count, Allocator.Temp);
+            using var sortedGoals = new Graphs.UnmanagedFloatPriorityQueue<T>(goals.Length, Allocator.Temp);
             foreach (var it in goals)
             {
                 var expectedDistance = heuristicFunction(Start, it);

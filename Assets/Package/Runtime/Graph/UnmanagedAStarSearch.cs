@@ -97,7 +97,7 @@ namespace TSKT
                 var startToItDistance = memo.Distances[it];
                 var h = heuristicFunction(it, goal);
                 var expectedDistance = startToItDistance + h;
-                tasks.Enqueue(expectedDistance, h, (it, h));
+                tasks.Enqueue(expectedDistance, h, (it, expectedDistance));
             }
             tasksToResume.Clear();
             bool memoModified = true;

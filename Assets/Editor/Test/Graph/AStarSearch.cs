@@ -58,7 +58,7 @@ namespace TSKT.Tests
                 }
 
                 Span<Vector2Int[]> aStarPaths = new Vector2Int[150][];
-                aStarSearch.SearchAllPaths(goal, double.PositiveInfinity, aStarPaths, out var aStarWrittenCount);
+                aStarSearch.SearchAllPaths(goal, float.PositiveInfinity, aStarPaths, out var aStarWrittenCount);
                 Assert.AreEqual(dijkstraWrittenCount, aStarWrittenCount, (start, goal).ToString());
                 if (dijkstraWrittenCount < dijkstraRoutes.Length)
                 {

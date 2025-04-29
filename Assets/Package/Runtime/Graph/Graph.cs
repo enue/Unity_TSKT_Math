@@ -119,7 +119,7 @@ namespace TSKT
             }
         }
 
-        public double GetWeight(T start, T end)
+        public float GetWeight(T start, T end)
         {
             return edges[start][end];
         }

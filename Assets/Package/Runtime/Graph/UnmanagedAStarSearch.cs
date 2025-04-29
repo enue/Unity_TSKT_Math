@@ -35,7 +35,7 @@ namespace TSKT
         {
             return TrySolve(goal, searchAllPaths: false, maxDistance);
         }
-        public readonly T[] SearchPath(in T goal, double maxDistance = double.PositiveInfinity)
+        public readonly T[] SearchPath(in T goal, float maxDistance = float.PositiveInfinity)
         {
             if (TrySolve(goal, searchAllPaths: false, maxDistance))
             {
@@ -43,7 +43,7 @@ namespace TSKT
             }
             return System.Array.Empty<T>();
         }
-        public readonly void SearchAllPaths(in T goal, double maxDistance, Span<T[]> destination, out int writtenCount)
+        public readonly void SearchAllPaths(in T goal, float maxDistance, Span<T[]> destination, out int writtenCount)
         {
             if (TrySolve(goal, searchAllPaths: true, maxDistance: maxDistance))
             {
@@ -55,7 +55,7 @@ namespace TSKT
             }
         }
 
-        public readonly bool SearchNearestNode(in ReadOnlySpan<T> goals, double maxDistance, out T result)
+        public readonly bool SearchNearestNode(in ReadOnlySpan<T> goals, float maxDistance, out T result)
         {
             using var sortedGoals = new Graphs.UnmanagedFloatPriorityQueue<T>(tasksToResume.Count, Allocator.Temp);
             foreach (var it in goals)
@@ -89,7 +89,7 @@ namespace TSKT
             return found;
         }
 
-        readonly bool TrySolve(in T goal, bool searchAllPaths, double maxDistance)
+        readonly bool TrySolve(in T goal, bool searchAllPaths, float maxDistance)
         {
             using var tasks = new Graphs.UnmanagedPriorityQueue<(T node, float expectedDistance)>(tasksToResume.Count, Allocator.Temp);
             foreach (var it in tasksToResume)

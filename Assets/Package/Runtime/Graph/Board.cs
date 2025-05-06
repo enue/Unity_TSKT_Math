@@ -1,15 +1,15 @@
-﻿using UnityEngine;
+﻿#nullable enable
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System;
-#nullable enable
 
 namespace TSKT
 {
     public class Board : IUnmanagedGraph<Vector2Int>, IUnmanagedGraph<int>, IGraph<Vector2Int>, IGraph<int>
     {
-        readonly float?[] costs;
+        readonly float[] costs;
         public int Width => costs.Length / Height;
         public int Height { get; }
         public DirectionMap<float>? DirectionCostMap { get; set; }
@@ -17,14 +17,8 @@ namespace TSKT
         public Board(int w, int h)
         {
             Height = h;
-            costs = new float?[w * h];
-            for (int i = 0; i < w; ++i)
-            {
-                for (int j = 0; j < h; ++j)
-                {
-                    costs[i * Height + j] = 1;
-                }
-            }
+            costs = new float[w * h];
+            System.Array.Fill(costs, 1f);
         }
 
         public Vector2Int IndexToCell(int index) => new(index / Height, index % Height);
@@ -34,9 +28,9 @@ namespace TSKT
         public bool TryGetCost(int i, int j, out float value)
         {
             var cost = costs[i * Height + j];
-            if (cost.HasValue)
+            if (cost < float.PositiveInfinity)
             {
-                value = cost.Value;
+                value = cost;
                 return true;
             }
             value = default;
@@ -50,7 +44,7 @@ namespace TSKT
 
         public void Disable(int i, int j)
         {
-            costs[i * Height + j] = null;
+            costs[i * Height + j] = float.PositiveInfinity;
         }
 
         public bool Contains(int i, int j)
@@ -70,13 +64,13 @@ namespace TSKT
                 if (Contains(next.x, next.y))
                 {
                     var cost = costs[next.x * Height + next.y];
-                    if (cost.HasValue)
+                    if (cost < float.PositiveInfinity)
                     {
                         if (DirectionCostMap != null)
                         {
                             cost += DirectionCostMap[it];
                         }
-                        yield return (next, cost.Value);
+                        yield return (next, cost);
                     }
                 }
             }
@@ -98,7 +92,7 @@ namespace TSKT
                 return;
             }
 
-            Span<Vector2Int> directions = stackalloc Vector2Int[4]
+            ReadOnlySpan<Vector2Int> directions = stackalloc Vector2Int[4]
             {
                 Vector2Int.right,
                 Vector2Int.up,
@@ -112,13 +106,13 @@ namespace TSKT
                 if (Contains(next.x, next.y))
                 {
                     var cost = costs[next.x * Height + next.y];
-                    if (cost.HasValue)
+                    if (cost < float.PositiveInfinity)
                     {
                         if (DirectionCostMap != null)
                         {
                             cost += DirectionCostMap[it];
                         }
-                        dest[writtenCount] = (next, cost.Value);
+                        dest[writtenCount] = (next, cost);
                         ++writtenCount;
                     }
                 }
@@ -160,18 +154,11 @@ namespace TSKT
 
         float ComputeHeuristicCoefficient()
         {
-            var minCost = float.PositiveInfinity;
-            foreach (var it in costs)
+            var minCost = costs.Min();
+            if (DirectionCostMap != null)
             {
-                if (it.HasValue)
-                {
-                    if (minCost > it.Value)
-                    {
-                        minCost = it.Value;
-                    }
-                }
+                minCost += Mathf.Min(DirectionCostMap.Right, DirectionCostMap.Left, DirectionCostMap.Up, DirectionCostMap.Down);
             }
-            minCost += DirectionCostMap?.Select(_ => _.Value).Min() ?? 0f;
 
             UnityEngine.Assertions.Assert.IsTrue(minCost > 0f);
 

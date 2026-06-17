@@ -27,6 +27,37 @@ namespace TSKT
 {
     public static class EasingFunction
     {
+        public static float EaseInBack(float start, float end, float t) => Back.EaseIn(start, end, t);
+        public static float EaseOutBack(float start, float end, float t) => Back.EaseOut(start, end, t);
+        public static float EaseInOutBack(float start, float end, float t) => Back.EaseInOut(start, end, t);
+        public static float EaseInBounce(float start, float end, float t) => Bounce.EaseIn(start, end, t);
+        public static float EaseOutBounce(float start, float end, float t) => Bounce.EaseOut(start, end, t);
+        public static float EaseInOutBounce(float start, float end, float t) => Bounce.EaseInOut(start, end, t);
+        public static float EaseInCirc(float start, float end, float t) => Circ.EaseIn(start, end, t);
+        public static float EaseOutCirc(float start, float end, float t) => Circ.EaseOut(start, end, t);
+        public static float EaseInOutCirc(float start, float end, float t) => Circ.EaseInOut(start, end, t);
+        public static float EaseInCubic(float start, float end, float t) => Cubic.EaseIn(start, end, t);
+        public static float EaseOutCubic(float start, float end, float t) => Cubic.EaseOut(start, end, t);
+        public static float EaseInOutCubic(float start, float end, float t) => Cubic.EaseInOut(start, end, t);
+        public static float EaseInElastic(float start, float end, float t) => Elastic.EaseIn(start, end, t);
+        public static float EaseOutElastic(float start, float end, float t) => Elastic.EaseOut(start, end, t);
+        public static float EaseInOutElastic(float start, float end, float t) => Elastic.EaseInOut(start, end, t);
+        public static float EaseInExpo(float start, float end, float t) => Expo.EaseIn(start, end, t);
+        public static float EaseOutExpo(float start, float end, float t) => Expo.EaseOut(start, end, t);
+        public static float EaseInOutExpo(float start, float end, float t) => Expo.EaseInOut(start, end, t);
+        public static float EaseInQuad(float start, float end, float t) => Quad.EaseIn(start, end, t);
+        public static float EaseOutQuad(float start, float end, float t) => Quad.EaseOut(start, end, t);
+        public static float EaseInOutQuad(float start, float end, float t) => Quad.EaseInOut(start, end, t);
+        public static float EaseInQuart(float start, float end, float t) => Quart.EaseIn(start, end, t);
+        public static float EaseOutQuart(float start, float end, float t) => Quart.EaseOut(start, end, t);
+        public static float EaseInOutQuart(float start, float end, float t) => Quart.EaseInOut(start, end, t);
+        public static float EaseInQuint(float start, float end, float t) => Quint.EaseIn(start, end, t);
+        public static float EaseOutQuint(float start, float end, float t) => Quint.EaseOut(start, end, t);
+        public static float EaseInOutQuint(float start, float end, float t) => Quint.EaseInOut(start, end, t);
+        public static float EaseInSine(float start, float end, float t) => Sine.EaseIn(start, end, t);
+        public static float EaseOutSine(float start, float end, float t) => Sine.EaseOut(start, end, t);
+        public static float EaseInOutSine(float start, float end, float t) => Sine.EaseInOut(start, end, t);
+
         public static class Back
         {
             public static float EaseIn(float start, float end, float t)

@@ -10,8 +10,8 @@ namespace TSKT
     {
         readonly DistanceMapCore<T> core;
         public readonly T Start => core.Start; 
-        public readonly IReadOnlyDictionary<T, float> Distances => core.Distances;
-        public readonly IReadOnlyDictionary<T, List<T>> ReversedEdges => core.ReversedEdges;
+        readonly IReadOnlyDictionary<T, float> Distances => core.Distances;
+        readonly IReadOnlyDictionary<T, List<T>> ReversedEdges => core.ReversedEdges;
 
         readonly Graphs.FloatPriorityQueue<T> tasks;
         readonly IGraph<T> graph;
@@ -36,6 +36,17 @@ namespace TSKT
         {
             return TrySolve(goal, maxDistance);
         }
+        public readonly bool TryGetDistance(in T goal, out float result, float maxDistance = float.PositiveInfinity)
+        {
+            if (TrySolve(goal, maxDistance))
+            {
+                result = core.Distances[goal];
+                return true;
+            }
+            result = default;
+            return false;
+        }
+
         readonly bool TrySolve(T? goal, float maxDistance = float.PositiveInfinity)
         {
             var found = goal != null && core.Distances.ContainsKey(goal);
@@ -44,7 +55,7 @@ namespace TSKT
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;
-                var startToCurrentNodeDistance = Distances[currentNode];
+                var startToCurrentNodeDistance = core.Distances[currentNode];
                 if (goal != null)
                 {
                     if (comparer.Equals(goal, currentNode))
@@ -71,11 +82,11 @@ namespace TSKT
                     UnityEngine.Debug.Assert(edgeWeight > 0.0, "weight must be greater than 0.0");
 
                     var startToNextNodeDistance = startToCurrentNodeDistance + edgeWeight;
-                    if (Distances.TryGetValue(nextNode, out var oldDistance))
+                    if (core.Distances.TryGetValue(nextNode, out var oldDistance))
                     {
                         if (oldDistance >= startToNextNodeDistance)
                         {
-                            var nearNodes = ReversedEdges[nextNode];
+                            var nearNodes = core.ReversedEdges[nextNode];
                             if (oldDistance > startToNextNodeDistance)
                             {
                                 nearNodes.Clear();

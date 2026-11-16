@@ -168,7 +168,7 @@ namespace TSKT
                     memoModified = true;
 
                     float h = heuristicFunction(next, goal);
-                    float nextExpectedDistance = startToNextNodeDistance = h;
+                    float nextExpectedDistance = startToNextNodeDistance + h;
 
                     tasks.Enqueue(nextExpectedDistance, h, (next, nextExpectedDistance));
                 }

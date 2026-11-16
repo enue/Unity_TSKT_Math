@@ -10,8 +10,6 @@ namespace TSKT
     {
         readonly DistanceMapCore<T> core;
         public readonly T Start => core.Start; 
-        readonly IReadOnlyDictionary<T, float> Distances => core.Distances;
-        readonly IReadOnlyDictionary<T, List<T>> ReversedEdges => core.ReversedEdges;
 
         readonly Graphs.FloatPriorityQueue<T> tasks;
         readonly IGraph<T> graph;
@@ -29,16 +27,16 @@ namespace TSKT
         }
         public readonly void SolveWithin(float maxDistance)
         {
-            TrySolve(default, maxDistance);
+            TrySolve(default!, false, maxDistance);
         }
 
         public readonly bool AnyPath(in T goal, float maxDistance = float.PositiveInfinity)
         {
-            return TrySolve(goal, maxDistance);
+            return TrySolve(goal, true, maxDistance);
         }
         public readonly bool TryGetDistance(in T goal, out float result, float maxDistance = float.PositiveInfinity)
         {
-            if (TrySolve(goal, maxDistance))
+            if (TrySolve(goal, true, maxDistance))
             {
                 result = core.Distances[goal];
                 return true;
@@ -47,16 +45,16 @@ namespace TSKT
             return false;
         }
 
-        readonly bool TrySolve(T? goal, float maxDistance = float.PositiveInfinity)
+        readonly bool TrySolve(T goal, bool hasGoal, float maxDistance = float.PositiveInfinity)
         {
-            var found = goal != null && core.Distances.ContainsKey(goal);
+            var found = hasGoal && core.Distances.ContainsKey(goal);
 
             var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
             {
                 var currentNode = tasks.Peek;
                 var startToCurrentNodeDistance = core.Distances[currentNode];
-                if (goal != null)
+                if (hasGoal)
                 {
                     if (comparer.Equals(goal, currentNode))
                     {
@@ -115,17 +113,17 @@ namespace TSKT
         }
         public readonly void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
         {
-            TrySolve(goal);
+            TrySolve(goal, true);
             core.SearchPaths(goal, destination, out writtenCount);
         }
         public readonly T[] SearchPath(in T goal)
         {
-            TrySolve(goal);
+            TrySolve(goal, true);
             return core.SearchPath(goal);
         }
         public readonly void SearchPath(in T goal, ref List<T> result)
         {
-            TrySolve(goal);
+            TrySolve(goal, true);
             core.SearchPath(goal, ref result);
         }
     }

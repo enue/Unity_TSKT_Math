@@ -25,6 +25,23 @@ namespace TSKT.Tests
         }
 
         [Test]
+        public void NegativeZero()
+        {
+            Assert.Less(OrderKeyConvert.ToUint32(-0f), OrderKeyConvert.ToUint32(0f));
+            Assert.Greater(OrderKeyConvert.ToUint32(-0f), OrderKeyConvert.ToUint32(-float.Epsilon));
+            Assert.Greater(OrderKeyConvert.ToUint32(-0f), OrderKeyConvert.ToUint32(float.NegativeInfinity));
+            Assert.Less(OrderKeyConvert.ToUint32(-0f), OrderKeyConvert.ToUint32(float.Epsilon));
+
+            Assert.Less(OrderKeyConvert.ToUint64(-0.0), OrderKeyConvert.ToUint64(0.0));
+            Assert.Greater(OrderKeyConvert.ToUint64(-0.0), OrderKeyConvert.ToUint64(-double.Epsilon));
+            Assert.Greater(OrderKeyConvert.ToUint64(-0.0), OrderKeyConvert.ToUint64(double.NegativeInfinity));
+            Assert.Less(OrderKeyConvert.ToUint64(-0.0), OrderKeyConvert.ToUint64(double.Epsilon));
+
+            // -0と+0は別のキーなので、primaryが-0と+0ならsecondaryに関わらずprimaryで順序が決まる
+            Assert.Less(OrderKeyConvert.Combine(-0f, 1f), OrderKeyConvert.Combine(0f, 0f));
+        }
+
+        [Test]
         [TestCase(ulong.MaxValue, uint.MaxValue, uint.MaxValue)]
         [TestCase(uint.MaxValue, (uint)0, uint.MaxValue)]
         [TestCase((ulong)uint.MaxValue + 1, (uint)1, (uint)0)]

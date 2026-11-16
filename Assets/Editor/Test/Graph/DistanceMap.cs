@@ -43,7 +43,7 @@ namespace TSKT.Tests
             var paths = new Vector2Int[10][];
             distanceMap.SearchPaths(new Vector2Int(9, 6), paths, out var writtenCount);
             Assert.AreNotEqual(0, writtenCount);
-            Assert.IsFalse(distanceMap.AnyPath(new Vector2Int(9, 8)));
+            Assert.IsFalse(distanceMap.TryGetDistance(new Vector2Int(9, 8), out _, maxDistance: 0f));
         }
 
         [Test]

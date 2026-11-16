@@ -19,6 +19,15 @@ namespace TSKT
 
         readonly public bool Intersect(in Segment2 target)
         {
+            // 自身が点の場合、以降の計算では常に一直線上と判定されてしまうので先に処理する
+            if (from == to)
+            {
+                if (target.from == target.to)
+                {
+                    return from == target.from;
+                }
+                return target.Intersect(this);
+            }
             {
                 Vector3 a = to - from;
                 Vector3 b = target.to - from;

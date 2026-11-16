@@ -53,8 +53,11 @@ namespace TSKT
 
         static bool Contains(Rect a, Rect b)
         {
-            return a.Contains(new Vector2(b.xMin, b.yMin), true)
-                && a.Contains(new Vector2(b.xMax, b.yMax), true);
+            // Rect.Containsは[min, max)で判定するので、max側の辺を共有する矩形を含んでいないと判定してしまう
+            return Mathf.Min(a.xMin, a.xMax) <= Mathf.Min(b.xMin, b.xMax)
+                && Mathf.Max(b.xMin, b.xMax) <= Mathf.Max(a.xMin, a.xMax)
+                && Mathf.Min(a.yMin, a.yMax) <= Mathf.Min(b.yMin, b.yMax)
+                && Mathf.Max(b.yMin, b.yMax) <= Mathf.Max(a.yMin, a.yMax);
         }
 
         static bool TryCombine(in Rect a, in Rect b, out Rect result)

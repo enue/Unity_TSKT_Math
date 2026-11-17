@@ -13,7 +13,7 @@ namespace TSKT
         readonly System.Func<T, T, float> heuristicFunction;
         public readonly DistanceMapCore<T> memo;
         public readonly T Start => memo.Start;
-        readonly List<T> tasksToResume;
+        readonly HashSet<T> tasksToResume;
 
         public AStarSearch(IGraph<T> graph, in T start, System.Func<T, T, float> heuristicFunction)
         {
@@ -25,7 +25,7 @@ namespace TSKT
                 new Dictionary<T, float>(),
                 new Dictionary<T, List<T>>());
             memo.Distances.Add(start, 0f);
-            tasksToResume = new List<T>() { start };
+            tasksToResume = new HashSet<T>() { start };
         }
 
         public readonly bool AnyPath(T goal, float maxDistance = float.PositiveInfinity)
@@ -88,21 +88,28 @@ namespace TSKT
 
         readonly bool TrySolve(T goal, bool searchAllPaths, float maxDistance)
         {
-            var tasks = new Graphs.PriorityQueue<(T node, float expectedDistance)>();
+            var tasks = new Graphs.PriorityQueue<(T node, float expectedDistance, float startToNodeDistance)>();
             foreach (var it in tasksToResume)
             {
                 memo.Distances.TryGetValue(it, out var startToItDistance);
 
                 var h = heuristicFunction(it, goal);
                 var expectedDistance = startToItDistance + h;
-                tasks.Enqueue(expectedDistance, h, (it, expectedDistance));
+                tasks.Enqueue(expectedDistance, h, (it, expectedDistance, startToItDistance));
             }
             tasksToResume.Clear();
             bool memoModified = true;
 
             while (tasks.Count > 0)
             {
-                var (currentNode, expectedDistance) = tasks.Peek;
+                var (currentNode, expectedDistance, enqueuedDistance) = tasks.Peek;
+                var startToCurrentNodeDistance = memo.Distances[currentNode];
+                // より短い距離が見つかって積み直されたノードの古い要素。短い方の要素が別にあるので捨てる
+                if (enqueuedDistance > startToCurrentNodeDistance)
+                {
+                    tasks.Dequeue();
+                    continue;
+                }
                 if (memoModified)
                 {
                     if (memo.Distances.TryGetValue(goal, out var startToGoalDistance))
@@ -125,17 +132,13 @@ namespace TSKT
                     memoModified = false;
                 }
                 tasks.Dequeue();
-                var startToCurrentNodeDistance = memo.Distances[currentNode];
 
                 foreach (var (next, edgeWeight) in graph.GetEdgesFrom(currentNode))
                 {
                     var startToNextNodeDistance = edgeWeight + startToCurrentNodeDistance;
                     if (startToNextNodeDistance > maxDistance)
                     {
-                        if (!tasksToResume.Contains(currentNode))
-                        {
-                            tasksToResume.Add(currentNode);
-                        }
+                        tasksToResume.Add(currentNode);
                         continue;
                     }
 
@@ -170,19 +173,18 @@ namespace TSKT
                     float h = heuristicFunction(next, goal);
                     float nextExpectedDistance = startToNextNodeDistance + h;
 
-                    tasks.Enqueue(nextExpectedDistance, h, (next, nextExpectedDistance));
+                    tasks.Enqueue(nextExpectedDistance, h, (next, nextExpectedDistance, startToNextNodeDistance));
                 }
             }
             while (tasks.Count > 0)
             {
                 var n = tasks.Dequeue().node;
-                if (!tasksToResume.Contains(n))
-                {
-                    tasksToResume.Add(n);
-                }
+                tasksToResume.Add(n);
             }
 
-            return memo.Distances.ContainsKey(goal);
+            // memoには以前の探索で見つけたmaxDistanceを超える距離も入っているので、距離で判定する
+            return memo.Distances.TryGetValue(goal, out var goalDistance)
+                && goalDistance <= maxDistance;
         }
    }
 }

@@ -54,6 +54,103 @@ namespace TSKT.Tests
             }
         }
         [Test]
+        public void Managed()
+        {
+            var queue = new TSKT.Graphs.PriorityQueue<float>();
+            var floatQueue = new TSKT.Graphs.FloatPriorityQueue<float>();
+            var doubleQueue = new TSKT.Graphs.DoublePriorityQueue<float>();
+            var expected = new List<float>();
+
+            // 出し入れを混ぜても常に最小の要素が出てくる
+            for (int i = 0; i < 2000; ++i)
+            {
+                if (expected.Count > 0 && UnityEngine.Random.Range(0, 3) == 0)
+                {
+                    var e = expected.Min();
+                    expected.Remove(e);
+                    Assert.AreEqual(e, queue.Peek);
+                    Assert.AreEqual(e, queue.Dequeue());
+                    Assert.AreEqual((e, e), floatQueue.PeekKeyAndValue);
+                    Assert.AreEqual((e, e), floatQueue.DequeueKeyAndValue());
+                    Assert.AreEqual(e, doubleQueue.Peek);
+                    Assert.AreEqual(e, doubleQueue.Dequeue());
+                }
+                else
+                {
+                    var r = UnityEngine.Random.Range(-1f, 1f);
+                    queue.Enqueue(r, -r, r);
+                    floatQueue.Enqueue(r, r);
+                    doubleQueue.Enqueue(r, -r, r);
+                    expected.Add(r);
+                }
+                Assert.AreEqual(expected.Count, queue.Count);
+                Assert.AreEqual(expected.Count, floatQueue.Count);
+                Assert.AreEqual(expected.Count, doubleQueue.Count);
+            }
+
+            expected.Sort();
+            foreach (var e in expected)
+            {
+                Assert.AreEqual(e, queue.Dequeue());
+                Assert.AreEqual(e, floatQueue.Dequeue());
+                Assert.AreEqual(e, doubleQueue.Dequeue());
+            }
+            Assert.AreEqual(0, queue.Count);
+            Assert.AreEqual(0, floatQueue.Count);
+            Assert.AreEqual(0, doubleQueue.Count);
+            Assert.Throws<InvalidOperationException>(() => queue.Dequeue());
+            Assert.Throws<InvalidOperationException>(() => floatQueue.Dequeue());
+            Assert.Throws<InvalidOperationException>(() => doubleQueue.Dequeue());
+        }
+
+        [Test]
+        public void Unmanaged()
+        {
+            using var queue = new UnmanagedPriorityQueue<float>(4, Allocator.Temp);
+            using var floatQueue = new UnmanagedFloatPriorityQueue<float>(4, Allocator.Temp);
+            using var doubleQueue = new UnmanagedDoublePriorityQueue<float>();
+            var expected = new List<float>();
+
+            // 出し入れを混ぜても常に最小の要素が出てくる
+            for (int i = 0; i < 2000; ++i)
+            {
+                if (expected.Count > 0 && UnityEngine.Random.Range(0, 3) == 0)
+                {
+                    var e = expected.Min();
+                    expected.Remove(e);
+                    Assert.AreEqual(e, queue.Peek);
+                    Assert.AreEqual(e, queue.Dequeue());
+                    Assert.AreEqual(e, floatQueue.Peek);
+                    Assert.AreEqual((e, e), floatQueue.DequeueKeyAndValue());
+                    Assert.AreEqual(e, doubleQueue.Peek);
+                    Assert.AreEqual(e, doubleQueue.Dequeue());
+                }
+                else
+                {
+                    var r = UnityEngine.Random.Range(-1f, 1f);
+                    queue.Enqueue(r, -r, r);
+                    floatQueue.Enqueue(r, r);
+                    doubleQueue.Enqueue(r, -r, r);
+                    expected.Add(r);
+                }
+                Assert.AreEqual(expected.Count, queue.Count);
+                Assert.AreEqual(expected.Count, floatQueue.Count);
+                Assert.AreEqual(expected.Count, doubleQueue.Count);
+            }
+
+            expected.Sort();
+            foreach (var e in expected)
+            {
+                Assert.AreEqual(e, queue.Dequeue());
+                Assert.AreEqual(e, floatQueue.Dequeue());
+                Assert.AreEqual(e, doubleQueue.Dequeue());
+            }
+            Assert.AreEqual(0, queue.Count);
+            Assert.AreEqual(0, floatQueue.Count);
+            Assert.AreEqual(0, doubleQueue.Count);
+        }
+
+        [Test]
         public void Hoge()
         {
             using var queue = new UnmanagedPriorityQueue<float>(1000, Allocator.Temp);

@@ -52,8 +52,14 @@ namespace TSKT
             var comparer = EqualityComparer<T>.Default;
             while (tasks.Count > 0)
             {
-                var currentNode = tasks.Peek;
+                var (enqueuedDistance, currentNode) = tasks.PeekKeyAndValue;
                 var startToCurrentNodeDistance = core.Distances[currentNode];
+                // より短い距離が見つかって積み直されたノードの古い要素。短い方の要素で展開済みなので捨てる
+                if (enqueuedDistance > startToCurrentNodeDistance)
+                {
+                    tasks.Dequeue();
+                    continue;
+                }
                 if (hasGoal)
                 {
                     if (comparer.Equals(goal, currentNode))
@@ -109,7 +115,11 @@ namespace TSKT
                     tasks.Enqueue(startToNextNodeDistance, nextNode);
                 }
             }
-            return found;
+            // Distancesには未確定の距離やmaxDistanceを超えた距離も入っているので、距離で判定する。
+            // ループを抜けた時点でmaxDistance以下の距離は確定している。
+            return hasGoal
+                && core.Distances.TryGetValue(goal, out var goalDistance)
+                && goalDistance <= maxDistance;
         }
         public readonly void SearchPaths(T goal, Span<T[]> destination, out int writtenCount)
         {

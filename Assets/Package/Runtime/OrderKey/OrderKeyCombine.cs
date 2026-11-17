@@ -55,13 +55,14 @@ namespace TSKT
                 throw new System.ArgumentException();
             }
 
-            ulong mask = 0;
-            for (int i = 0; i < count; ++i)
+            // C#のシフトはシフト量の下位6ビットしか見ないので、64ビットシフトになるcount == 0は先に除外する
+            if (count == 0)
             {
-                mask |= (ulong)1 << (63 - index - i);
+                return;
             }
-            var offset = 64 - index - count;
-            var v = (k & mask) >> offset;
+
+            // 上位index桁を左シフトで落とし、右シフトで下位count桁に寄せる
+            var v = (k << index) >> (64 - count);
 
             Result |= v << (capacity - Length - count);
             Length += count;

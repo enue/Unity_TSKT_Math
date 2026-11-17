@@ -47,6 +47,36 @@ namespace TSKT.Tests
         }
 
         [Test]
+        public void MaxDistance()
+        {
+            var board = new Board(10, 10);
+            var start = new Vector2Int(5, 5);
+            // 距離4
+            var goal = new Vector2Int(9, 5);
+            {
+                var distanceMap = new DistanceMap<Vector2Int>(board, start);
+                distanceMap.SolveWithin(3f);
+                Assert.IsFalse(distanceMap.AnyPath(goal, 3f));
+                Assert.IsFalse(distanceMap.TryGetDistance(goal, out _, 3f));
+                Assert.IsTrue(distanceMap.TryGetDistance(goal, out var distance, 4f));
+                Assert.AreEqual(4f, distance);
+            }
+            {
+                var distanceMap = board.CreateDistanceMapFrom(start);
+                distanceMap.SolveWithin(3f);
+                Assert.IsFalse(distanceMap.AnyPath(goal, 3f));
+                Assert.IsTrue(distanceMap.AnyPath(goal, 4f));
+            }
+            // 距離4のノードはどれもmaxDistance:3では到達できない
+            for (int dx = -4; dx <= 4; ++dx)
+            {
+                var dy = 4 - Mathf.Abs(dx);
+                Assert.IsFalse(new DistanceMap<Vector2Int>(board, start).AnyPath(start + new Vector2Int(dx, dy), 3f));
+                Assert.IsFalse(new DistanceMap<Vector2Int>(board, start).AnyPath(start + new Vector2Int(dx, -dy), 3f));
+            }
+        }
+
+        [Test]
         public void Path()
         {
             var graph = new Graph<char>();

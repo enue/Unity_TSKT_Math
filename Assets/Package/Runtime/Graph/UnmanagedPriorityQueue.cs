@@ -7,19 +7,19 @@ using UnityEngine;
 
 namespace TSKT.Graphs
 {
+    // いずれも二分ヒープ。キーが同じ要素同士の取り出し順は不定。
+
     public struct UnmanagedPriorityQueue<T> : IDisposable where T : unmanaged
     {
         NativeList<T> items;
         NativeList<ulong> keys;
-        public readonly int Count => keys.Length - position;
-        int position;
-        public readonly T Peek => items[position];
+        public readonly int Count => keys.Length;
+        public readonly T Peek => Count > 0 ? items[0] : throw new InvalidOperationException();
 
         public UnmanagedPriorityQueue(int initialCapacity, Allocator allocator)
         {
             items = new(initialCapacity, allocator);
             keys = new(initialCapacity, allocator);
-            position = 0;
         }
 
         public void Enqueue(float primaryKey, float secondaryKey, T item)
@@ -28,31 +28,74 @@ namespace TSKT.Graphs
         }
         public void Enqueue(ulong key, T item)
         {
-            var index = keys.AsArray().GetSubArray(position, keys.Length - position).BinarySearch(key);
-            if (index < 0)
+            // 末尾に置いて、親の方が大きい間は親を下ろしていく
+            var index = keys.Length;
+            keys.Add(key);
+            items.Add(item);
+            while (index > 0)
             {
-                index = ~index;
+                var parent = (index - 1) / 2;
+                var parentKey = keys[parent];
+                if (parentKey <= key)
+                {
+                    break;
+                }
+                keys[index] = parentKey;
+                items[index] = items[parent];
+                index = parent;
             }
-            if (index == 0 && position > 0)
-            {
-                --position;
-                keys[position] = key;
-                items[position] = item;
-            }
-            else
-            {
-                items.InsertRange(index + position, 1);
-                items[index + position] = item;
-
-                keys.InsertRange(index + position, 1);
-                keys[index + position] = key;
-            }
+            keys[index] = key;
+            items[index] = item;
         }
         public T Dequeue()
         {
-            var index = position;
-            ++position;
-            return items[index];
+            if (keys.Length == 0)
+            {
+                throw new InvalidOperationException();
+            }
+
+            var result = items[0];
+
+            // 末尾の要素を根に置いたものとして、小さい方の子を引き上げながら下ろしていく
+            var count = keys.Length - 1;
+            var key = keys[count];
+            var item = items[count];
+            keys.RemoveAt(count);
+            items.RemoveAt(count);
+
+            var index = 0;
+            while (true)
+            {
+                var child = index * 2 + 1;
+                if (child >= count)
+                {
+                    break;
+                }
+                var childKey = keys[child];
+                if (child + 1 < count)
+                {
+                    var rightKey = keys[child + 1];
+                    if (rightKey < childKey)
+                    {
+                        ++child;
+                        childKey = rightKey;
+                    }
+                }
+                if (key <= childKey)
+                {
+                    break;
+                }
+                keys[index] = childKey;
+                items[index] = items[child];
+                index = child;
+            }
+            if (count > 0)
+            {
+                keys[index] = key;
+                items[index] = item;
+            }
+
+            return result;
         }
         public void Dispose()
         {
@@ -66,38 +109,34 @@ namespace TSKT.Graphs
     {
         NativeList<T> items;
         NativeList<float> keys;
-        public readonly int Count => keys.Length - position;
-        int position;
-        public readonly T Peek => items[position];
+        public readonly int Count => keys.Length;
+        public readonly T Peek => Count > 0 ? items[0] : throw new InvalidOperationException();
 
         public UnmanagedFloatPriorityQueue(int initialCapacity, Allocator allocator)
         {
             items = new(initialCapacity, allocator);
             keys = new(initialCapacity, allocator);
-            position = 0;
         }
 
         public void Enqueue(float key, T item)
         {
-            var index = keys.AsArray().GetSubArray(position, keys.Length - position).BinarySearch(key);
-            if (index < 0)
+            var index = keys.Length;
+            keys.Add(key);
+            items.Add(item);
+            while (index > 0)
             {
-                index = ~index;
+                var parent = (index - 1) / 2;
+                var parentKey = keys[parent];
+                if (parentKey <= key)
+                {
+                    break;
+                }
+                keys[index] = parentKey;
+                items[index] = items[parent];
+                index = parent;
             }
-            if (index == 0 && position > 0)
-            {
-                --position;
-                keys[position] = key;
-                items[position] = item;
-            }
-            else
-            {
-                items.InsertRange(index + position, 1);
-                items[index + position] = item;
-
-                keys.InsertRange(index + position, 1);
-                keys[index + position] = key;
-            }
+            keys[index] = key;
+            items[index] = item;
         }
         public T Dequeue()
         {
@@ -105,9 +144,52 @@ namespace TSKT.Graphs
         }
         public (float key, T value) DequeueKeyAndValue()
         {
-            var index = position;
-            ++position;
-            return (keys[index], items[index]);
+            if (keys.Length == 0)
+            {
+                throw new InvalidOperationException();
+            }
+
+            var result = (keys[0], items[0]);
+
+            var count = keys.Length - 1;
+            var key = keys[count];
+            var item = items[count];
+            keys.RemoveAt(count);
+            items.RemoveAt(count);
+
+            var index = 0;
+            while (true)
+            {
+                var child = index * 2 + 1;
+                if (child >= count)
+                {
+                    break;
+                }
+                var childKey = keys[child];
+                if (child + 1 < count)
+                {
+                    var rightKey = keys[child + 1];
+                    if (rightKey < childKey)
+                    {
+                        ++child;
+                        childKey = rightKey;
+                    }
+                }
+                if (key <= childKey)
+                {
+                    break;
+                }
+                keys[index] = childKey;
+                items[index] = items[child];
+                index = child;
+            }
+            if (count > 0)
+            {
+                keys[index] = key;
+                items[index] = item;
+            }
+
+            return result;
         }
         public void Dispose()
         {
@@ -119,9 +201,8 @@ namespace TSKT.Graphs
     {
         NativeList<T> items = new(Allocator.Temp);
         NativeList<OrderKey2> keys = new(Allocator.Temp);
-        public int Count => keys.Length - position;
-        int position;
-        public T Peek => items[position];
+        public int Count => keys.Length;
+        public T Peek => Count > 0 ? items[0] : throw new InvalidOperationException();
 
         public void Enqueue(double primaryKey, double secondaryKey, T item)
         {
@@ -136,32 +217,73 @@ namespace TSKT.Graphs
                 primaryKey,
                 secondaryKey);
 
-            var index = keys.AsArray().GetSubArray(position, keys.Length - position).BinarySearch(key);
-            if (index < 0)
+            var index = keys.Length;
+            keys.Add(key);
+            items.Add(item);
+            while (index > 0)
             {
-                index = ~index;
+                var parent = (index - 1) / 2;
+                var parentKey = keys[parent];
+                if (parentKey.CompareTo(key) <= 0)
+                {
+                    break;
+                }
+                keys[index] = parentKey;
+                items[index] = items[parent];
+                index = parent;
             }
-            if (index == 0 && position > 0)
-            {
-                --position;
-                keys[position] = key;
-                items[position] = item;
-            }
-            else
-            {
-                items.InsertRange(index + position, 1);
-                items[index + position] = item;
-
-                keys.InsertRange(index + position, 1);
-                keys[index + position] = key;
-            }
+            keys[index] = key;
+            items[index] = item;
         }
 
         public T Dequeue()
         {
-            var index = position;
-            ++position;
-            return items[index];
+            if (keys.Length == 0)
+            {
+                throw new InvalidOperationException();
+            }
+
+            var result = items[0];
+
+            var count = keys.Length - 1;
+            var key = keys[count];
+            var item = items[count];
+            keys.RemoveAt(count);
+            items.RemoveAt(count);
+
+            var index = 0;
+            while (true)
+            {
+                var child = index * 2 + 1;
+                if (child >= count)
+                {
+                    break;
+                }
+                var childKey = keys[child];
+                if (child + 1 < count)
+                {
+                    var rightKey = keys[child + 1];
+                    if (rightKey < childKey)
+                    {
+                        ++child;
+                        childKey = rightKey;
+                    }
+                }
+                if (key.CompareTo(childKey) <= 0)
+                {
+                    break;
+                }
+                keys[index] = childKey;
+                items[index] = items[child];
+                index = child;
+            }
+            if (count > 0)
+            {
+                keys[index] = key;
+                items[index] = item;
+            }
+
+            return result;
         }
 
         public void Dispose()

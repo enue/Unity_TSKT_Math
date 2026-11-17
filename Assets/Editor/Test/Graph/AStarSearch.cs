@@ -149,6 +149,30 @@ namespace TSKT.Tests
             }
         }
         [Test]
+        public void MaxDistanceWithMemoTest()
+        {
+            var start = new Vector2Int(0, 0);
+            var board = new Board(10, 10);
+            var far = new Vector2Int(9, 0);
+            // 距離5
+            var goal = new Vector2Int(5, 0);
+            {
+                var aStarSearch = new AStarSearch<Vector2Int>(board, start, (a, b) => TSKT.Vector2IntUtil.GetManhattanDistance(a, b));
+                Assert.IsTrue(aStarSearch.AnyPath(far));
+                Assert.IsFalse(aStarSearch.AnyPath(goal, 3f));
+                Assert.AreEqual(0, aStarSearch.SearchPath(goal, 3f).Length);
+                Assert.IsTrue(aStarSearch.AnyPath(goal, 5f));
+            }
+            {
+                var aStarSearch = board.CreateAStarSearch(start);
+                Assert.IsTrue(aStarSearch.AnyPath(far));
+                Assert.IsFalse(aStarSearch.AnyPath(goal, 3f));
+                Assert.AreEqual(0, aStarSearch.SearchPath(goal, 3f).Length);
+                Assert.IsTrue(aStarSearch.AnyPath(goal, 5f));
+            }
+        }
+
+        [Test]
         public void MultiGoalWithMemoTest()
         {
             var start = new Vector2Int(0, 0);
